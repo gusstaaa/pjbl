@@ -129,9 +129,9 @@
 
 ## 7. Contexto do projeto (preenchido nas Etapas 4 e 5)
 
-- **O que é:** _(Etapa 4)_
-- **Stack:** _(Etapa 4)_
-- **Princípio de arquitetura:** _(Etapa 4)_
+- **O que é:** Sistema de Gestão Escolar (Maternal ao 5º ano) para centralizar cadastros, matrículas e turmas na secretaria escolar.
+- **Stack:** Next.js (React + TypeScript), Tailwind CSS, Prisma ORM (SQLite local / PostgreSQL produção).
+- **Princípio de arquitetura:** Rota fina (Next.js App Router / API routes) → Serviço / Ação → Prisma Client; regras de negócio e validações no servidor; mensagens claras ao usuário.
 - **Como ligar:** `bash start.sh` _(Etapa 5)_
 
 | Validação | Comando | Esperado |
