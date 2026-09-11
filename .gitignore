@@ -3,6 +3,13 @@
 .env.*
 *.env
 !.env.example
+
+# banco de dados local
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # ambientes e dependências
 .venv/
 venv/
@@ -11,6 +18,8 @@ __pycache__/
 dist/
 build/
 .next/
+
 # sistema
 .DS_Store
 Thumbs.db
+*.tsbuildinfo

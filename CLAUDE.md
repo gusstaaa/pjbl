@@ -136,10 +136,10 @@
 
 | Validação | Comando | Esperado |
 |---|---|---|
-| Tipos / compilação | _(Etapa 5)_ | zero erros |
-| Lint | _(Etapa 5)_ | zero erros |
+| Tipos / compilação | `npm run typecheck` | zero erros |
+| Lint | `npm run lint` | zero erros |
 | Smoke (rotas vivas) | `bash scripts/smoke.sh` | 0 falhas e total ≥ última contagem |
-| Jornada principal (E2E) | _(Etapa 6)_ | N/N |
+| Jornada principal (E2E) | `bash scripts/e2e_jornada_matricula.sh` _(Etapa 6)_ | N/N |
 
 ## 8. Documentos: um fato, um lugar
 

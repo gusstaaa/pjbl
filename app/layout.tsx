@@ -1,0 +1,21 @@
+import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'Sistema de Gestão Escolar',
+  description: 'Gestão de matrículas, alunos e turmas do Maternal ao 5º ano',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="pt-BR">
+      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
+        {children}
+      </body>
+    </html>
+  );
+}

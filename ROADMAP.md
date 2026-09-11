@@ -12,11 +12,11 @@
 ## Fase 0 — Fundação (Etapa 5)
 | # | Item | Status | O que o usuário vê |
 |---|---|---|---|
-| 0.1 | Ferramentas da stack instaladas (Node.js, npm, Next.js, Prisma) | 🔵 | versões respondendo no terminal |
-| 0.2 | Contas dos serviços + limites de gasto + `.env` preenchido | 🔵 | variáveis locais configuradas sem custo |
-| 0.3 | Esqueleto do sistema + `start.sh` | 🔵 | página inicial abre no navegador em `http://localhost:3000` |
-| 0.4 | Banco conectado + 1ª tabela (Turma) + `/health` e `/health/db` | 🔵 | rotas respondendo "ok" e banco conectado |
-| 0.5 | `scripts/smoke.sh` com o 1º teste + `NOTAS.md` | 🔵 | smoke test 1/1 passando |
+| 0.1 | Ferramentas da stack instaladas (Node.js, npm, Next.js, Prisma) | ✅ | versões respondendo no terminal (v24 / v15 / v6) |
+| 0.2 | Contas dos serviços + limites de gasto + `.env` preenchido | ✅ | variáveis locais configuradas sem custo |
+| 0.3 | Esqueleto do sistema + `start.sh` | ✅ | página inicial abre no navegador em `http://localhost:3000` |
+| 0.4 | Banco conectado + 1ª tabela (Turma) + `/health` e `/health/db` | ✅ | rotas respondendo "ok" e banco conectado |
+| 0.5 | `scripts/smoke.sh` com o 1º teste + `NOTAS.md` | ✅ | smoke test 3/3 passando |
 
 ## Fase 1 — MVP (Etapa 6)
 | # | Item | Requisito | Status | O que o usuário vê |

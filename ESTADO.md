@@ -15,8 +15,8 @@
 | 2 | Cofre do código (Git + GitHub) | ✅ | 2026-09-11 |
 | 3 | Requisitos | ✅ | 2026-09-11 |
 | 4 | Plano | ✅ | 2026-09-11 |
-| 5 | Fundação | ▶ agora | |
-| 6 | Construção | 🔒 | |
+| 5 | Fundação | ✅ | 2026-09-11 |
+| 6 | Construção | ▶ agora | |
 | 7 | Segurança | 🔒 | |
 | 8 | Publicação e rotina | 🔒 | |
 
@@ -24,7 +24,7 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Etapa 5 — Fundação (ROADMAP 0.1 a 0.5)**: Instalar dependências da stack (Node.js, Next.js, Prisma, Tailwind), criar esqueleto com `start.sh`, conectar banco SQLite e criar `/health` e `/health/db`.
+**ROADMAP 1.1 — Gestão de Séries e Turmas (RF-18, RN-04)**: Construir a rota de API e a tela de cadastro e listagem de turmas (Maternal 1 ao 5º ano), com controle de vagas e turnos.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 

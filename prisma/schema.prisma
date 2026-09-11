@@ -1,0 +1,72 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Turma {
+  id          String      @id @default(uuid())
+  nome        String
+  serie       String
+  anoLetivo   Int
+  turno       String
+  capacidade  Int         @default(25)
+  matriculas  Matricula[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Responsavel {
+  id          String             @id @default(uuid())
+  nome        String
+  cpf         String             @unique
+  telefone    String
+  email       String?
+  endereco    String?
+  parentesco  String             @default("Responsável")
+  alunos      AlunoResponsavel[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model Aluno {
+  id                 String             @id @default(uuid())
+  nome               String
+  dataNascimento     DateTime
+  genero             String?
+  certidaoNascimento String?
+  observacoesMedicas String?
+  responsaveis       AlunoResponsavel[]
+  matriculas         Matricula[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model AlunoResponsavel {
+  id            String      @id @default(uuid())
+  alunoId       String
+  responsavelId String
+  aluno         Aluno       @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  responsavel   Responsavel @relation(fields: [responsavelId], references: [id], onDelete: Cascade)
+  ehPrincipal   Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+
+  @@unique([alunoId, responsavelId])
+}
+
+model Matricula {
+  id            String    @id @default(uuid())
+  codigo        String    @unique
+  alunoId       String
+  turmaId       String
+  anoLetivo     Int
+  status        String    @default("ATIVA")
+  dataMatricula DateTime  @default(now())
+  aluno         Aluno     @relation(fields: [alunoId], references: [id], onDelete: Restrict)
+  turma         Turma     @relation(fields: [turmaId], references: [id], onDelete: Restrict)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
