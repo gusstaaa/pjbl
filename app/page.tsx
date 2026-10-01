@@ -176,20 +176,23 @@ export default async function HomePage() {
               </div>
             </Link>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-violet-50 text-violet-600">
+            <Link
+              href="/matriculas"
+              className="bg-white p-5 rounded-xl border border-violet-200 hover:border-violet-400 hover:shadow-md transition group shadow-sm flex items-start gap-4"
+            >
+              <div className="p-3 rounded-lg bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition">
                 <CheckCircle className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-800">1.4 Matrícula e Situação Escolar</h4>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-violet-50 text-violet-700">Item 1.4</span>
+                  <h4 className="font-semibold text-slate-800 group-hover:text-violet-700 transition">1.4 Matrícula e Situação Escolar</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Efetivação da matrícula na turma com vaga, gerando comprovante e status "Ativa".
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
         </section>
 

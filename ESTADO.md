@@ -28,7 +28,7 @@
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- _(vazio)_
+- Item 1.4: Desenvolvendo serviço `lib/matricula.ts`, rotas `/api/matriculas` e interface `/matriculas`.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 

@@ -4,15 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { School, BookOpen, Users, UserCheck, CheckCircle } from 'lucide-react';
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: any;
+  badge?: string;
+}
+
 export function Navbar() {
   const pathname = usePathname();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: '/', label: 'Início', icon: School },
     { href: '/turmas', label: 'Turmas & Séries', icon: BookOpen },
     { href: '/responsaveis', label: 'Responsáveis', icon: Users },
     { href: '/alunos', label: 'Alunos', icon: UserCheck },
-    { href: '/matriculas', label: 'Matrículas', icon: CheckCircle, badge: 'Em breve' },
+    { href: '/matriculas', label: 'Matrículas', icon: CheckCircle },
   ];
 
   return (
