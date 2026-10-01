@@ -21,7 +21,7 @@
 ## Fase 1 — MVP (Etapa 6)
 | # | Item | Requisito | Status | O que o usuário vê |
 |---|---|---|---|---|
-| 1.1 | Gestão de Séries e Turmas | RF-18, RN-04 | 🔵 | Cadastro de turmas (Maternal ao 5º ano), listagem com vagas e capacidade |
+| 1.1 | Gestão de Séries e Turmas | RF-18, RN-04 | ✅ | Cadastro de turmas (Maternal ao 5º ano), listagem com vagas e capacidade |
 | 1.2 | Cadastro de Responsáveis Legais | RF-02, RN-01 | 🔵 | Tela de cadastro de responsáveis (nome, CPF, WhatsApp, e-mail) |
 | 1.3 | Cadastro de Alunos e Vínculo com Responsável | RF-01, RF-03, RN-01, RN-02 | 🔵 | Tela de cadastro do aluno com seleção obrigatória do responsável legal |
 | 1.4 | Fluxo de Matrícula e Situação do Aluno | RF-05, RF-07, RN-03 | 🔵 | Matricular aluno em turma com vaga e painel de alunos matriculados com status Ativa |

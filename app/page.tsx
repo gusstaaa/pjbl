@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { School, Users, UserCheck, BookOpen, CheckCircle, Database, Server } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
+import { Navbar } from '@/components/Navbar';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,27 +24,8 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Topo / Navbar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 text-white p-2 rounded-lg shadow-sm">
-              <School className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg text-slate-800 leading-tight">Gestão Escolar</h1>
-              <p className="text-xs text-slate-500">Maternal ao 5º Ano · PJBL</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Sistema no Ar
-            </span>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
 
       {/* Conteúdo Principal */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
@@ -140,20 +122,23 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
+            <Link
+              href="/turmas"
+              className="bg-white p-5 rounded-xl border border-blue-200 hover:border-blue-400 hover:shadow-md transition group shadow-sm flex items-start gap-4"
+            >
+              <div className="p-3 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
                 <BookOpen className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-800">1.1 Gestão de Séries e Turmas</h4>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700">Item 1.1</span>
+                  <h4 className="font-semibold text-slate-800 group-hover:text-blue-700 transition">1.1 Gestão de Séries e Turmas</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Configuração de turmas do Maternal 1 ao 5º ano, turnos e controle de vagas por sala.
                 </p>
               </div>
-            </div>
+            </Link>
 
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
               <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600">
@@ -219,6 +204,6 @@ export default async function HomePage() {
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
         Sistema de Gestão Escolar · Desenvolvido com Antigravity CLI e Metodologia Kit v2 · Repositório: gusstaaa/pjbl
       </footer>
-    </main>
+    </div>
   );
 }

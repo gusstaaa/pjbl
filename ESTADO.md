@@ -4,7 +4,7 @@
 > cada passo concluído. Não é diário: **teto ~60 linhas** (entrega antiga sai
 > daqui; o `git log` guarda).
 
-**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-09-11
+**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-01
 **Salvo no GitHub?** sim · **No ar?** ainda não (Etapa 8)
 
 ## 🧭 Trilha
@@ -24,7 +24,7 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**ROADMAP 1.1 — Gestão de Séries e Turmas (RF-18, RN-04)**: Construir a rota de API e a tela de cadastro e listagem de turmas (Maternal 1 ao 5º ano), com controle de vagas e turnos.
+**ROADMAP 1.2 — Cadastro de Responsáveis Legais (RF-02, RN-01)**: Construir a rota de API e a tela de cadastro e listagem de responsáveis (nome, CPF, WhatsApp, e-mail, parentesco).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
@@ -38,6 +38,7 @@
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-01 | 1.1 Gestão de Séries e Turmas | smoke 5/5, criação/listagem testadas, RN-04 validada, cálculo de vagas |
 
 ## 📝 Anotado para depois
 
