@@ -38,6 +38,8 @@ check_endpoint "Tela de Gestão de Turmas" "$BASE_URL/turmas" "200"
 check_endpoint "API de Listagem de Turmas" "$BASE_URL/api/turmas" "200"
 check_endpoint "Tela de Gestão de Responsáveis" "$BASE_URL/responsaveis" "200"
 check_endpoint "API de Listagem de Responsáveis" "$BASE_URL/api/responsaveis" "200"
+check_endpoint "Tela de Gestão de Alunos" "$BASE_URL/alunos" "200"
+check_endpoint "API de Listagem de Alunos" "$BASE_URL/api/alunos" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

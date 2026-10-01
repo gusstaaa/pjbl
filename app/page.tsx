@@ -158,20 +158,23 @@ export default async function HomePage() {
               </div>
             </Link>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-emerald-50 text-emerald-600">
+            <Link
+              href="/alunos"
+              className="bg-white p-5 rounded-xl border border-emerald-200 hover:border-emerald-400 hover:shadow-md transition group shadow-sm flex items-start gap-4"
+            >
+              <div className="p-3 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition">
                 <UserCheck className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-800">1.3 Cadastro de Alunos e Vínculos</h4>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">Item 1.3</span>
+                  <h4 className="font-semibold text-slate-800 group-hover:text-emerald-700 transition">1.3 Cadastro de Alunos e Vínculos</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Dados do estudante e vínculo obrigatório ao responsável legal correspondente.
                 </p>
               </div>
-            </div>
+            </Link>
 
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
               <div className="p-3 rounded-lg bg-violet-50 text-violet-600">

@@ -11,7 +11,7 @@ export function Navbar() {
     { href: '/', label: 'Início', icon: School },
     { href: '/turmas', label: 'Turmas & Séries', icon: BookOpen },
     { href: '/responsaveis', label: 'Responsáveis', icon: Users },
-    { href: '/alunos', label: 'Alunos', icon: UserCheck, badge: 'Em breve' },
+    { href: '/alunos', label: 'Alunos', icon: UserCheck },
     { href: '/matriculas', label: 'Matrículas', icon: CheckCircle, badge: 'Em breve' },
   ];
 

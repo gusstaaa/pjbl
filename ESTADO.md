@@ -24,7 +24,7 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**ROADMAP 1.3 — Cadastro de Alunos e Vínculo com Responsável (RF-01, RF-03, RN-01, RN-02)**: Construir a rota de API e a tela de cadastro de alunos com dados básicos (nome, nascimento, gênero) e vínculo obrigatório ao responsável legal selecionado.
+**ROADMAP 1.4 — Fluxo de Matrícula e Situação do Aluno (RF-05, RF-07, RN-03)**: Construir a rota de API e a tela para efetivação de matrículas de alunos em turmas com vagas disponíveis, geração de código de matrícula e painel de acompanhamento de status.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
@@ -38,6 +38,7 @@
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-01 | 1.3 Cadastro de Alunos e Vínculos | smoke 9/9, cálculo de idade, observações de saúde, RN-01/RN-02 provadas |
 | 2026-10-01 | 1.2 Cadastro de Responsáveis Legais | smoke 7/7, validação/formatação de CPF/WhatsApp, unicidade de CPF provada |
 | 2026-10-01 | 1.1 Gestão de Séries e Turmas | smoke 5/5, criação/listagem testadas, RN-04 validada, cálculo de vagas |
 
