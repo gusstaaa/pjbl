@@ -10,7 +10,7 @@ export function Navbar() {
   const navItems = [
     { href: '/', label: 'Início', icon: School },
     { href: '/turmas', label: 'Turmas & Séries', icon: BookOpen },
-    { href: '/responsaveis', label: 'Responsáveis', icon: Users, badge: 'Em breve' },
+    { href: '/responsaveis', label: 'Responsáveis', icon: Users },
     { href: '/alunos', label: 'Alunos', icon: UserCheck, badge: 'Em breve' },
     { href: '/matriculas', label: 'Matrículas', icon: CheckCircle, badge: 'Em breve' },
   ];

@@ -140,20 +140,23 @@ export default async function HomePage() {
               </div>
             </Link>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600">
+            <Link
+              href="/responsaveis"
+              className="bg-white p-5 rounded-xl border border-indigo-200 hover:border-indigo-400 hover:shadow-md transition group shadow-sm flex items-start gap-4"
+            >
+              <div className="p-3 rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
                 <Users className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-800">1.2 Cadastro de Responsáveis</h4>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Item 1.2</span>
+                  <h4 className="font-semibold text-slate-800 group-hover:text-indigo-700 transition">1.2 Cadastro de Responsáveis</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Registro dos pais e tutores legais com CPF, contatos e endereço (exigência da RN-01).
                 </p>
               </div>
-            </div>
+            </Link>
 
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
               <div className="p-3 rounded-lg bg-emerald-50 text-emerald-600">
