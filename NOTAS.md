@@ -25,6 +25,9 @@
 |---|---|---|---|
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo de vida completo da matrícula | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
+| `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
 ## 4. Banco (consultar antes de criar tabela: reaproveitar antes de criar)
 | Alteração | Tabelas / mudança | Protegida? | Data | ROADMAP |

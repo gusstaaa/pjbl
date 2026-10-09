@@ -97,15 +97,22 @@ export function validarDadosResponsavel(data: Partial<CriarResponsavelInput>): {
 }
 
 export async function listarResponsaveis(busca?: string) {
-  const whereClause = busca
-    ? {
-        OR: [
-          { nome: { contains: busca.trim() } },
-          { cpf: { contains: limparDigitos(busca) || busca.trim() } },
-          { telefone: { contains: limparDigitos(busca) || busca.trim() } },
-        ],
-      }
-    : {};
+  const buscaLimpa = busca?.trim();
+  const digitos = buscaLimpa ? limparDigitos(buscaLimpa) : '';
+
+  let whereClause = {};
+  if (buscaLimpa) {
+    const conditions: any[] = [
+      { nome: { contains: buscaLimpa } },
+    ];
+    if (digitos.length >= 3) {
+      conditions.push({ cpf: { contains: digitos } });
+    }
+    if (digitos.length >= 4) {
+      conditions.push({ telefone: { contains: digitos } });
+    }
+    whereClause = { OR: conditions };
+  }
 
   const responsaveis = await prisma.responsavel.findMany({
     where: whereClause,

@@ -30,7 +30,7 @@
 ## Fase S — Segurança e publicação (Etapas 7 e 8)
 | # | Item | Status |
 |---|---|---|
-| S.1 | Gate de segurança completo (`SEGURANCA.md`) | 🔵 |
+| S.1 | Gate de segurança completo (`SEGURANCA.md`) | ✅ |
 | S.2 | Publicação na nuvem (Vercel) com aprovação | 🔵 |
 | S.3 | Monitoramento básico e rotina de manutenção | 🔵 |
 

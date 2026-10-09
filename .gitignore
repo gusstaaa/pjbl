@@ -9,6 +9,7 @@
 *.db-journal
 *.sqlite
 *.sqlite3
+backups/
 
 # ambientes e dependências
 .venv/

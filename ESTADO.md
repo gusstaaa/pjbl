@@ -1,4 +1,4 @@
-2# ESTADO — onde paramos
+# ESTADO — onde paramos
 
 > Fonte da verdade do progresso. O Claude lê no início da sessão e atualiza a
 > cada passo concluído. Não é diário: **teto ~60 linhas** (entrega antiga sai
@@ -17,14 +17,14 @@
 | 4 | Plano | ✅ | 2026-09-11 |
 | 5 | Fundação | ✅ | 2026-09-11 |
 | 6 | Construção | ✅ | 2026-10-09 |
-| 7 | Segurança | ▶ agora | |
-| 8 | Publicação e rotina | 🔒 | |
+| 7 | Segurança | ✅ | 2026-10-09 |
+| 8 | Publicação e rotina | ▶ agora | |
 
 ▶ agora · ✅ concluída · 🔒 bloqueada (abre quando a anterior fecha)
 
 ## ▶ PRÓXIMO PASSO
 
-**Etapa 7, passo 7.1 — Criar o SEGURANCA.md**: Executar o gate de segurança antes da publicação (varredura de histórico do git contra segredos, teste do caminho do atacante, auditoria de dependências e checklist de LGPD).
+**Etapa 8, passo 8.1 — Hospedagem**: Conectar o repositório GitHub à plataforma de publicação (Vercel) e configurar variáveis de ambiente para deploy de produção.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
@@ -32,19 +32,19 @@
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- _(vazio)_
+- Confirmar ativação de verificação em duas etapas (2FA/MFA) nas contas do GitHub e Vercel.
+- Aprovação para seguir com a publicação da versão no ar.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-09 | S.1 Gate de Segurança | SEGURANCA.md, test_seguranca.sh 12/12 verde, headers HTTP ativos, backup testado |
 | 2026-10-09 | 1.5 E2E da Jornada Principal | e2e 6/6 verde (Turma → Resp → Aluno → Matrícula → Status Ativa) |
 | 2026-10-01 | 1.4 Fluxo de Matrícula e Situação | smoke 11/11, trava de vagas RN-03, código MAT sequencial, alteração de status |
 | 2026-10-01 | 1.3 Cadastro de Alunos e Vínculos | smoke 9/9, cálculo de idade, observações de saúde, RN-01/RN-02 provadas |
 | 2026-10-01 | 1.2 Cadastro de Responsáveis Legais | smoke 7/7, validação/formatação de CPF/WhatsApp, unicidade de CPF provada |
-| 2026-10-01 | 1.1 Gestão de Séries e Turmas | smoke 5/5, criação/listagem testadas, RN-04 validada, cálculo de vagas |
 
 ## 📝 Anotado para depois
 
-- _(pedidos fora de hora ficam aqui até a Etapa 4; depois vão para "Ideias
-  novas" do `ROADMAP.md`)_
+- _(pedidos fora de hora ficam aqui até a Etapa 4; depois vão para "Ideias novas" do `ROADMAP.md`)_
