@@ -25,7 +25,7 @@
 | 1.2 | Cadastro de Responsáveis Legais | RF-02, RN-01 | ✅ | Tela de cadastro de responsáveis (nome, CPF, WhatsApp, e-mail) |
 | 1.3 | Cadastro de Alunos e Vínculo com Responsável | RF-01, RF-03, RN-01, RN-02 | ✅ | Tela de cadastro do aluno com seleção obrigatória do responsável legal |
 | 1.4 | Fluxo de Matrícula e Situação do Aluno | RF-05, RF-07, RN-03 | ✅ | Matricular aluno em turma com vaga e painel de alunos matriculados com status Ativa |
-| 1.5 | Teste automatizado da jornada principal (`scripts/e2e_jornada_matricula.sh`) | REQUISITOS §13 | 🔵 | Script simulando toda a jornada do início ao fim com resultado verde N/N |
+| 1.5 | Teste automatizado da jornada principal (`scripts/e2e_jornada_matricula.sh`) | REQUISITOS §13 | ✅ | Script simulando toda a jornada do início ao fim com resultado verde 6/6 |
 
 ## Fase S — Segurança e publicação (Etapas 7 e 8)
 | # | Item | Status |
