@@ -4,8 +4,8 @@
 > cada passo concluído. Não é diário: **teto ~60 linhas** (entrega antiga sai
 > daqui; o `git log` guarda).
 
-**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-09
-**Salvo no GitHub?** sim · **No ar?** ainda não (Etapa 8)
+**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-12
+**Salvo no GitHub?** sim · **No ar?** sim (conferido em https://pjbl-gusta22.vercel.app/ com /health/db ok)
 
 ## 🧭 Trilha
 
@@ -18,33 +18,32 @@
 | 5 | Fundação | ✅ | 2026-09-11 |
 | 6 | Construção | ✅ | 2026-10-09 |
 | 7 | Segurança | ✅ | 2026-10-09 |
-| 8 | Publicação e rotina | ▶ agora | |
+| 8 | Publicação e rotina | ✅ | 2026-10-12 |
 
-▶ agora · ✅ concluída · 🔒 bloqueada (abre quando a anterior fecha)
+**Projeto EM OPERAÇÃO desde 2026-10-12**
 
 ## ▶ PRÓXIMO PASSO
 
-**Etapa 8, passo 8.1 — Hospedagem**: Conectar o repositório GitHub à plataforma de publicação (Vercel) e configurar variáveis de ambiente para deploy de produção.
+**Fase 2, Item 2.1 — Rematrícula simplificada e histórico do aluno (RF-06)**: Implementar fluxo de rematrícula para o próximo ano letivo e visualização do histórico escolar das turmas anteriores do aluno.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- _(vazio)_
+- _(vazio — sistema em produção estável)_
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Confirmar ativação de verificação em duas etapas (2FA/MFA) nas contas do GitHub e Vercel.
-- Aprovação para seguir com a publicação da versão no ar.
+- _(vazio)_
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-12 | S.2 e S.3 Publicação na Nuvem | Vercel no ar, Postgres conectado, smoke 11/11 e e2e 6/6 verdes na URL pública |
 | 2026-10-09 | S.1 Gate de Segurança | SEGURANCA.md, test_seguranca.sh 12/12 verde, headers HTTP ativos, backup testado |
 | 2026-10-09 | 1.5 E2E da Jornada Principal | e2e 6/6 verde (Turma → Resp → Aluno → Matrícula → Status Ativa) |
 | 2026-10-01 | 1.4 Fluxo de Matrícula e Situação | smoke 11/11, trava de vagas RN-03, código MAT sequencial, alteração de status |
 | 2026-10-01 | 1.3 Cadastro de Alunos e Vínculos | smoke 9/9, cálculo de idade, observações de saúde, RN-01/RN-02 provadas |
-| 2026-10-01 | 1.2 Cadastro de Responsáveis Legais | smoke 7/7, validação/formatação de CPF/WhatsApp, unicidade de CPF provada |
 
 ## 📝 Anotado para depois
 
-- _(pedidos fora de hora ficam aqui até a Etapa 4; depois vão para "Ideias novas" do `ROADMAP.md`)_
+- _(vazio)_

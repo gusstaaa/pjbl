@@ -31,8 +31,8 @@
 | # | Item | Status |
 |---|---|---|
 | S.1 | Gate de segurança completo (`SEGURANCA.md`) | ✅ |
-| S.2 | Publicação na nuvem (Vercel) com aprovação | 🔵 |
-| S.3 | Monitoramento básico e rotina de manutenção | 🔵 |
+| S.2 | Publicação na nuvem (Vercel) com aprovação | ✅ |
+| S.3 | Monitoramento básico e rotina de manutenção | ✅ |
 
 ## Fase 2 — Importantes e Desejáveis (depois da publicação)
 | # | Item | Requisito | Status |

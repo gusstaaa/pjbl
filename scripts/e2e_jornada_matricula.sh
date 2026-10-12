@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 PORT="${PORT:-3000}"
-BASE_URL="http://127.0.0.1:$PORT"
+BASE_URL="${1:-http://127.0.0.1:$PORT}"
 
 echo "=========================================================="
 echo "🎯 E2E: TESTE DA JORNADA PRINCIPAL DA SECRETARIA (REQUISITOS §13)"
