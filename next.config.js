@@ -29,6 +29,22 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/health',
+        destination: '/api/health',
+      },
+      {
+        source: '/health/db',
+        destination: '/api/health/db',
+      },
+      {
+        source: '/version',
+        destination: '/api/version',
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

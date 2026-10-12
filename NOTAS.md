@@ -60,4 +60,6 @@ Pegadinhas do banco:
 | 2026-09-11 | Vínculo explícito Aluno-Responsável (N:N) | Permitir múltiplos filhos para um responsável e múltiplos responsáveis por aluno | Campo texto solto no aluno | Sim |
 
 ## 8. Rotina de manutenção (Etapa 8)
-*(será preenchida na publicação)*
+- **Toda sessão:** Ao comando "continuar" → fazer `git pull`, subir o sistema (`npm run dev -- -p 3000` ou `start.sh`) e validar `/health` e `/health/db`.
+- **Toda semana:** (quando solicitar "rotina semanal") → conferir keepalive rodando na aba Actions do GitHub, rodar `npm audit`, validar integridade do banco e consumo da hospedagem.
+- **Todo mês:** Revisar o `SEGURANCA.md` (repetir varredura de histórico e caminho do atacante) e executar teste de restauração de backup com `scripts/test_backup.sh`.
