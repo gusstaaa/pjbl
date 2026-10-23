@@ -161,6 +161,17 @@ else
   fail "Rematrícula inválida não retornou HTTP 400 (retornou $REMAT_INVALIDA_CODE)."
 fi
 
+# Tentativa de adulterar status de documento de matrícula com valor inválido (RF-14 / RN-05)
+DOC_INVALIDO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$BASE_URL/api/matriculas/id-inexistente/documentos" \
+  -H "Content-Type: application/json" \
+  -d '{"tipo":"Certidão de Nascimento do Aluno","status":"STATUS_FALSO"}')
+
+if [ "$DOC_INVALIDO_CODE" = "400" ]; then
+  pass "Tentativa de injetar status inválido no checklist de documentos bloqueada (HTTP 400)."
+else
+  fail "Status inválido no checklist de documentos não retornou HTTP 400 (retornou $DOC_INVALIDO_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

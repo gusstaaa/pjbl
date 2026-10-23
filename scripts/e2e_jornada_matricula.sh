@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=7
+TOTAL_PASSOS=8
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -130,6 +130,21 @@ if [ -n "$REMAT_ID" ] && [[ "$CODIGO_REMAT" =~ ^MAT-2027- ]] && [[ "$RES_REMAT" 
   passo_ok "Rematrícula simplificada (RF-06) e histórico de 2 anos validados! Novo código: $CODIGO_REMAT"
 else
   passo_falha "Erro na rematrícula simplificada ou histórico: $RES_REMAT"
+fi
+
+# 8. Checklist de Documentos e Regra RN-05 (RF-13, RF-14, RN-05)
+RES_DOC_PEND=$(curl -s -X PATCH "$BASE_URL/api/matriculas/$MAT_ID/documentos" \
+  -H "Content-Type: application/json" \
+  -d '{"tipo":"Carteira de Vacinação Atualizada","status":"PENDENTE"}')
+
+RES_DOC_OK=$(curl -s -X PATCH "$BASE_URL/api/matriculas/$MAT_ID/documentos" \
+  -H "Content-Type: application/json" \
+  -d '{"tipo":"Carteira de Vacinação Atualizada","status":"ENTREGUE"}')
+
+if [[ "$RES_DOC_PEND" =~ "\"statusMatricula\":\"PENDENTE_DOCUMENTOS\"" ]] && [[ "$RES_DOC_OK" =~ "\"statusMatricula\":\"ATIVA\"" ]]; then
+  passo_ok "Checklist de documentos (RF-13/RF-14) e regra RN-05 validados (Pendente -> Regularizada ATIVA)!"
+else
+  passo_falha "Erro na validação do checklist documental RN-05: $RES_DOC_PEND | $RES_DOC_OK"
 fi
 
 # Limpeza automática dos dados do teste

@@ -15,6 +15,9 @@ import {
   Clock,
   RefreshCw,
   History,
+  FileCheck,
+  FileWarning,
+  X,
 } from 'lucide-react';
 
 interface HistoricoItem {
@@ -58,6 +61,25 @@ interface TurmaOption {
   lotada: boolean;
 }
 
+interface DocumentoMatriculaItem {
+  id: string;
+  matriculaId: string;
+  tipo: string;
+  obrigatorio: boolean;
+  status: 'ENTREGUE' | 'PENDENTE';
+  dataEntrega: string | null;
+  dataEntregaFormatada: string | null;
+  observacao: string | null;
+}
+
+interface ResumoDocumentos {
+  totalDocumentos: number;
+  totalObrigatorios: number;
+  obrigatoriosEntregues: number;
+  obrigatoriosPendentes: number;
+  possuiPendenciaDocumental: boolean;
+}
+
 interface MatriculaItem {
   id: string;
   codigo: string;
@@ -80,6 +102,8 @@ interface MatriculaItem {
     telefone: string;
     parentesco: string;
   } | null;
+  documentos: DocumentoMatriculaItem[];
+  resumoDocumentos: ResumoDocumentos;
 }
 
 export default function MatriculasPage() {
@@ -94,6 +118,10 @@ export default function MatriculasPage() {
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
+
+  // Painel de Checklist de Documentos (Item 2.2 - RF-13, RF-14, RN-05)
+  const [matriculaChecklist, setMatriculaChecklist] = useState<MatriculaItem | null>(null);
+  const [atualizandoDocId, setAtualizandoDocId] = useState<string | null>(null);
 
   // Formulário Unificado (Matrícula Inicial RF-05 e Rematrícula Veterano RF-06)
   const [alunoId, setAlunoId] = useState('');
@@ -113,8 +141,13 @@ export default function MatriculasPage() {
       ]);
 
       if (!resMat.ok) throw new Error('Erro ao carregar matrículas.');
-      const dataMat = await resMat.json();
+      const dataMat: MatriculaItem[] = await resMat.json();
       setMatriculas(dataMat);
+
+      if (matriculaChecklist) {
+        const matAtualizada = dataMat.find((m) => m.id === matriculaChecklist.id) || null;
+        setMatriculaChecklist(matAtualizada);
+      }
 
       if (resAlunos.ok) {
         const dataAlunos = await resAlunos.json();
@@ -172,6 +205,41 @@ export default function MatriculasPage() {
 
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAlternarDocumento = async (matriculaId: string, doc: DocumentoMatriculaItem) => {
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    setAtualizandoDocId(doc.id);
+
+    const novoStatus = doc.status === 'ENTREGUE' ? 'PENDENTE' : 'ENTREGUE';
+
+    try {
+      const res = await fetch(`/api/matriculas/${matriculaId}/documentos`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentoId: doc.id,
+          status: novoStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao atualizar documento.');
+      }
+
+      setMensagemSucesso(
+        `Documento "${doc.tipo}" marcado como ${novoStatus === 'ENTREGUE' ? 'Entregue' : 'Pendente'}. Situação da matrícula: ${
+          data.statusMatricula === 'PENDENTE_DOCUMENTOS' ? 'Pendente de Documentação (RN-05)' : data.statusMatricula
+        }.`
+      );
+      await carregarDados(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message);
+    } finally {
+      setAtualizandoDocId(null);
+    }
   };
 
   const handleBuscaSubmit = (e: React.FormEvent) => {
@@ -277,13 +345,13 @@ export default function MatriculasPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
-                Itens 1.4 e 2.1 do Roadmap
+                Itens 1.4, 2.1 e 2.2 do Roadmap
               </span>
-              <span className="text-xs text-slate-500">RF-05 · RF-06 · RF-07 · RN-03</span>
+              <span className="text-xs text-slate-500">RF-05 · RF-06 · RF-13 · RF-14 · RN-03 · RN-05</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Matrículas e Rematrículas de Veteranos</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mt-1">Matrículas, Rematrículas e Documentação</h1>
             <p className="text-sm text-slate-500">
-              Matricule alunos novos ou realize a rematrícula simplificada reaproveitando o histórico escolar.
+              Gerencie matrículas, rematricule alunos veteranos e controle o checklist de documentos obrigatórios.
             </p>
           </div>
 
@@ -357,7 +425,7 @@ export default function MatriculasPage() {
             <p className="text-2xl font-extrabold text-emerald-600 mt-1">{ativasCount}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendentes de Documentos</span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendentes de Documentos (RN-05)</span>
             <p className="text-2xl font-extrabold text-amber-600 mt-1">{pendentesCount}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -365,6 +433,114 @@ export default function MatriculasPage() {
             <p className="text-2xl font-extrabold text-violet-600 mt-1">{alunosSemMatricula}</p>
           </div>
         </section>
+
+        {/* Painel de Checklist de Documentos da Matrícula (Item 2.2 - RF-13, RF-14, RN-05) */}
+        {matriculaChecklist && (
+          <section className="bg-white p-6 rounded-2xl border-2 border-violet-300 shadow-sm space-y-5 animate-in fade-in duration-200">
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
+                    Checklist de Documentos (RF-13 · RF-14 · RN-05)
+                  </span>
+                  <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                    {matriculaChecklist.codigo}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                      matriculaChecklist.status === 'ATIVA'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}
+                  >
+                    Situação: {matriculaChecklist.status === 'ATIVA' ? 'Ativa' : 'Pendente de Documentação'}
+                  </span>
+                </div>
+                <h2 className="text-lg font-bold text-slate-800 mt-1.5">
+                  Aluno(a): {matriculaChecklist.aluno.nome} — {matriculaChecklist.turma.nome} (
+                  {matriculaChecklist.turma.serie} · {matriculaChecklist.anoLetivo})
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Pela regra <strong>RN-05</strong>, qualquer documento obrigatório pendente mantém a matrícula com
+                  alerta de <strong>Pendente de Documentação</strong> até que todos os itens obrigatórios sejam entregues.
+                </p>
+              </div>
+              <button
+                onClick={() => setMatriculaChecklist(null)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
+              >
+                <X className="w-4 h-4" />
+                Fechar Checklist
+              </button>
+            </div>
+
+            {matriculaChecklist.resumoDocumentos?.possuiPendenciaDocumental && (
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2.5 text-xs">
+                <FileWarning className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <strong>Alerta de Pendência Documental (RF-14):</strong> Existem{' '}
+                  <strong>{matriculaChecklist.resumoDocumentos.obrigatoriosPendentes}</strong> documento(s)
+                  obrigatório(s) pendente(s) de entrega.
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {matriculaChecklist.documentos?.map((doc) => {
+                const entregue = doc.status === 'ENTREGUE';
+                return (
+                  <div
+                    key={doc.id}
+                    className={`p-4 rounded-xl border flex items-center justify-between gap-3 transition ${
+                      entregue
+                        ? 'bg-emerald-50/40 border-emerald-200'
+                        : doc.obrigatorio
+                        ? 'bg-amber-50/50 border-amber-200'
+                        : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-800">{doc.tipo}</span>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            doc.obrigatorio
+                              ? 'bg-slate-200 text-slate-700'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
+                          {doc.obrigatorio ? 'Obrigatório' : 'Opcional'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {entregue
+                          ? `Entregue em ${doc.dataEntregaFormatada || 'hoje'}`
+                          : 'Pendente de entrega na secretaria'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={atualizandoDocId === doc.id}
+                      onClick={() => handleAlternarDocumento(matriculaChecklist.id, doc)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
+                        entregue
+                          ? 'bg-white border border-amber-300 text-amber-800 hover:bg-amber-100'
+                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      } disabled:opacity-50`}
+                    >
+                      {atualizandoDocId === doc.id
+                        ? 'Salvando...'
+                        : entregue
+                        ? 'Marcar Pendente'
+                        : 'Confirmar Entrega'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Formulário Unificado de Matrícula Inicial e Rematrícula Simplificada */}
         {showForm && (
@@ -689,6 +865,8 @@ export default function MatriculasPage() {
                     ? 'bg-slate-100 text-slate-700 border-slate-200'
                     : 'bg-rose-50 text-rose-700 border-rose-200';
 
+                const temPendenciaDoc = m.resumoDocumentos?.possuiPendenciaDocumental;
+
                 return (
                   <div
                     key={m.id}
@@ -704,7 +882,7 @@ export default function MatriculasPage() {
                           <p className="text-xs text-slate-400">{m.aluno.idade}</p>
                         </div>
                         <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${badgeCor}`}>
-                          {m.status === 'ATIVA' ? 'Ativa' : m.status === 'PENDENTE_DOCUMENTOS' ? 'Pendente' : m.status}
+                          {m.status === 'ATIVA' ? 'Ativa' : m.status === 'PENDENTE_DOCUMENTOS' ? 'Pendente Doc.' : m.status}
                         </span>
                       </div>
 
@@ -726,6 +904,35 @@ export default function MatriculasPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Resumo do Checklist de Documentos (RF-13, RF-14, RN-05) */}
+                      {m.resumoDocumentos && (
+                        <div
+                          onClick={() => {
+                            setMatriculaChecklist(m);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`p-2.5 rounded-xl border text-xs flex items-center justify-between cursor-pointer transition ${
+                            temPendenciaDoc
+                              ? 'bg-amber-50/80 border-amber-200 text-amber-900 hover:bg-amber-100/80'
+                              : 'bg-emerald-50/60 border-emerald-200 text-emerald-900 hover:bg-emerald-100/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 font-medium">
+                            {temPendenciaDoc ? (
+                              <FileWarning className="w-4 h-4 text-amber-600 shrink-0" />
+                            ) : (
+                              <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                            )}
+                            <span>
+                              {temPendenciaDoc
+                                ? `${m.resumoDocumentos.obrigatoriosPendentes} doc(s) pendente(s)`
+                                : `Docs em dia (${m.resumoDocumentos.obrigatoriosEntregues}/${m.resumoDocumentos.totalObrigatorios})`}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-bold underline">Checklist →</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
@@ -738,7 +945,7 @@ export default function MatriculasPage() {
                         Rematricular
                       </button>
 
-                      {m.status === 'ATIVA' ? (
+                      {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') ? (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleMudarStatus(m.id, 'TRANCADA')}

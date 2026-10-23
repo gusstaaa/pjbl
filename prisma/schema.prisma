@@ -58,15 +58,31 @@ model AlunoResponsavel {
 }
 
 model Matricula {
-  id            String    @id @default(uuid())
-  codigo        String    @unique
+  id            String               @id @default(uuid())
+  codigo        String               @unique
   alunoId       String
   turmaId       String
   anoLetivo     Int
-  status        String    @default("ATIVA")
-  dataMatricula DateTime  @default(now())
-  aluno         Aluno     @relation(fields: [alunoId], references: [id], onDelete: Restrict)
-  turma         Turma     @relation(fields: [turmaId], references: [id], onDelete: Restrict)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  status        String               @default("ATIVA")
+  dataMatricula DateTime             @default(now())
+  aluno         Aluno                @relation(fields: [alunoId], references: [id], onDelete: Restrict)
+  turma         Turma                @relation(fields: [turmaId], references: [id], onDelete: Restrict)
+  documentos    DocumentoMatricula[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model DocumentoMatricula {
+  id          String    @id @default(uuid())
+  matriculaId String
+  tipo        String
+  obrigatorio Boolean   @default(true)
+  status      String    @default("PENDENTE")
+  dataEntrega DateTime?
+  observacao  String?
+  matricula   Matricula @relation(fields: [matriculaId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([matriculaId, tipo])
 }
