@@ -37,8 +37,8 @@
 ## Fase 2 — Importantes e Desejáveis (depois da publicação)
 | # | Item | Requisito | Status |
 |---|---|---|---|
-| 2.1 | Rematrícula simplificada e histórico do aluno | RF-06 | 🟡 |
-| 2.2 | Checklist de documentos e pendências da matrícula | RF-13, RF-14, RN-05 | 🔵 |
+| 2.1 | Rematrícula simplificada e histórico do aluno | RF-06 | ✅ |
+| 2.2 | Checklist de documentos e pendências da matrícula | RF-13, RF-14, RN-05 | 🟡 |
 | 2.3 | Controle de mensalidades e status de pagamento (Pago / Pendente) | RF-15, RF-16, RN-08 | 🔵 |
 | 2.4 | Cadastro de funcionários e professores | RF-04, RN-07 | 🔵 |
 | 2.5 | Painel de comunicados para turmas e escola | RF-20 | 🔵 |
