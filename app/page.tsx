@@ -258,10 +258,28 @@ export default async function HomePage() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-slate-800 group-hover:text-indigo-700 transition">2.6 Listas de Materiais Escolares (RF-11)</h4>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Cadastro de listas de materiais por série e turma e consulta imediata pelo aluno matriculado (RF-11).
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/livros"
+              className="bg-white p-5 rounded-xl border border-teal-200 hover:border-teal-400 hover:shadow-md transition group shadow-sm flex items-start gap-4 md:col-span-2"
+            >
+              <div className="p-3 rounded-lg bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-slate-800 group-hover:text-teal-700 transition">2.7 Relação de Livros Adotados e Fornecidos (RF-12)</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Gestão e consulta do catálogo de livros adotados (adquiridos pela família) e livros fornecidos diretamente pela escola por turma e série (RF-12).
                 </p>
               </div>
             </Link>

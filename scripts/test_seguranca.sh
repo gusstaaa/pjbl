@@ -260,6 +260,28 @@ else
   fail "Material com série inválida não retornou HTTP 400 (retornou $MAT_SERIE_INVALIDA_CODE)."
 fi
 
+# Tentativa de cadastrar livro escolar por perfil não autorizado (Violação RN-07)
+LIVRO_NAO_AUTORIZADO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/livros" \
+  -H "Content-Type: application/json" \
+  -d '{"serie":"3º ano","titulo":"Livro Falso","origem":"ADOTADO","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$LIVRO_NAO_AUTORIZADO_CODE" = "403" ]; then
+  pass "Tentativa de alterar relação de livros por perfil não autorizado bloqueada pela RN-07 (HTTP 403)."
+else
+  fail "Cadastro de livro sem permissão RN-07 não retornou HTTP 403 (retornou $LIVRO_NAO_AUTORIZADO_CODE)."
+fi
+
+# Tentativa de cadastrar livro com modalidade/origem inválida (RF-12)
+LIVRO_ORIGEM_INVALIDA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/livros" \
+  -H "Content-Type: application/json" \
+  -d '{"serie":"3º ano","titulo":"Livro Origem Inválida","origem":"PIRATA","perfilOperador":"SECRETARIA"}')
+
+if [ "$LIVRO_ORIGEM_INVALIDA_CODE" = "400" ]; then
+  pass "Tentativa de cadastrar livro com modalidade inválida bloqueada (HTTP 400)."
+else
+  fail "Livro com modalidade inválida não retornou HTTP 400 (retornou $LIVRO_ORIGEM_INVALIDA_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

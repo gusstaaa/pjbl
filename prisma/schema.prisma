@@ -19,6 +19,7 @@ model Turma {
   matriculas         Matricula[]
   comunicados        Comunicado[]
   materiais          MaterialEscolar[]
+  livros             LivroEscolar[]
   createdAt          DateTime          @default(now())
   updatedAt          DateTime     @updatedAt
 }
@@ -153,4 +154,20 @@ model MaterialEscolar {
   turma       Turma?   @relation(fields: [turmaId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model LivroEscolar {
+  id         String   @id @default(uuid())
+  titulo     String
+  autor      String?
+  editora    String?
+  isbn       String?
+  disciplina String   @default("Língua Portuguesa")
+  serie      String
+  origem     String   @default("ADOTADO")
+  observacao String?
+  turmaId    String?
+  turma      Turma?   @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

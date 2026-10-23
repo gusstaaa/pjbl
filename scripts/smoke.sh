@@ -50,6 +50,8 @@ check_endpoint "Tela de Painel de Comunicados" "$BASE_URL/comunicados" "200"
 check_endpoint "API de Listagem de Comunicados" "$BASE_URL/api/comunicados" "200"
 check_endpoint "Tela de Listas de Materiais" "$BASE_URL/materiais" "200"
 check_endpoint "API de Listagem de Materiais" "$BASE_URL/api/materiais" "200"
+check_endpoint "Tela de Relação de Livros" "$BASE_URL/livros" "200"
+check_endpoint "API de Listagem de Livros" "$BASE_URL/api/livros" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

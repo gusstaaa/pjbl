@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=12
+TOTAL_PASSOS=13
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -219,6 +219,21 @@ if [ -n "$MAT_ITEM_ID" ] && [[ "$CONSULTA_MATERIAIS_ALUNO" =~ "$NOME_MATERIAL" ]
   passo_ok "Lista de materiais cadastrada e consultada pela matrícula do aluno (RF-11)!"
 else
   passo_falha "Erro no cadastro ou consulta de lista de materiais (RF-11): $RES_MAT_ITEM | $CONSULTA_MATERIAIS_ALUNO"
+fi
+
+# 13. Relação de Livros Adotados e Fornecidos pela Escola (RF-12)
+TITULO_LIVRO="Coleção Saber E2E $TIMESTAMP"
+RES_LIVRO=$(curl -s -X POST "$BASE_URL/api/livros" \
+  -H "Content-Type: application/json" \
+  -d "{\"turmaId\":\"$TURMA_ID\",\"titulo\":\"$TITULO_LIVRO\",\"disciplina\":\"Língua Portuguesa\",\"origem\":\"ADOTADO\",\"editora\":\"Editora Escolar\",\"perfilOperador\":\"SECRETARIA\"}")
+
+LIVRO_ID=$(echo "$RES_LIVRO" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+CONSULTA_LIVROS_TURMA=$(curl -s "$BASE_URL/api/livros?turmaId=$TURMA_ID")
+
+if [ -n "$LIVRO_ID" ] && [[ "$CONSULTA_LIVROS_TURMA" =~ "$TITULO_LIVRO" ]]; then
+  passo_ok "Relação de livros adotados/fornecidos cadastrada e visível por turma (RF-12)!"
+else
+  passo_falha "Erro no cadastro ou consulta de livros (RF-12): $RES_LIVRO | $CONSULTA_LIVROS_TURMA"
 fi
 
 # Limpeza automática dos dados do teste

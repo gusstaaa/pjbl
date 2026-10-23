@@ -26,7 +26,7 @@
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
 | `scripts/prepare-db.js` | Ajusta provider Prisma (`sqlite` local / `postgresql` nuvem) | Antes de `db push` e `build` | Lê protocolo da `DATABASE_URL` |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
-| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades, equipe, comunicados e materiais (12/12) | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades, equipe, comunicados, materiais e livros (13/13) | Em entregas de fluxo | Limpa os dados de teste ao final |
 | `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
 | `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
@@ -39,6 +39,7 @@
 | 004_colaboradores | `Colaborador` + `Turma.professorTitularId` | Sim (validação RN-07 + CPF único + SetNull na Turma) | 2026-10-23 | 2.4 |
 | 005_comunicados | `Comunicado` | Sim (validação RF-20 + filtro de isolamento por turma + Cascade Delete) | 2026-10-23 | 2.5 |
 | 006_materiais_escolares | `MaterialEscolar` | Sim (validação RN-04, RN-07 + consulta por matrícula RF-11 + Cascade Delete) | 2026-10-23 | 2.6 |
+| 007_livros_escolares | `LivroEscolar` | Sim (validação RN-04, RN-07 + distinção adotado/fornecido RF-12 + Cascade Delete) | 2026-10-23 | 2.7 |
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.
@@ -58,6 +59,7 @@ Pegadinhas do banco:
 | Funcionários e Professores (2.4) | `lib/colaborador.ts` | `/api/colaboradores`, `/api/colaboradores/[id]` | `/colaboradores` |
 | Painel de Comunicados (2.5) | `lib/comunicado.ts` | `/api/comunicados` | `/comunicados` |
 | Listas de Materiais (2.6) | `lib/material.ts` | `/api/materiais` | `/materiais` |
+| Relação de Livros (2.7) | `lib/livro.ts` | `/api/livros` | `/livros` |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |
