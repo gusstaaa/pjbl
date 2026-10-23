@@ -24,15 +24,15 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.4 — Cadastro de funcionários e professores (RF-04, RN-07)**: Validar com o usuário e avançar para o Item 2.5 (Painel de comunicados para turmas e escola — RF-20).
+**Fase 2, Item 2.5 — Painel de comunicados para turmas e escola (RF-20)**: Implementar mural de avisos gerais e segmentados por turma.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 2.4 (RF-04, RN-07) implementado e provado nos testes automatizados (`e2e 10/10`, `segurança 18/18`, `smoke 15/15`).
+- Itens 2.1, 2.2, 2.3 e 2.4 concluídos e sincronizados no GitHub (`e2e 10/10`, `segurança 18/18`, `smoke 15/15`). Pronto para iniciar o Item 2.5.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Aprovar o Item 2.4 (Cadastro de Funcionários e Professores) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.5.
+- Autorizar início do Item 2.5 (Painel de comunicados para turmas e escola — RF-20) quando desejar continuar.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
