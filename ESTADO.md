@@ -24,15 +24,15 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.7 — Relação de livros adotados e fornecidos (RF-12)**: Validar com o usuário e avançar para o Item 2.8 (Solicitação de fardas escolares — RF-10).
+**Fase 2, Item 2.8 — Solicitação de fardas escolares (RF-10)**: Implementar registro e consulta de solicitações de tamanho e quantidade de fardas/uniformes.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 2.7 (RF-12) implementado e provado nos testes automatizados (`e2e 13/13`, `segurança 24/24`, `smoke 21/21`).
+- Itens 2.1 a 2.7 concluídos, validados (`e2e 13/13`, `segurança 24/24`, `smoke 21/21`) e sincronizados no GitHub e na Vercel.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Aprovar o Item 2.7 (Relação de Livros Adotados e Fornecidos) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.8.
+- Autorizar início do Item 2.8 (Solicitação de fardas escolares — RF-10) quando desejar continuar.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
