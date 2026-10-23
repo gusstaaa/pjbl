@@ -330,7 +330,7 @@ export default async function HomePage() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-slate-800 group-hover:text-amber-700 transition">2.10 Calendário de Eventos Escolares (RF-19)</h4>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Programação de reuniões de pais, conselhos de classe, feriados e eventos pedagógicos gerais ou por turma (RF-19).

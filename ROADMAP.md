@@ -46,7 +46,7 @@
 | 2.7 | Relação de livros adotados e fornecidos | RF-12 | ✅ |
 | 2.8 | Solicitação de fardas escolares (tamanho/quantidade) | RF-10 | ✅ |
 | 2.9 | Formulários e autorizações digitais | RF-08, RF-09 | ✅ |
-| 2.10 | Calendário de eventos escolares | RF-19 | 🟡 |
+| 2.10 | Calendário de eventos escolares | RF-19 | ✅ |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |
@@ -60,3 +60,4 @@
 | Data | Evento |
 |---|---|
 | 2026-09-11 | Roadmap criado a partir do REQUISITOS v1.0 aprovado |
+| 2026-10-23 | Fases 0, 1, S e 2 (100% dos requisitos RF-01 a RF-20 e RN-01 a RN-08) concluídas e validadas |

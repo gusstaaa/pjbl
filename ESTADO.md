@@ -24,15 +24,15 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.10 — Calendário de eventos escolares (RF-19)**: Validar com o usuário para encerrar 100% da Fase 2 (`ROADMAP.md`).
+**Projeto 100% concluído (Fases 0, 1, S e 2 — Todos os itens ✅ no `ROADMAP.md`)**: Em regime de operação e manutenção contínua (`Etapa 8`).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 2.10 (RF-19) implementado e provado nos testes automatizados (`e2e 16/16`, `segurança 30/30`, `smoke 27/27`).
+- _(nenhum item pendente — 100% dos requisitos RF-01 a RF-20 e regras RN-01 a RN-08 entregues, testados e publicados)_
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Aprovar o Item 2.10 (Calendário de Eventos Escolares) para marcarmos ✅ no ROADMAP e oficializarmos o fechamento de 100% da Fase 2.
+- Solicitar "rotina semanal", "rotina mensal" ou novas ideias para entrarem no `ROADMAP.md`.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
