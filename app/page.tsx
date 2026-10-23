@@ -294,10 +294,28 @@ export default async function HomePage() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-slate-800 group-hover:text-cyan-700 transition">2.8 Solicitação de Fardas Escolares (RF-10)</h4>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Registro de pedidos de uniforme por tamanho e quantidade e painel consolidado de demanda para a secretaria (RF-10).
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/formularios"
+              className="bg-white p-5 rounded-xl border border-rose-200 hover:border-rose-400 hover:shadow-md transition group shadow-sm flex items-start gap-4 md:col-span-2"
+            >
+              <div className="p-3 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-slate-800 group-hover:text-rose-700 transition">2.9 Formulários, Contratos e Autorizações Digitais (RF-08, RF-09, RF-17)</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Criação de modelos de autorizações e contratos pela secretaria (RF-08) e preenchimento/assinatura digital pelos responsáveis (RF-09).
                 </p>
               </div>
             </Link>

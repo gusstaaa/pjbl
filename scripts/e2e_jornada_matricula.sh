@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=14
+TOTAL_PASSOS=15
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -250,11 +250,32 @@ else
   passo_falha "Erro na solicitação ou consulta de farda escolar (RF-10): $RES_FARDA | $CONSULTA_FARDAS"
 fi
 
+# 15. Formulários e Autorizações Digitais (RF-08, RF-09)
+TITULO_FORM="Autorização Passeio E2E $TIMESTAMP"
+RES_FORM_MODELO=$(curl -s -X POST "$BASE_URL/api/formularios" \
+  -H "Content-Type: application/json" \
+  -d "{\"titulo\":\"$TITULO_FORM\",\"tipo\":\"PASSEIO_EVENTO\",\"descricao\":\"Autorizo participação na visita pedagógica ao museu.\",\"obrigatorio\":true,\"perfilOperador\":\"SECRETARIA\"}")
+
+FORM_ID=$(echo "$RES_FORM_MODELO" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
+RES_FORM_RESP=$(curl -s -X POST "$BASE_URL/api/formularios/respostas" \
+  -H "Content-Type: application/json" \
+  -d "{\"formularioId\":\"$FORM_ID\",\"alunoId\":\"$ALUNO_ID\",\"decisao\":\"AUTORIZADO\"}")
+
+CONSULTA_FORM=$(curl -s "$BASE_URL/api/formularios?alunoId=$ALUNO_ID")
+
+if [ -n "$FORM_ID" ] && [[ "$RES_FORM_RESP" =~ "\"decisao\":\"AUTORIZADO\"" ]] && [[ "$CONSULTA_FORM" =~ "$TITULO_FORM" ]]; then
+  passo_ok "Modelo de autorização disponibilizado (RF-08) e assinado digitalmente pelo responsável (RF-09)!"
+else
+  passo_falha "Erro no fluxo de formulários e autorizações digitais (RF-08/RF-09): $RES_FORM_MODELO | $RES_FORM_RESP"
+fi
+
 # Limpeza automática dos dados do teste
 node -e "
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function clean() {
+  if ('$FORM_ID') await prisma.formularioModelo.deleteMany({ where: { id: '$FORM_ID' } });
   await prisma.matricula.deleteMany({ where: { id: { in: ['$MAT_ID', '$REMAT_ID'] } } });
   await prisma.alunoResponsavel.deleteMany({ where: { alunoId: '$ALUNO_ID' } });
   await prisma.aluno.delete({ where: { id: '$ALUNO_ID' } });

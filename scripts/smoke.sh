@@ -54,6 +54,8 @@ check_endpoint "Tela de Relação de Livros" "$BASE_URL/livros" "200"
 check_endpoint "API de Listagem de Livros" "$BASE_URL/api/livros" "200"
 check_endpoint "Tela de Solicitação de Fardas" "$BASE_URL/fardas" "200"
 check_endpoint "API de Listagem de Fardas" "$BASE_URL/api/fardas" "200"
+check_endpoint "Tela de Formulários e Autorizações" "$BASE_URL/formularios" "200"
+check_endpoint "API de Listagem de Formulários" "$BASE_URL/api/formularios" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

@@ -304,6 +304,28 @@ else
   fail "Baixa de farda sem permissão RN-07 não retornou HTTP 403 (retornou $FARDA_RN07_CODE)."
 fi
 
+# Tentativa de criar modelo de formulário por perfil não autorizado (Violação RN-07 / RF-08)
+FORM_RN07_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/formularios" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Modelo Falso","descricao":"Texto da autorização falso","tipo":"AUTORIZACAO","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$FORM_RN07_CODE" = "403" ]; then
+  pass "Tentativa de criar modelo de autorização por perfil não autorizado bloqueada pela RN-07 (HTTP 403)."
+else
+  fail "Criação de modelo sem permissão RN-07 não retornou HTTP 403 (retornou $FORM_RN07_CODE)."
+fi
+
+# Tentativa de responder formulário com decisão inválida (RF-09)
+FORM_DECISAO_INVALIDA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/formularios/respostas" \
+  -H "Content-Type: application/json" \
+  -d '{"formularioId":"id-qualquer","alunoId":"id-qualquer","decisao":"DECISAO_HACK"}')
+
+if [ "$FORM_DECISAO_INVALIDA_CODE" = "400" ]; then
+  pass "Tentativa de enviar resposta de formulário com decisão inválida bloqueada (HTTP 400)."
+else
+  fail "Resposta de formulário inválida não retornou HTTP 400 (retornou $FORM_DECISAO_INVALIDA_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

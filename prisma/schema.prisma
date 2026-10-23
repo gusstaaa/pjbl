@@ -45,9 +45,10 @@ model Aluno {
   certidaoNascimento String?
   observacoesMedicas String?
   responsaveis       AlunoResponsavel[]
-  matriculas         Matricula[]
-  solicitacoesFarda  SolicitacaoFarda[]
-  createdAt          DateTime           @default(now())
+  matriculas          Matricula[]
+  solicitacoesFarda   SolicitacaoFarda[]
+  respostasFormulario RespostaFormulario[]
+  createdAt           DateTime             @default(now())
   updatedAt          DateTime           @updatedAt
 }
 
@@ -185,4 +186,31 @@ model SolicitacaoFarda {
   aluno       Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FormularioModelo {
+  id          String               @id @default(uuid())
+  titulo      String
+  tipo        String               @default("AUTORIZACAO")
+  descricao   String
+  obrigatorio Boolean              @default(true)
+  ativo       Boolean              @default(true)
+  respostas   RespostaFormulario[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model RespostaFormulario {
+  id              String           @id @default(uuid())
+  formularioId    String
+  alunoId         String
+  responsavelNome String
+  decisao         String           @default("AUTORIZADO")
+  observacoes     String?
+  dataAssinatura  DateTime         @default(now())
+  formulario      FormularioModelo @relation(fields: [formularioId], references: [id], onDelete: Cascade)
+  aluno           Aluno            @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+
+  @@unique([formularioId, alunoId])
 }
