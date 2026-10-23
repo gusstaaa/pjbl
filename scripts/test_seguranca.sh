@@ -194,6 +194,28 @@ else
   fail "Valor negativo de mensalidade não retornou HTTP 400 (retornou $VALOR_NEGATIVO_CODE)."
 fi
 
+# Tentativa de cadastrar/alterar colaborador com perfil não autorizado (Violação da regra RN-07)
+RN07_VIOLACAO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/colaboradores" \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Invasor Teste","cpf":"11144477735","cargo":"Professor(a)","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$RN07_VIOLACAO_CODE" = "403" ]; then
+  pass "Tentativa de cadastro de colaborador por perfil não autorizado bloqueada pela RN-07 (HTTP 403)."
+else
+  fail "Violação da regra RN-07 não retornou HTTP 403 (retornou $RN07_VIOLACAO_CODE)."
+fi
+
+# Tentativa de cadastrar colaborador com cargo fora da lista homologada (RF-04)
+CARGO_INVALIDO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/colaboradores" \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Colaborador Cargo Falso","cpf":"11144477735","cargo":"Hacker Root","perfilOperador":"SECRETARIA"}')
+
+if [ "$CARGO_INVALIDO_CODE" = "400" ]; then
+  pass "Tentativa de cadastrar colaborador com cargo não homologado bloqueada (HTTP 400)."
+else
+  fail "Cargo inválido de colaborador não retornou HTTP 400 (retornou $CARGO_INVALIDO_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

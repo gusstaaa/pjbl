@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=9
+TOTAL_PASSOS=10
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -168,6 +168,28 @@ else
   passo_falha "Erro no fluxo financeiro de mensalidades: $RES_CARNE | $RES_BAIXA"
 fi
 
+# 10. Cadastro de Professor e Alocação em Turma (RF-04, RN-07)
+CPF_PROF=$(node -e '
+  const n = Array.from({length: 9}, () => Math.floor(Math.random() * 9));
+  const d1 = (n.reduce((acc, val, i) => acc + val * (10 - i), 0) * 10 % 11) % 10;
+  n.push(d1);
+  const d2 = (n.reduce((acc, val, i) => acc + val * (11 - i), 0) * 10 % 11) % 10;
+  n.push(d2);
+  console.log(n.join(""));
+')
+
+RES_PROF=$(curl -s -X POST "$BASE_URL/api/colaboradores" \
+  -H "Content-Type: application/json" \
+  -d "{\"nome\":\"Profa. E2E $TIMESTAMP\",\"cpf\":\"$CPF_PROF\",\"cargo\":\"Professor(a)\",\"setor\":\"Pedagógico\",\"turmaId\":\"$TURMA_ID\",\"perfilOperador\":\"SECRETARIA\"}")
+
+PROF_ID=$(echo "$RES_PROF" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
+if [ -n "$PROF_ID" ] && [[ "$RES_PROF" =~ "$TURMA_ID" ]]; then
+  passo_ok "Professor(a) cadastrado(a) e alocado(a) como titular da turma (RF-04/RN-07)!"
+else
+  passo_falha "Erro no cadastro/alocação de professor (RF-04): $RES_PROF"
+fi
+
 # Limpeza automática dos dados do teste
 node -e "
 const { PrismaClient } = require('@prisma/client');
@@ -178,6 +200,7 @@ async function clean() {
   await prisma.aluno.delete({ where: { id: '$ALUNO_ID' } });
   await prisma.responsavel.delete({ where: { id: '$RESP_ID' } });
   await prisma.turma.deleteMany({ where: { id: { in: ['$TURMA_ID', '$TURMA_2027_ID'] } } });
+  if ('$PROF_ID') await prisma.colaborador.deleteMany({ where: { id: '$PROF_ID' } });
   await prisma.\$disconnect();
 }
 clean().catch(console.error);

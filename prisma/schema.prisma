@@ -8,15 +8,17 @@ generator client {
 }
 
 model Turma {
-  id          String      @id @default(uuid())
-  nome        String
-  serie       String
-  anoLetivo   Int
-  turno       String
-  capacidade  Int         @default(25)
-  matriculas  Matricula[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                 String       @id @default(uuid())
+  nome               String
+  serie              String
+  anoLetivo          Int
+  turno              String
+  capacidade         Int          @default(25)
+  professorTitularId String?
+  professorTitular   Colaborador? @relation(fields: [professorTitularId], references: [id], onDelete: SetNull)
+  matriculas         Matricula[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 }
 
 model Responsavel {
@@ -104,4 +106,19 @@ model Mensalidade {
   updatedAt      DateTime  @updatedAt
 
   @@unique([matriculaId, mesReferencia, anoReferencia])
+}
+
+model Colaborador {
+  id            String   @id @default(uuid())
+  nome          String
+  cpf           String   @unique
+  cargo         String
+  setor         String   @default("Pedagógico")
+  email         String?
+  telefone      String?
+  especialidade String?
+  ativo         Boolean  @default(true)
+  turmas        Turma[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

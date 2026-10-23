@@ -44,6 +44,8 @@ check_endpoint "Tela de Gestão de Matrículas" "$BASE_URL/matriculas" "200"
 check_endpoint "API de Listagem de Matrículas" "$BASE_URL/api/matriculas" "200"
 check_endpoint "Tela de Controle de Mensalidades" "$BASE_URL/mensalidades" "200"
 check_endpoint "API de Listagem de Mensalidades" "$BASE_URL/api/mensalidades" "200"
+check_endpoint "Tela de Funcionários e Professores" "$BASE_URL/colaboradores" "200"
+check_endpoint "API de Listagem de Colaboradores" "$BASE_URL/api/colaboradores" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

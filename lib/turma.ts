@@ -61,6 +61,7 @@ export async function listarTurmas() {
   const turmas = await prisma.turma.findMany({
     orderBy: [{ anoLetivo: 'desc' }, { serie: 'asc' }, { nome: 'asc' }],
     include: {
+      professorTitular: true,
       _count: {
         select: {
           matriculas: {
