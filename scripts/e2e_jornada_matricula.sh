@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=6
+TOTAL_PASSOS=7
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -110,16 +110,38 @@ else
   passo_falha "Matrícula não encontrada na consulta ou status divergente"
 fi
 
+# 7. Rematrícula Simplificada para o próximo ano letivo e Histórico Escolar (RF-06)
+NOME_TURMA_2027="Turma E2E-2027-$TIMESTAMP"
+RES_TURMA_2027=$(curl -s -X POST "$BASE_URL/api/turmas" \
+  -H "Content-Type: application/json" \
+  -d "{\"nome\":\"$NOME_TURMA_2027\",\"serie\":\"4º ano\",\"turno\":\"Tarde\",\"anoLetivo\":2027,\"capacidade\":20}")
+
+TURMA_2027_ID=$(echo "$RES_TURMA_2027" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
+RES_REMAT=$(curl -s -X POST "$BASE_URL/api/matriculas/rematricula" \
+  -H "Content-Type: application/json" \
+  -d "{\"alunoId\":\"$ALUNO_ID\",\"novaTurmaId\":\"$TURMA_2027_ID\",\"observacoesMedicas\":\"Sem alergias em 2027\"}")
+
+REMAT_ID=$(echo "$RES_REMAT" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+CODIGO_REMAT=$(echo "$RES_REMAT" | grep -o '"codigo":"[^"]*' | head -1 | cut -d'"' -f4)
+CONSULTA_ALUNO_HIST=$(curl -s "$BASE_URL/api/alunos?busca=$TIMESTAMP")
+
+if [ -n "$REMAT_ID" ] && [[ "$CODIGO_REMAT" =~ ^MAT-2027- ]] && [[ "$RES_REMAT" =~ "dadosReaproveitados" ]] && [[ "$CONSULTA_ALUNO_HIST" =~ "\"ehVeterano\":true" ]]; then
+  passo_ok "Rematrícula simplificada (RF-06) e histórico de 2 anos validados! Novo código: $CODIGO_REMAT"
+else
+  passo_falha "Erro na rematrícula simplificada ou histórico: $RES_REMAT"
+fi
+
 # Limpeza automática dos dados do teste
 node -e "
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function clean() {
-  await prisma.matricula.delete({ where: { id: '$MAT_ID' } });
+  await prisma.matricula.deleteMany({ where: { id: { in: ['$MAT_ID', '$REMAT_ID'] } } });
   await prisma.alunoResponsavel.deleteMany({ where: { alunoId: '$ALUNO_ID' } });
   await prisma.aluno.delete({ where: { id: '$ALUNO_ID' } });
   await prisma.responsavel.delete({ where: { id: '$RESP_ID' } });
-  await prisma.turma.delete({ where: { id: '$TURMA_ID' } });
+  await prisma.turma.deleteMany({ where: { id: { in: ['$TURMA_ID', '$TURMA_2027_ID'] } } });
   await prisma.\$disconnect();
 }
 clean().catch(console.error);

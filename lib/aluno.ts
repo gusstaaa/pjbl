@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { SERIES_PERMITIDAS } from '@/lib/turma';
 
 export const GENEROS_PERMITIDOS = [
   'Masculino',
@@ -14,6 +15,15 @@ export interface CriarAlunoInput {
   genero?: string;
   certidaoNascimento?: string;
   observacoesMedicas?: string;
+}
+
+export function sugerirProximaSerie(serieAtual?: string | null): string | null {
+  if (!serieAtual) return null;
+  const idx = SERIES_PERMITIDAS.indexOf(serieAtual as any);
+  if (idx === -1 || idx + 1 >= SERIES_PERMITIDAS.length) {
+    return null;
+  }
+  return SERIES_PERMITIDAS[idx + 1];
 }
 
 export function calcularIdade(dataNascimento: Date): string {
@@ -85,7 +95,7 @@ export async function listarAlunos(busca?: string) {
         },
       },
       matriculas: {
-        where: { status: 'ATIVA' },
+        orderBy: [{ anoLetivo: 'desc' }, { createdAt: 'desc' }],
         include: {
           turma: true,
         },
@@ -95,7 +105,21 @@ export async function listarAlunos(busca?: string) {
 
   return alunos.map((aluno) => {
     const responsavelPrincipal = aluno.responsaveis.find((r) => r.ehPrincipal)?.responsavel || aluno.responsaveis[0]?.responsavel;
-    const matriculaAtiva = aluno.matriculas[0];
+    const matriculaAtiva = aluno.matriculas.find((m) => m.status === 'ATIVA') || null;
+    const ultimaMatricula = aluno.matriculas[0] || null;
+
+    const historicoMatriculas = aluno.matriculas.map((m) => ({
+      id: m.id,
+      codigo: m.codigo,
+      anoLetivo: m.anoLetivo,
+      status: m.status,
+      dataMatricula: m.dataMatricula.toISOString(),
+      dataMatriculaFormatada: new Date(m.dataMatricula).toLocaleDateString('pt-BR'),
+      turmaId: m.turma.id,
+      turmaNome: m.turma.nome,
+      turmaSerie: m.turma.serie,
+      turmaTurno: m.turma.turno,
+    }));
 
     return {
       id: aluno.id,
@@ -125,6 +149,10 @@ export async function listarAlunos(busca?: string) {
             anoLetivo: matriculaAtiva.anoLetivo,
           }
         : null,
+      historicoMatriculas,
+      ehVeterano: historicoMatriculas.length > 0,
+      sugestaoProximaSerie: ultimaMatricula ? sugerirProximaSerie(ultimaMatricula.turma.serie) : null,
+      sugestaoProximoAno: ultimaMatricula ? ultimaMatricula.anoLetivo + 1 : new Date().getFullYear() + 1,
       estaMatriculado: Boolean(matriculaAtiva),
       createdAt: aluno.createdAt.toISOString(),
     };

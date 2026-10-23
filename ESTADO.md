@@ -4,7 +4,7 @@
 > cada passo concluído. Não é diário: **teto ~60 linhas** (entrega antiga sai
 > daqui; o `git log` guarda).
 
-**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-12
+**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-23
 **Salvo no GitHub?** sim · **No ar?** sim (conferido em https://pjbl-gusta22.vercel.app/ com /health/db ok)
 
 ## 🧭 Trilha
@@ -24,25 +24,25 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.1 — Rematrícula simplificada e histórico do aluno (RF-06)**: Implementar fluxo de rematrícula para o próximo ano letivo e visualização do histórico escolar das turmas anteriores do aluno.
+**Fase 2, Item 2.1 — Rematrícula simplificada e histórico do aluno (RF-06)**: Validar com o usuário e avançar para o Item 2.2 (Checklist de documentos e pendências da matrícula — RF-13, RF-14, RN-05).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- _(vazio — sistema em produção estável)_
+- Item 2.1 (RF-06) implementado e provado nos testes automatizados (`e2e 7/7`, `segurança 13/13`, `smoke 11/11`).
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- _(vazio)_
+- Aprovar o Item 2.1 (Histórico Escolar e Rematrícula Simplificada) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.2.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-23 | 2.1 Rematrícula e Histórico (RF-06) | `/api/matriculas/rematricula`, ficha histórica em `/alunos`, e2e 7/7 e segurança 13/13 verdes |
 | 2026-10-12 | S.2 e S.3 Publicação na Nuvem | Vercel no ar, Postgres conectado, smoke 11/11 e e2e 6/6 verdes na URL pública |
 | 2026-10-09 | S.1 Gate de Segurança | SEGURANCA.md, test_seguranca.sh 12/12 verde, headers HTTP ativos, backup testado |
 | 2026-10-09 | 1.5 E2E da Jornada Principal | e2e 6/6 verde (Turma → Resp → Aluno → Matrícula → Status Ativa) |
 | 2026-10-01 | 1.4 Fluxo de Matrícula e Situação | smoke 11/11, trava de vagas RN-03, código MAT sequencial, alteração de status |
-| 2026-10-01 | 1.3 Cadastro de Alunos e Vínculos | smoke 9/9, cálculo de idade, observações de saúde, RN-01/RN-02 provadas |
 
 ## 📝 Anotado para depois
 

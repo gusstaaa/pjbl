@@ -150,6 +150,17 @@ else
   fail "Status inválido não retornou HTTP 400 (retornou $STATUS_INVALIDO_CODE)."
 fi
 
+# Tentativa de rematrícula sem dados válidos (RF-06)
+REMAT_INVALIDA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/matriculas/rematricula" \
+  -H "Content-Type: application/json" \
+  -d '{"alunoId":"id-inexistente","novaTurmaId":"turma-inexistente"}')
+
+if [ "$REMAT_INVALIDA_CODE" = "400" ]; then
+  pass "Tentativa de rematrícula com aluno/turma inexistentes bloqueada (HTTP 400)."
+else
+  fail "Rematrícula inválida não retornou HTTP 400 (retornou $REMAT_INVALIDA_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

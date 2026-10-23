@@ -24,8 +24,9 @@
 | Script | O que faz | Quando rodar | Trava de segurança |
 |---|---|---|---|
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
+| `scripts/prepare-db.js` | Ajusta provider Prisma (`sqlite` local / `postgresql` nuvem) | Antes de `db push` e `build` | Lê protocolo da `DATABASE_URL` |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
-| `scripts/e2e_jornada_matricula.sh` | Valida ciclo de vida completo da matrícula | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula e rematrícula (7/7) | Em entregas de fluxo | Limpa os dados de teste ao final |
 | `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
 | `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
@@ -36,21 +37,23 @@
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.
-- SQLite não aceita escritas simultâneas em grande escala; na Etapa 8 será usado PostgreSQL.
+- `scripts/prepare-db.js` seleciona automaticamente `sqlite` quando `DATABASE_URL` começa com `file:` e `postgresql` quando começa com `postgres://`.
 
 ## 5. Mapa do sistema (lógica → rota → tela)
 | Módulo | Lógica (serviço) | Rotas | Telas |
 |---|---|---|---|
-| Fundação | Prisma Client | `/api/health`, `/api/health/db` | `/` (Dashboard de Boas-Vindas) |
+| Fundação | Prisma Client | `/api/health`, `/api/health/db`, `/api/version` | `/` (Dashboard de Boas-Vindas) |
 | Turmas (1.1) | `lib/turma.ts` | `/api/turmas` | `/turmas` |
 | Responsáveis (1.2) | `lib/responsavel.ts` | `/api/responsaveis` | `/responsaveis` |
 | Alunos (1.3) | `lib/aluno.ts` | `/api/alunos` | `/alunos` |
-| Matrícula (1.4) | `lib/matricula.ts` | `/api/matriculas` | `/matriculas` |
+| Matrícula (1.4) | `lib/matricula.ts` | `/api/matriculas`, `/api/matriculas/[id]` | `/matriculas` |
+| Rematrícula e Histórico (2.1) | `lib/aluno.ts`, `lib/matricula.ts` | `/api/matriculas/rematricula`, `/api/alunos` | `/alunos`, `/matriculas` |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |
 |---|---|---|---|
 | 2026-09-11 | Banco SQLite poderia subir para o git | Falta de regras no .gitignore | `*.db` adicionado ao .gitignore imediatamente |
+| 2026-10-23 | Conflito de provider Prisma entre SQLite local e Postgres na Vercel | `schema.prisma` fixo em um único provider quebrava o outro ambiente | `scripts/prepare-db.js` ajusta o provider conforme o protocolo da `DATABASE_URL` |
 
 ## 7. Decisões (técnicas e de negócio)
 | Data | Decisão | Motivo | Alternativa descartada | Validada pelo usuário? |
@@ -58,6 +61,7 @@ Pegadinhas do banco:
 | 2026-09-11 | Next.js App Router full-stack | Menor complexidade operacional; frontend e API na mesma codebase | Backend Express separado | Sim |
 | 2026-09-11 | SQLite em desenvolvimento | Inicialização instantânea sem necessidade de provisionamento em nuvem no MVP | Supabase direto no dev local | Sim |
 | 2026-09-11 | Vínculo explícito Aluno-Responsável (N:N) | Permitir múltiplos filhos para um responsável e múltiplos responsáveis por aluno | Campo texto solto no aluno | Sim |
+| 2026-10-23 | Reaproveitar tabela `Matricula` para histórico e rematrícula (RF-06) | Cada matrícula já possui `anoLetivo`, `turmaId` e `status`, formando o histórico anual sem duplicar tabelas | Criar tabela separada `HistoricoMatricula` | Sim |
 
 ## 8. Rotina de manutenção (Etapa 8)
 - **Toda sessão:** Ao comando "continuar" → fazer `git pull`, subir o sistema (`npm run dev -- -p 3000` ou `start.sh`) e validar `/health` e `/health/db`.

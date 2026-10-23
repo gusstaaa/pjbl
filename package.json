@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "prisma generate && (prisma db push --accept-data-loss || true) && next build",
+    "build": "node scripts/prepare-db.js && prisma generate && (prisma db push --accept-data-loss || true) && next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "db:push": "prisma db push",
+    "db:push": "node scripts/prepare-db.js && prisma db push",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit"
   },

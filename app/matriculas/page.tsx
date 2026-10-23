@@ -3,15 +3,46 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
-import { CheckCircle, Plus, Search, AlertCircle, BookOpen, User, Phone, Sparkles, Filter, XCircle, Clock } from 'lucide-react';
+import {
+  CheckCircle,
+  Plus,
+  Search,
+  AlertCircle,
+  BookOpen,
+  User,
+  Sparkles,
+  Filter,
+  Clock,
+  RefreshCw,
+  History,
+} from 'lucide-react';
+
+interface HistoricoItem {
+  id: string;
+  codigo: string;
+  anoLetivo: number;
+  status: string;
+  turmaNome: string;
+  turmaSerie: string;
+  turmaTurno: string;
+}
 
 interface AlunoOption {
   id: string;
   nome: string;
   idadeCalculada: string;
+  certidaoNascimento: string;
+  observacoesMedicas: string | null;
   estaMatriculado: boolean;
+  ehVeterano: boolean;
+  sugestaoProximaSerie: string | null;
+  sugestaoProximoAno: number;
+  historicoMatriculas: HistoricoItem[];
   responsavelPrincipal: {
     nome: string;
+    cpf: string;
+    telefone: string;
+    parentesco: string;
   } | null;
 }
 
@@ -20,6 +51,7 @@ interface TurmaOption {
   nome: string;
   serie: string;
   turno: string;
+  anoLetivo: number;
   capacidade: number;
   vagasOcupadas: number;
   vagasRestantes: number;
@@ -57,16 +89,18 @@ export default function MatriculasPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [modoFormulario, setModoFormulario] = useState<'MATRICULA' | 'REMATRICULA'>('MATRICULA');
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
-  // Formulário
+  // Formulário Unificado (Matrícula Inicial RF-05 e Rematrícula Veterano RF-06)
   const [alunoId, setAlunoId] = useState('');
   const [turmaId, setTurmaId] = useState('');
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
   const [status, setStatus] = useState('ATIVA');
+  const [observacoesMedicas, setObservacoesMedicas] = useState('');
 
   const carregarDados = async (termoBusca?: string) => {
     try {
@@ -88,6 +122,8 @@ export default function MatriculasPage() {
         const naoMatriculados = dataAlunos.filter((a: AlunoOption) => !a.estaMatriculado);
         if (naoMatriculados.length > 0 && !alunoId) {
           setAlunoId(naoMatriculados[0].id);
+        } else if (dataAlunos.length > 0 && !alunoId) {
+          setAlunoId(dataAlunos[0].id);
         }
       }
 
@@ -110,6 +146,34 @@ export default function MatriculasPage() {
     carregarDados();
   }, []);
 
+  const iniciarRematriculaRapida = (idAluno: string) => {
+    const alunoVet = alunos.find((a) => a.id === idAluno);
+    setModoFormulario('REMATRICULA');
+    setAlunoId(idAluno);
+    setObservacoesMedicas(alunoVet?.observacoesMedicas || '');
+    setMensagemErro(null);
+
+    const comVagas = turmas.filter((t) => !t.lotada);
+    if (alunoVet) {
+      const sugerida =
+        comVagas.find(
+          (t) =>
+            t.anoLetivo === alunoVet.sugestaoProximoAno &&
+            (!alunoVet.sugestaoProximaSerie || t.serie === alunoVet.sugestaoProximaSerie)
+        ) ||
+        comVagas.find((t) => t.anoLetivo >= alunoVet.sugestaoProximoAno) ||
+        comVagas[0];
+
+      if (sugerida) {
+        setTurmaId(sugerida.id);
+        setAnoLetivo(sugerida.anoLetivo.toString());
+      }
+    }
+
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleBuscaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     carregarDados(busca);
@@ -122,24 +186,46 @@ export default function MatriculasPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/matriculas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          alunoId,
-          turmaId,
-          anoLetivo: Number(anoLetivo),
-          status,
-        }),
-      });
+      if (modoFormulario === 'REMATRICULA') {
+        const res = await fetch('/api/matriculas/rematricula', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            alunoId,
+            novaTurmaId: turmaId,
+            status,
+            observacoesMedicas,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Erro ao realizar rematrícula.');
+        }
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao efetivar matrícula.');
+        setMensagemSucesso(
+          `Rematrícula ${data.codigo} concluída! Dados reaproveitados (anterior: ${data.dadosReaproveitados?.turmaAnterior}) para a nova turma ${data.turma?.nome} (${data.anoLetivo}).`
+        );
+      } else {
+        const res = await fetch('/api/matriculas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            alunoId,
+            turmaId,
+            anoLetivo: Number(anoLetivo),
+            status,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Erro ao efetivar matrícula.');
+        }
+
+        setMensagemSucesso(`Matrícula ${data.codigo} efetivada com sucesso! Aluno alocado na turma.`);
       }
 
-      setMensagemSucesso(`Matrícula ${data.codigo} efetivada com sucesso! Aluno alocado na turma.`);
       setShowForm(false);
       await carregarDados();
     } catch (err: any) {
@@ -177,6 +263,10 @@ export default function MatriculasPage() {
   const pendentesCount = matriculas.filter((m) => m.status === 'PENDENTE_DOCUMENTOS').length;
   const alunosSemMatricula = alunos.filter((a) => !a.estaMatriculado).length;
 
+  const alunoSelecionadoObj = alunos.find((a) => a.id === alunoId) || null;
+  const opcoesAlunos =
+    modoFormulario === 'REMATRICULA' ? alunos.filter((a) => a.ehVeterano) : alunos;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -187,26 +277,46 @@ export default function MatriculasPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
-                Item 1.4 do Roadmap
+                Itens 1.4 e 2.1 do Roadmap
               </span>
-              <span className="text-xs text-slate-500">RF-05 · RF-07 · RN-03</span>
+              <span className="text-xs text-slate-500">RF-05 · RF-06 · RF-07 · RN-03</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Efetivação e Gestão de Matrículas</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mt-1">Matrículas e Rematrículas de Veteranos</h1>
             <p className="text-sm text-slate-500">
-              Matricule alunos em turmas com controle de vagas e gere o comprovante oficial de matrícula.
+              Matricule alunos novos ou realize a rematrícula simplificada reaproveitando o histórico escolar.
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setMensagemErro(null);
-            }}
-            className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            {showForm ? 'Fechar Formulário' : 'Nova Matrícula'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                setModoFormulario('REMATRICULA');
+                const veteranos = alunos.filter((a) => a.ehVeterano);
+                if (veteranos.length > 0) {
+                  setAlunoId(veteranos[0].id);
+                  setObservacoesMedicas(veteranos[0].observacoesMedicas || '');
+                }
+                setShowForm(true);
+                setMensagemErro(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Rematricular Veterano (RF-06)
+            </button>
+
+            <button
+              onClick={() => {
+                setModoFormulario('MATRICULA');
+                setShowForm(!showForm);
+                setMensagemErro(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              {showForm && modoFormulario === 'MATRICULA' ? 'Fechar Formulário' : 'Nova Matrícula'}
+            </button>
+          </div>
         </div>
 
         {/* Notificações */}
@@ -256,12 +366,54 @@ export default function MatriculasPage() {
           </div>
         </section>
 
-        {/* Formulário de Efetivação */}
+        {/* Formulário Unificado de Matrícula Inicial e Rematrícula Simplificada */}
         {showForm && (
           <section className="bg-white p-6 rounded-2xl border border-violet-200 shadow-sm transition animate-in fade-in duration-200">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <Sparkles className="w-5 h-5 text-violet-600" />
-              <h2 className="text-base font-bold text-slate-800">Efetivar Matrícula de Aluno</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                {modoFormulario === 'REMATRICULA' ? (
+                  <RefreshCw className="w-5 h-5 text-emerald-600" />
+                ) : (
+                  <Sparkles className="w-5 h-5 text-violet-600" />
+                )}
+                <h2 className="text-base font-bold text-slate-800">
+                  {modoFormulario === 'REMATRICULA'
+                    ? 'Rematrícula Simplificada de Aluno Veterano (RF-06)'
+                    : 'Efetivar Matrícula Inicial de Aluno (RF-05)'}
+                </h2>
+              </div>
+
+              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setModoFormulario('MATRICULA')}
+                  className={`px-3 py-1 rounded-md transition ${
+                    modoFormulario === 'MATRICULA'
+                      ? 'bg-white text-violet-700 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  Matrícula Inicial
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModoFormulario('REMATRICULA');
+                    const veteranos = alunos.filter((a) => a.ehVeterano);
+                    if (veteranos.length > 0 && !veteranos.some((v) => v.id === alunoId)) {
+                      setAlunoId(veteranos[0].id);
+                      setObservacoesMedicas(veteranos[0].observacoesMedicas || '');
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-md transition ${
+                    modoFormulario === 'REMATRICULA'
+                      ? 'bg-white text-emerald-700 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  Rematrícula Veterano (RF-06)
+                </button>
+              </div>
             </div>
 
             {alunos.length === 0 ? (
@@ -273,6 +425,13 @@ export default function MatriculasPage() {
                 >
                   Cadastrar Aluno Primeiro →
                 </Link>
+              </div>
+            ) : modoFormulario === 'REMATRICULA' && opcoesAlunos.length === 0 ? (
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 space-y-2">
+                <p className="text-sm font-semibold">Nenhum aluno veterano com histórico encontrado!</p>
+                <p className="text-xs">
+                  Para realizar uma rematrícula (RF-06), o aluno precisa ter pelo menos uma matrícula anterior.
+                </p>
               </div>
             ) : turmas.length === 0 ? (
               <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 space-y-2">
@@ -290,18 +449,29 @@ export default function MatriculasPage() {
                   {/* Seleção do Aluno */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Aluno a Matricular (RF-05) *
+                      {modoFormulario === 'REMATRICULA'
+                        ? 'Aluno Veterano com Histórico (RF-06) *'
+                        : 'Aluno a Matricular (RF-05) *'}
                     </label>
                     <select
                       required
                       value={alunoId}
-                      onChange={(e) => setAlunoId(e.target.value)}
+                      onChange={(e) => {
+                        setAlunoId(e.target.value);
+                        const sel = alunos.find((a) => a.id === e.target.value);
+                        if (sel) {
+                          setObservacoesMedicas(sel.observacoesMedicas || '');
+                        }
+                      }}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-violet-500 bg-white"
                     >
                       <option value="">Selecione o aluno...</option>
-                      {alunos.map((a) => (
+                      {opcoesAlunos.map((a) => (
                         <option key={a.id} value={a.id}>
-                          {a.nome} ({a.idadeCalculada}) {a.estaMatriculado ? '— [JÁ MATRICULADO]' : '— Disponível'}
+                          {a.nome} ({a.idadeCalculada}){' '}
+                          {a.ehVeterano
+                            ? `— Veterano (${a.historicoMatriculas.length} matrícula(s))`
+                            : '— Novo Aluno'}
                         </option>
                       ))}
                     </select>
@@ -315,38 +485,99 @@ export default function MatriculasPage() {
                     <select
                       required
                       value={turmaId}
-                      onChange={(e) => setTurmaId(e.target.value)}
+                      onChange={(e) => {
+                        setTurmaId(e.target.value);
+                        const turmaSel = turmas.find((t) => t.id === e.target.value);
+                        if (turmaSel) {
+                          setAnoLetivo(turmaSel.anoLetivo.toString());
+                        }
+                      }}
                       className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-violet-500 bg-white"
                     >
                       <option value="">Selecione a turma...</option>
                       {turmas.map((t) => (
                         <option key={t.id} value={t.id} disabled={t.lotada}>
-                          {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vagas restantes {t.lotada ? '[LOTADA]' : ''}
+                          Ano {t.anoLetivo} · {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vagas restantes{' '}
+                          {t.lotada ? '[LOTADA]' : ''}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Ano Letivo */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Ano Letivo *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="2020"
-                      max="2100"
-                      value={anoLetivo}
-                      onChange={(e) => setAnoLetivo(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-violet-500"
-                    />
-                  </div>
+                  {/* Resumo dos dados reaproveitados quando em modo REMATRICULA */}
+                  {modoFormulario === 'REMATRICULA' && alunoSelecionadoObj && (
+                    <div className="sm:col-span-2 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-slate-700 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                          <History className="w-4 h-4 text-emerald-600" />
+                          Dados Anteriores Reaproveitados Automaticamente (RF-06):
+                        </span>
+                        {alunoSelecionadoObj.sugestaoProximaSerie && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                            Próxima série sugerida: {alunoSelecionadoObj.sugestaoProximaSerie} (
+                            {alunoSelecionadoObj.sugestaoProximoAno})
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        <div>
+                          <span className="text-slate-500">Responsável Legal:</span>{' '}
+                          <strong>
+                            {alunoSelecionadoObj.responsavelPrincipal?.nome || 'Vinculado'} (
+                            {alunoSelecionadoObj.responsavelPrincipal?.parentesco})
+                          </strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Certidão:</span>{' '}
+                          <strong>{alunoSelecionadoObj.certidaoNascimento}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Última Turma:</span>{' '}
+                          <strong>
+                            {alunoSelecionadoObj.historicoMatriculas[0]
+                              ? `${alunoSelecionadoObj.historicoMatriculas[0].turmaNome} (${alunoSelecionadoObj.historicoMatriculas[0].turmaSerie} · ${alunoSelecionadoObj.historicoMatriculas[0].anoLetivo})`
+                              : 'N/A'}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ano Letivo (somente na matrícula inicial; na rematrícula herda o ano da nova turma) */}
+                  {modoFormulario === 'MATRICULA' ? (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Ano Letivo *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        min="2020"
+                        max="2100"
+                        value={anoLetivo}
+                        onChange={(e) => setAnoLetivo(e.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Observações Médicas (reaproveitadas — edite se necessário)
+                      </label>
+                      <input
+                        type="text"
+                        value={observacoesMedicas}
+                        onChange={(e) => setObservacoesMedicas(e.target.value)}
+                        placeholder="Sem alterações médicas"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  )}
 
                   {/* Status Inicial */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Situação Inicial da Matrícula (RN-05) *
+                      Situação da Matrícula (RN-05) *
                     </label>
                     <select
                       value={status}
@@ -370,9 +601,17 @@ export default function MatriculasPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
+                    className={`${
+                      modoFormulario === 'REMATRICULA'
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-violet-600 hover:bg-violet-700'
+                    } disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs`}
                   >
-                    {submitting ? 'Efetivando...' : 'Efetivar Matrícula'}
+                    {submitting
+                      ? 'Processando...'
+                      : modoFormulario === 'REMATRICULA'
+                      ? 'Confirmar Rematrícula (RF-06)'
+                      : 'Efetivar Matrícula'}
                   </button>
                 </div>
               </form>
@@ -490,8 +729,16 @@ export default function MatriculasPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-400">Em {m.dataMatriculaFormatada}</span>
-                      {m.status === 'ATIVA' && (
+                      <button
+                        type="button"
+                        onClick={() => iniciarRematriculaRapida(m.aluno.id)}
+                        className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Rematricular
+                      </button>
+
+                      {m.status === 'ATIVA' ? (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
@@ -507,6 +754,8 @@ export default function MatriculasPage() {
                             Cancelar
                           </button>
                         </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Em {m.dataMatriculaFormatada}</span>
                       )}
                     </div>
                   </div>

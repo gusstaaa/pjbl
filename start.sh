@@ -12,7 +12,8 @@ if [ ! -f .env ]; then
 fi
 
 echo "Sincronizando banco de dados..."
-npx prisma db push --skip-generate
+node scripts/prepare-db.js
+npx prisma db push
 
 PORT="${PORT:-3000}"
 

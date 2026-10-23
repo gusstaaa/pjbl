@@ -17,6 +17,31 @@ export interface EfetivarMatriculaInput {
   status?: string;
 }
 
+export interface RematricularAlunoInput {
+  alunoId: string;
+  novaTurmaId: string;
+  status?: string;
+  observacoesMedicas?: string;
+}
+
+async function gerarCodigoMatricula(tx: any, ano: number): Promise<string> {
+  const totalMatriculasAno = await tx.matricula.count({
+    where: { anoLetivo: ano },
+  });
+  const ultimaMatriculaAno = await tx.matricula.findFirst({
+    where: {
+      anoLetivo: ano,
+      codigo: { startsWith: `MAT-${ano}-` },
+    },
+    orderBy: { codigo: 'desc' },
+  });
+  const ultimoSeq = ultimaMatriculaAno
+    ? parseInt(ultimaMatriculaAno.codigo.split('-')[2] || '0', 10)
+    : 0;
+  const proximoSeq = Math.max(totalMatriculasAno, isNaN(ultimoSeq) ? 0 : ultimoSeq) + 1;
+  return `MAT-${ano}-${String(proximoSeq).padStart(4, '0')}`;
+}
+
 export async function listarMatriculas(filtros?: {
   turmaId?: string;
   status?: string;
@@ -42,7 +67,7 @@ export async function listarMatriculas(filtros?: {
 
   const matriculas = await prisma.matricula.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ anoLetivo: 'desc' }, { createdAt: 'desc' }],
     include: {
       turma: true,
       aluno: {
@@ -164,10 +189,7 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
     }
 
     // 5. Gera código da matrícula
-    const totalMatriculasAno = await tx.matricula.count({
-      where: { anoLetivo: ano },
-    });
-    const codigo = `MAT-${ano}-${String(totalMatriculasAno + 1).padStart(4, '0')}`;
+    const codigo = await gerarCodigoMatricula(tx, ano);
 
     // 6. Cria o registro de matrícula
     return tx.matricula.create({
@@ -183,6 +205,133 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
         aluno: true,
       },
     });
+  });
+}
+
+export async function rematricularAluno(input: RematricularAlunoInput) {
+  if (!input.alunoId || typeof input.alunoId !== 'string' || input.alunoId.trim() === '') {
+    throw new Error('Selecione o aluno veterano para realizar a rematrícula.');
+  }
+
+  if (!input.novaTurmaId || typeof input.novaTurmaId !== 'string' || input.novaTurmaId.trim() === '') {
+    throw new Error('Selecione a nova turma de destino para a rematrícula.');
+  }
+
+  const statusFinal = input.status && STATUS_MATRICULA.includes(input.status as StatusMatricula)
+    ? input.status
+    : 'ATIVA';
+
+  return prisma.$transaction(async (tx) => {
+    const aluno = await tx.aluno.findUnique({
+      where: { id: input.alunoId },
+      include: {
+        responsaveis: {
+          include: {
+            responsavel: true,
+          },
+        },
+        matriculas: {
+          orderBy: [{ anoLetivo: 'desc' }, { createdAt: 'desc' }],
+          include: {
+            turma: true,
+          },
+        },
+      },
+    });
+
+    if (!aluno) {
+      throw new Error('Aluno não encontrado no sistema.');
+    }
+
+    if (aluno.responsaveis.length === 0) {
+      throw new Error('Regra RN-01 violada: O aluno não possui responsável legal vinculado.');
+    }
+
+    if (aluno.matriculas.length === 0) {
+      throw new Error(
+        'Regra RF-06: Este aluno ainda não possui histórico de matrículas anteriores. Utilize o fluxo de matrícula inicial.'
+      );
+    }
+
+    const novaTurma = await tx.turma.findUnique({
+      where: { id: input.novaTurmaId },
+    });
+
+    if (!novaTurma) {
+      throw new Error('A nova turma selecionada não foi encontrada.');
+    }
+
+    const anoDestino = novaTurma.anoLetivo;
+
+    // Verifica se o aluno já possui matrícula ativa/pendente no ano letivo da nova turma
+    const matriculaMesmoAno = await tx.matricula.findFirst({
+      where: {
+        alunoId: aluno.id,
+        anoLetivo: anoDestino,
+        status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS'] },
+      },
+      include: { turma: true },
+    });
+
+    if (matriculaMesmoAno) {
+      throw new Error(
+        `O aluno "${aluno.nome}" já possui matrícula registrada no ano letivo ${anoDestino} na turma "${matriculaMesmoAno.turma.nome}" (${matriculaMesmoAno.codigo}).`
+      );
+    }
+
+    // Regra RN-03: Vagas disponíveis na nova turma
+    const matriculasAtivasTurma = await tx.matricula.count({
+      where: {
+        turmaId: novaTurma.id,
+        status: 'ATIVA',
+      },
+    });
+
+    if (statusFinal === 'ATIVA' && matriculasAtivasTurma >= novaTurma.capacidade) {
+      throw new Error(
+        `Regra RN-03 violada: A turma "${novaTurma.nome}" (${anoDestino}) está com as vagas esgotadas (${matriculasAtivasTurma}/${novaTurma.capacidade} alunos).`
+      );
+    }
+
+    // Atualiza observações médicas se informadas na rematrícula, reaproveitando os demais dados
+    if (input.observacoesMedicas !== undefined) {
+      await tx.aluno.update({
+        where: { id: aluno.id },
+        data: {
+          observacoesMedicas: input.observacoesMedicas.trim() || null,
+        },
+      });
+    }
+
+    const codigo = await gerarCodigoMatricula(tx, anoDestino);
+
+    const novaMatricula = await tx.matricula.create({
+      data: {
+        codigo,
+        alunoId: aluno.id,
+        turmaId: novaTurma.id,
+        anoLetivo: anoDestino,
+        status: statusFinal,
+      },
+      include: {
+        turma: true,
+        aluno: true,
+      },
+    });
+
+    const matriculaAnterior = aluno.matriculas[0];
+    const respPrincipal = aluno.responsaveis.find((r) => r.ehPrincipal)?.responsavel || aluno.responsaveis[0]?.responsavel;
+
+    return {
+      ...novaMatricula,
+      dadosReaproveitados: {
+        alunoNome: aluno.nome,
+        certidaoNascimento: aluno.certidaoNascimento,
+        responsavelNome: respPrincipal?.nome || null,
+        responsavelCpf: respPrincipal?.cpf || null,
+        turmaAnterior: `${matriculaAnterior.turma.nome} (${matriculaAnterior.turma.serie} - ${matriculaAnterior.anoLetivo})`,
+      },
+    };
   });
 }
 
