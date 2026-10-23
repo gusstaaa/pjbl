@@ -26,7 +26,7 @@
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
 | `scripts/prepare-db.js` | Ajusta provider Prisma (`sqlite` local / `postgresql` nuvem) | Antes de `db push` e `build` | Lê protocolo da `DATABASE_URL` |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
-| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades e equipe (10/10) | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades, equipe e comunicados (11/11) | Em entregas de fluxo | Limpa os dados de teste ao final |
 | `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
 | `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
@@ -37,6 +37,7 @@
 | 002_documentos_matricula | `DocumentoMatricula` | Sim (validação de tipos/status + Cascade Delete) | 2026-10-23 | 2.2 |
 | 003_mensalidades | `Mensalidade` | Sim (validação RN-08 + unicidade por mês/ano/matrícula + Cascade Delete) | 2026-10-23 | 2.3 |
 | 004_colaboradores | `Colaborador` + `Turma.professorTitularId` | Sim (validação RN-07 + CPF único + SetNull na Turma) | 2026-10-23 | 2.4 |
+| 005_comunicados | `Comunicado` | Sim (validação RF-20 + filtro de isolamento por turma + Cascade Delete) | 2026-10-23 | 2.5 |
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.
@@ -54,6 +55,7 @@ Pegadinhas do banco:
 | Checklist de Documentos (2.2) | `lib/matricula.ts` | `/api/matriculas/[id]/documentos` | `/matriculas` |
 | Mensalidades e Pagamentos (2.3) | `lib/mensalidade.ts` | `/api/mensalidades`, `/api/mensalidades/[id]` | `/mensalidades` |
 | Funcionários e Professores (2.4) | `lib/colaborador.ts` | `/api/colaboradores`, `/api/colaboradores/[id]` | `/colaboradores` |
+| Painel de Comunicados (2.5) | `lib/comunicado.ts` | `/api/comunicados` | `/comunicados` |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |

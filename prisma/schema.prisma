@@ -17,6 +17,7 @@ model Turma {
   professorTitularId String?
   professorTitular   Colaborador? @relation(fields: [professorTitularId], references: [id], onDelete: SetNull)
   matriculas         Matricula[]
+  comunicados        Comunicado[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 }
@@ -121,4 +122,19 @@ model Colaborador {
   turmas        Turma[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Comunicado {
+  id             String   @id @default(uuid())
+  titulo         String
+  conteudo       String
+  publicoAlvo    String   @default("GERAL")
+  prioridade     String   @default("NORMAL")
+  autorNome      String   @default("Secretaria Escolar")
+  autorPerfil    String   @default("SECRETARIA")
+  turmaId        String?
+  turma          Turma?   @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  dataPublicacao DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

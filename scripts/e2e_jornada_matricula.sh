@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=10
+TOTAL_PASSOS=11
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -188,6 +188,22 @@ if [ -n "$PROF_ID" ] && [[ "$RES_PROF" =~ "$TURMA_ID" ]]; then
   passo_ok "Professor(a) cadastrado(a) e alocado(a) como titular da turma (RF-04/RN-07)!"
 else
   passo_falha "Erro no cadastro/alocação de professor (RF-04): $RES_PROF"
+fi
+
+# 11. Painel de Comunicados e Isolamento por Turma (RF-20)
+TITULO_COMUNICADO="Aviso Exclusivo Turma $TIMESTAMP"
+RES_COM=$(curl -s -X POST "$BASE_URL/api/comunicados" \
+  -H "Content-Type: application/json" \
+  -d "{\"titulo\":\"$TITULO_COMUNICADO\",\"conteudo\":\"Reunião exclusiva para os responsáveis desta turma.\",\"publicoAlvo\":\"TURMA\",\"prioridade\":\"IMPORTANTE\",\"turmaId\":\"$TURMA_ID\",\"perfilOperador\":\"SECRETARIA\"}")
+
+COM_ID=$(echo "$RES_COM" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+VISAO_TURMA_ALVO=$(curl -s "$BASE_URL/api/comunicados?turmaId=$TURMA_ID")
+VISAO_OUTRA_TURMA=$(curl -s "$BASE_URL/api/comunicados?turmaId=$TURMA_2027_ID")
+
+if [ -n "$COM_ID" ] && [[ "$VISAO_TURMA_ALVO" =~ "$TITULO_COMUNICADO" ]] && ! [[ "$VISAO_OUTRA_TURMA" =~ "$TITULO_COMUNICADO" ]]; then
+  passo_ok "Comunicado por turma publicado e isolamento de visualização validado (RF-20)!"
+else
+  passo_falha "Erro na publicação ou isolamento de comunicado por turma (RF-20): $RES_COM"
 fi
 
 # Limpeza automática dos dados do teste

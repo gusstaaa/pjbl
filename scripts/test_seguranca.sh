@@ -216,6 +216,28 @@ else
   fail "Cargo inválido de colaborador não retornou HTTP 400 (retornou $CARGO_INVALIDO_CODE)."
 fi
 
+# Tentativa de publicar comunicado por perfil não autorizado (RF-20)
+COM_NAO_AUTORIZADO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/comunicados" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Aviso Falso","conteudo":"Tentativa de publicação por perfil sem permissão.","publicoAlvo":"GERAL","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$COM_NAO_AUTORIZADO_CODE" = "403" ]; then
+  pass "Tentativa de publicar comunicado por perfil não autorizado bloqueada (HTTP 403)."
+else
+  fail "Publicação de comunicado sem permissão não retornou HTTP 403 (retornou $COM_NAO_AUTORIZADO_CODE)."
+fi
+
+# Tentativa de publicar comunicado de TURMA sem informar turmaId (RF-20)
+COM_SEM_TURMA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/comunicados" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Aviso Sem Turma","conteudo":"Conteúdo válido mas sem turmaId.","publicoAlvo":"TURMA","perfilOperador":"SECRETARIA"}')
+
+if [ "$COM_SEM_TURMA_CODE" = "400" ]; then
+  pass "Tentativa de publicar comunicado de turma sem selecionar turma bloqueada (HTTP 400)."
+else
+  fail "Comunicado de turma sem turmaId não retornou HTTP 400 (retornou $COM_SEM_TURMA_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

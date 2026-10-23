@@ -46,6 +46,8 @@ check_endpoint "Tela de Controle de Mensalidades" "$BASE_URL/mensalidades" "200"
 check_endpoint "API de Listagem de Mensalidades" "$BASE_URL/api/mensalidades" "200"
 check_endpoint "Tela de Funcionários e Professores" "$BASE_URL/colaboradores" "200"
 check_endpoint "API de Listagem de Colaboradores" "$BASE_URL/api/colaboradores" "200"
+check_endpoint "Tela de Painel de Comunicados" "$BASE_URL/comunicados" "200"
+check_endpoint "API de Listagem de Comunicados" "$BASE_URL/api/comunicados" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

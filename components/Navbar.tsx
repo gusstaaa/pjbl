@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { School, BookOpen, Users, UserCheck, CheckCircle, DollarSign, Briefcase } from 'lucide-react';
+import { School, BookOpen, Users, UserCheck, CheckCircle, DollarSign, Briefcase, Megaphone } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -22,6 +22,7 @@ export function Navbar() {
     { href: '/matriculas', label: 'Matrículas', icon: CheckCircle },
     { href: '/mensalidades', label: 'Mensalidades', icon: DollarSign },
     { href: '/colaboradores', label: 'Equipe & Profs', icon: Briefcase },
+    { href: '/comunicados', label: 'Comunicados', icon: Megaphone },
   ];
 
   return (
