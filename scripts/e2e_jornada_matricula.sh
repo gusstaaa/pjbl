@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=13
+TOTAL_PASSOS=14
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -234,6 +234,20 @@ if [ -n "$LIVRO_ID" ] && [[ "$CONSULTA_LIVROS_TURMA" =~ "$TITULO_LIVRO" ]]; then
   passo_ok "Relação de livros adotados/fornecidos cadastrada e visível por turma (RF-12)!"
 else
   passo_falha "Erro no cadastro ou consulta de livros (RF-12): $RES_LIVRO | $CONSULTA_LIVROS_TURMA"
+fi
+
+# 14. Solicitação de Fardas Escolares (Tamanho e Quantidade - RF-10)
+RES_FARDA=$(curl -s -X POST "$BASE_URL/api/fardas" \
+  -H "Content-Type: application/json" \
+  -d "{\"alunoId\":\"$ALUNO_ID\",\"tipoPeca\":\"Camiseta Diária\",\"tamanho\":\"8\",\"quantidade\":2}")
+
+FARDA_ID=$(echo "$RES_FARDA" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+CONSULTA_FARDAS=$(curl -s "$BASE_URL/api/fardas?alunoId=$ALUNO_ID")
+
+if [ -n "$FARDA_ID" ] && [[ "$CONSULTA_FARDAS" =~ "\"tamanho\":\"8\"" ]] && [[ "$CONSULTA_FARDAS" =~ "$NOME_ALUNO" ]]; then
+  passo_ok "Solicitação de farda registrada e demanda visível para a secretaria (RF-10)!"
+else
+  passo_falha "Erro na solicitação ou consulta de farda escolar (RF-10): $RES_FARDA | $CONSULTA_FARDAS"
 fi
 
 # Limpeza automática dos dados do teste

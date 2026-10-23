@@ -282,6 +282,28 @@ else
   fail "Livro com modalidade inválida não retornou HTTP 400 (retornou $LIVRO_ORIGEM_INVALIDA_CODE)."
 fi
 
+# Tentativa de solicitar farda com tamanho inválido (RF-10)
+FARDA_TAM_INVALIDO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/fardas" \
+  -H "Content-Type: application/json" \
+  -d '{"alunoId":"id-qualquer","tipoPeca":"Camiseta Diária","tamanho":"XXXL_FALSO","quantidade":1}')
+
+if [ "$FARDA_TAM_INVALIDO_CODE" = "400" ]; then
+  pass "Tentativa de solicitar farda com tamanho inválido bloqueada (HTTP 400)."
+else
+  fail "Farda com tamanho inválido não retornou HTTP 400 (retornou $FARDA_TAM_INVALIDO_CODE)."
+fi
+
+# Tentativa de alterar status de entrega de farda por perfil não autorizado (Violação RN-07)
+FARDA_RN07_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$BASE_URL/api/fardas/id-qualquer" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"ENTREGUE","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$FARDA_RN07_CODE" = "403" ]; then
+  pass "Tentativa de dar baixa em farda por perfil não autorizado bloqueada pela RN-07 (HTTP 403)."
+else
+  fail "Baixa de farda sem permissão RN-07 não retornou HTTP 403 (retornou $FARDA_RN07_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

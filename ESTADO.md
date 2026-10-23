@@ -24,25 +24,25 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.8 — Solicitação de fardas escolares (RF-10)**: Implementar registro e consulta de solicitações de tamanho e quantidade de fardas/uniformes.
+**Fase 2, Item 2.8 — Solicitação de fardas escolares (RF-10)**: Validar com o usuário e avançar para o Item 2.9 (Formulários e autorizações digitais — RF-08, RF-09).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Itens 2.1 a 2.7 concluídos, validados (`e2e 13/13`, `segurança 24/24`, `smoke 21/21`) e sincronizados no GitHub e na Vercel.
+- Item 2.8 (RF-10) implementado e provado nos testes automatizados (`e2e 14/14`, `segurança 26/26`, `smoke 23/23`).
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Autorizar início do Item 2.8 (Solicitação de fardas escolares — RF-10) quando desejar continuar.
+- Aprovar o Item 2.8 (Solicitação de Fardas Escolares) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.9.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-23 | 2.8 Solicitação de Fardas (RF-10) | `/api/fardas`, tela `/fardas`, e2e 14/14, segurança 26/26 e smoke 23/23 verdes |
 | 2026-10-23 | 2.7 Relação de Livros Escolares (RF-12) | `/api/livros`, tela `/livros`, e2e 13/13, segurança 24/24 e smoke 21/21 verdes |
 | 2026-10-23 | 2.6 Listas de Materiais Escolares (RF-11) | `/api/materiais`, tela `/materiais`, e2e 12/12, segurança 22/22 e smoke 19/19 verdes |
 | 2026-10-23 | 2.5 Painel de Comunicados (RF-20) | `/api/comunicados`, tela `/comunicados`, e2e 11/11, segurança 20/20 e smoke 17/17 verdes |
 | 2026-10-23 | 2.4 Funcionários e Professores (RF-04, RN-07) | `/api/colaboradores`, tela `/colaboradores`, e2e 10/10, segurança 18/18 e smoke 15/15 verdes |
-| 2026-10-23 | 2.3 Mensalidades e Pagamentos (RF-15, RF-16, RN-08) | `/api/mensalidades`, tela `/mensalidades`, e2e 9/9, segurança 16/16 e smoke 13/13 verdes |
 
 ## 📝 Anotado para depois
 
