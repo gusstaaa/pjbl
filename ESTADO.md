@@ -24,25 +24,25 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.5 — Painel de comunicados para turmas e escola (RF-20)**: Validar com o usuário e avançar para o Item 2.6 (Listas de materiais escolares por turma — RF-11).
+**Fase 2, Item 2.6 — Listas de materiais escolares por turma (RF-11)**: Validar com o usuário e avançar para o Item 2.7 (Relação de livros adotados e fornecidos — RF-12).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 2.5 (RF-20) implementado e provado nos testes automatizados (`e2e 11/11`, `segurança 20/20`, `smoke 17/17`).
+- Item 2.6 (RF-11) implementado e provado nos testes automatizados (`e2e 12/12`, `segurança 22/22`, `smoke 19/19`).
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Aprovar o Item 2.5 (Painel de Comunicados para Turmas e Escola) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.6.
+- Aprovar o Item 2.6 (Listas de Materiais Escolares por Turma) para marcarmos ✅ no ROADMAP e iniciarmos o Item 2.7.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-23 | 2.6 Listas de Materiais Escolares (RF-11) | `/api/materiais`, tela `/materiais`, e2e 12/12, segurança 22/22 e smoke 19/19 verdes |
 | 2026-10-23 | 2.5 Painel de Comunicados (RF-20) | `/api/comunicados`, tela `/comunicados`, e2e 11/11, segurança 20/20 e smoke 17/17 verdes |
 | 2026-10-23 | 2.4 Funcionários e Professores (RF-04, RN-07) | `/api/colaboradores`, tela `/colaboradores`, e2e 10/10, segurança 18/18 e smoke 15/15 verdes |
 | 2026-10-23 | 2.3 Mensalidades e Pagamentos (RF-15, RF-16, RN-08) | `/api/mensalidades`, tela `/mensalidades`, e2e 9/9, segurança 16/16 e smoke 13/13 verdes |
 | 2026-10-23 | 2.2 Checklist de Documentos (RF-13, RF-14, RN-05) | `/api/matriculas/[id]/documentos`, checklist interativo em `/matriculas`, e2e 8/8 e segurança 14/14 verdes |
-| 2026-10-23 | 2.1 Rematrícula e Histórico (RF-06) | `/api/matriculas/rematricula`, ficha histórica em `/alunos`, e2e 7/7 e segurança 13/13 verdes |
 
 ## 📝 Anotado para depois
 

@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=11
+TOTAL_PASSOS=12
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -204,6 +204,21 @@ if [ -n "$COM_ID" ] && [[ "$VISAO_TURMA_ALVO" =~ "$TITULO_COMUNICADO" ]] && ! [[
   passo_ok "Comunicado por turma publicado e isolamento de visualização validado (RF-20)!"
 else
   passo_falha "Erro na publicação ou isolamento de comunicado por turma (RF-20): $RES_COM"
+fi
+
+# 12. Lista de Materiais Escolares por Turma e Consulta pelo Filho Matriculado (RF-11)
+NOME_MATERIAL="Kit Geométrico E2E $TIMESTAMP"
+RES_MAT_ITEM=$(curl -s -X POST "$BASE_URL/api/materiais" \
+  -H "Content-Type: application/json" \
+  -d "{\"turmaId\":\"$TURMA_2027_ID\",\"nomeItem\":\"$NOME_MATERIAL\",\"categoria\":\"Papelaria / Uso Individual\",\"quantidade\":2,\"unidade\":\"kits\",\"obrigatorio\":true,\"perfilOperador\":\"SECRETARIA\"}")
+
+MAT_ITEM_ID=$(echo "$RES_MAT_ITEM" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+CONSULTA_MATERIAIS_ALUNO=$(curl -s "$BASE_URL/api/materiais?alunoId=$ALUNO_ID")
+
+if [ -n "$MAT_ITEM_ID" ] && [[ "$CONSULTA_MATERIAIS_ALUNO" =~ "$NOME_MATERIAL" ]]; then
+  passo_ok "Lista de materiais cadastrada e consultada pela matrícula do aluno (RF-11)!"
+else
+  passo_falha "Erro no cadastro ou consulta de lista de materiais (RF-11): $RES_MAT_ITEM | $CONSULTA_MATERIAIS_ALUNO"
 fi
 
 # Limpeza automática dos dados do teste

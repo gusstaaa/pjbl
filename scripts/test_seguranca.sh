@@ -238,6 +238,28 @@ else
   fail "Comunicado de turma sem turmaId não retornou HTTP 400 (retornou $COM_SEM_TURMA_CODE)."
 fi
 
+# Tentativa de cadastrar material escolar por perfil não autorizado (Violação RN-07)
+MAT_NAO_AUTORIZADO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/materiais" \
+  -H "Content-Type: application/json" \
+  -d '{"serie":"2º ano","nomeItem":"Caderno Hack","quantidade":1,"perfilOperador":"RESPONSAVEL"}')
+
+if [ "$MAT_NAO_AUTORIZADO_CODE" = "403" ]; then
+  pass "Tentativa de alterar lista de materiais por perfil não autorizado bloqueada pela RN-07 (HTTP 403)."
+else
+  fail "Cadastro de material sem permissão RN-07 não retornou HTTP 403 (retornou $MAT_NAO_AUTORIZADO_CODE)."
+fi
+
+# Tentativa de cadastrar material escolar para série fora do escopo RN-04
+MAT_SERIE_INVALIDA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/materiais" \
+  -H "Content-Type: application/json" \
+  -d '{"serie":"Ensino Médio","nomeItem":"Caderno Inválido","quantidade":1,"perfilOperador":"SECRETARIA"}')
+
+if [ "$MAT_SERIE_INVALIDA_CODE" = "400" ]; then
+  pass "Tentativa de cadastrar material para série não homologada bloqueada pela RN-04 (HTTP 400)."
+else
+  fail "Material com série inválida não retornou HTTP 400 (retornou $MAT_SERIE_INVALIDA_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------
