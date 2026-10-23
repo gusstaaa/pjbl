@@ -26,7 +26,7 @@
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
 | `scripts/prepare-db.js` | Ajusta provider Prisma (`sqlite` local / `postgresql` nuvem) | Antes de `db push` e `build` | Lê protocolo da `DATABASE_URL` |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
-| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula e documentos (8/8) | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos e mensalidades (9/9) | Em entregas de fluxo | Limpa os dados de teste ao final |
 | `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
 | `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
@@ -35,6 +35,7 @@
 |---|---|---|---|---|
 | 001_inicial | `Turma`, `Responsavel`, `Aluno`, `AlunoResponsavel`, `Matricula` | Sim (validação backend + integridade referencial) | 2026-09-11 | 0.4 |
 | 002_documentos_matricula | `DocumentoMatricula` | Sim (validação de tipos/status + Cascade Delete) | 2026-10-23 | 2.2 |
+| 003_mensalidades | `Mensalidade` | Sim (validação RN-08 + unicidade por mês/ano/matrícula + Cascade Delete) | 2026-10-23 | 2.3 |
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.
@@ -50,6 +51,7 @@ Pegadinhas do banco:
 | Matrícula (1.4) | `lib/matricula.ts` | `/api/matriculas`, `/api/matriculas/[id]` | `/matriculas` |
 | Rematrícula e Histórico (2.1) | `lib/aluno.ts`, `lib/matricula.ts` | `/api/matriculas/rematricula`, `/api/alunos` | `/alunos`, `/matriculas` |
 | Checklist de Documentos (2.2) | `lib/matricula.ts` | `/api/matriculas/[id]/documentos` | `/matriculas` |
+| Mensalidades e Pagamentos (2.3) | `lib/mensalidade.ts` | `/api/mensalidades`, `/api/mensalidades/[id]` | `/mensalidades` |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |

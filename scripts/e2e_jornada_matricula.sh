@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=8
+TOTAL_PASSOS=9
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -145,6 +145,27 @@ if [[ "$RES_DOC_PEND" =~ "\"statusMatricula\":\"PENDENTE_DOCUMENTOS\"" ]] && [[ 
   passo_ok "Checklist de documentos (RF-13/RF-14) e regra RN-05 validados (Pendente -> Regularizada ATIVA)!"
 else
   passo_falha "Erro na validação do checklist documental RN-05: $RES_DOC_PEND | $RES_DOC_OK"
+fi
+
+# 9. Controle de Mensalidades e Baixa Financeira (RF-15, RF-16, RN-08)
+RES_CARNE=$(curl -s -X POST "$BASE_URL/api/mensalidades" \
+  -H "Content-Type: application/json" \
+  -d "{\"matriculaId\":\"$MAT_ID\",\"valorMensal\":650.00,\"diaVencimento\":10,\"mesInicial\":1,\"quantidadeMeses\":3,\"perfilOperador\":\"FINANCEIRO\"}")
+
+MENSALIDADE_ID=$(echo "$RES_CARNE" | node -e '
+  const fs = require("fs");
+  const data = JSON.parse(fs.readFileSync(0, "utf8"));
+  console.log(data.mensalidades && data.mensalidades[0] ? data.mensalidades[0].id : "");
+')
+
+RES_BAIXA=$(curl -s -X PATCH "$BASE_URL/api/mensalidades/$MENSALIDADE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"PAGO","perfilOperador":"FINANCEIRO"}')
+
+if [ -n "$MENSALIDADE_ID" ] && [[ "$RES_CARNE" =~ "\"parcelasGeradas\":3" ]] && [[ "$RES_BAIXA" =~ "\"status\":\"PAGO\"" ]] && [[ "$RES_BAIXA" =~ "\"dataPagamento\":\"" ]]; then
+  passo_ok "Carnê de mensalidades gerado (RF-15) e baixa de pagamento registrada (RF-16/RN-08)!"
+else
+  passo_falha "Erro no fluxo financeiro de mensalidades: $RES_CARNE | $RES_BAIXA"
 fi
 
 # Limpeza automática dos dados do teste

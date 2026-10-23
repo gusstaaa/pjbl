@@ -185,11 +185,29 @@ export default async function HomePage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-800 group-hover:text-violet-700 transition">1.4 Matrícula e Situação Escolar</h4>
+                  <h4 className="font-semibold text-slate-800 group-hover:text-violet-700 transition">1.4 / 2.1 / 2.2 Matrículas, Rematrícula e Documentos</h4>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Disponível</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Efetivação da matrícula na turma com vaga, gerando comprovante e status "Ativa".
+                  Matrícula inicial, rematrícula simplificada (RF-06) e checklist de documentos obrigatórios (RF-13/RN-05).
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/mensalidades"
+              className="bg-white p-5 rounded-xl border border-emerald-200 hover:border-emerald-400 hover:shadow-md transition group shadow-sm flex items-start gap-4 md:col-span-2"
+            >
+              <div className="p-3 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-slate-800 group-hover:text-emerald-700 transition">2.3 Controle de Mensalidades e Pagamentos (RF-15, RF-16, RN-08)</h4>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Novo · Fase 2</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Geração de carnês anuais por matrícula, baixa de pagamentos (Pago / Pendente), filtro de inadimplência e controle de alçada financeira (RN-08).
                 </p>
               </div>
             </Link>

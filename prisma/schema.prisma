@@ -68,6 +68,7 @@ model Matricula {
   aluno         Aluno                @relation(fields: [alunoId], references: [id], onDelete: Restrict)
   turma         Turma                @relation(fields: [turmaId], references: [id], onDelete: Restrict)
   documentos    DocumentoMatricula[]
+  mensalidades  Mensalidade[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 }
@@ -85,4 +86,22 @@ model DocumentoMatricula {
   updatedAt   DateTime  @updatedAt
 
   @@unique([matriculaId, tipo])
+}
+
+model Mensalidade {
+  id             String    @id @default(uuid())
+  matriculaId    String
+  mesReferencia  Int
+  anoReferencia  Int
+  vencimento     DateTime
+  valor          Float
+  status         String    @default("PENDENTE")
+  dataPagamento  DateTime?
+  operadorPerfil String?   @default("FINANCEIRO")
+  observacao     String?
+  matricula      Matricula @relation(fields: [matriculaId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([matriculaId, mesReferencia, anoReferencia])
 }

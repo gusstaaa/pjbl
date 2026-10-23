@@ -172,6 +172,28 @@ else
   fail "Status inválido no checklist de documentos não retornou HTTP 400 (retornou $DOC_INVALIDO_CODE)."
 fi
 
+# Tentativa de operar mensalidades com perfil não autorizado (Violação da regra RN-08)
+RN08_VIOLACAO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/mensalidades" \
+  -H "Content-Type: application/json" \
+  -d '{"matriculaId":"id-qualquer","valorMensal":500,"perfilOperador":"PROFESSOR"}')
+
+if [ "$RN08_VIOLACAO_CODE" = "403" ]; then
+  pass "Tentativa de operação financeira por perfil não autorizado bloqueada pela RN-08 (HTTP 403)."
+else
+  fail "Violação da regra RN-08 não retornou HTTP 403 (retornou $RN08_VIOLACAO_CODE)."
+fi
+
+# Tentativa de lançar mensalidade com valor negativo ou inválido (RF-15)
+VALOR_NEGATIVO_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/mensalidades" \
+  -H "Content-Type: application/json" \
+  -d '{"matriculaId":"id-qualquer","valorMensal":-150,"perfilOperador":"FINANCEIRO"}')
+
+if [ "$VALOR_NEGATIVO_CODE" = "400" ]; then
+  pass "Tentativa de lançar mensalidade com valor negativo bloqueada (HTTP 400)."
+else
+  fail "Valor negativo de mensalidade não retornou HTTP 400 (retornou $VALOR_NEGATIVO_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------
