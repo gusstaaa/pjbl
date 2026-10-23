@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { School, BookOpen, Users, UserCheck, CheckCircle, DollarSign, Briefcase, Megaphone, Package, Library, Shirt, FileSignature } from 'lucide-react';
+import { School, BookOpen, Users, UserCheck, CheckCircle, DollarSign, Briefcase, Megaphone, Package, Library, Shirt, FileSignature, Calendar } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -27,6 +27,7 @@ export function Navbar() {
     { href: '/livros', label: 'Livros', icon: Library },
     { href: '/fardas', label: 'Fardas', icon: Shirt },
     { href: '/formularios', label: 'Autorizações', icon: FileSignature },
+    { href: '/calendario', label: 'Calendário', icon: Calendar },
   ];
 
   return (

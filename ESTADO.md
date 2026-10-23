@@ -24,25 +24,25 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 2, Item 2.9 — Formulários e autorizações digitais (RF-08, RF-09)**: Validar com o usuário e avançar para o Item 2.10 (Calendário de eventos escolares — RF-19).
+**Fase 2, Item 2.10 — Calendário de eventos escolares (RF-19)**: Validar com o usuário para encerrar 100% da Fase 2 (`ROADMAP.md`).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 2.9 (RF-08, RF-09, RF-17) implementado e provado nos testes automatizados (`e2e 15/15`, `segurança 28/28`, `smoke 25/25`).
+- Item 2.10 (RF-19) implementado e provado nos testes automatizados (`e2e 16/16`, `segurança 30/30`, `smoke 27/27`).
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Aprovar o Item 2.9 (Formulários e Autorizações Digitais) para marcarmos ✅ no ROADMAP e iniciarmos o último item da Fase 2 (Item 2.10).
+- Aprovar o Item 2.10 (Calendário de Eventos Escolares) para marcarmos ✅ no ROADMAP e oficializarmos o fechamento de 100% da Fase 2.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-23 | 2.10 Calendário de Eventos Escolares (RF-19) | `/api/calendario`, tela `/calendario`, e2e 16/16, segurança 30/30 e smoke 27/27 verdes |
 | 2026-10-23 | 2.9 Formulários e Autorizações (RF-08, RF-09) | `/api/formularios`, tela `/formularios`, e2e 15/15, segurança 28/28 e smoke 25/25 verdes |
 | 2026-10-23 | 2.8 Solicitação de Fardas (RF-10) | `/api/fardas`, tela `/fardas`, e2e 14/14, segurança 26/26 e smoke 23/23 verdes |
 | 2026-10-23 | 2.7 Relação de Livros Escolares (RF-12) | `/api/livros`, tela `/livros`, e2e 13/13, segurança 24/24 e smoke 21/21 verdes |
 | 2026-10-23 | 2.6 Listas de Materiais Escolares (RF-11) | `/api/materiais`, tela `/materiais`, e2e 12/12, segurança 22/22 e smoke 19/19 verdes |
-| 2026-10-23 | 2.5 Painel de Comunicados (RF-20) | `/api/comunicados`, tela `/comunicados`, e2e 11/11, segurança 20/20 e smoke 17/17 verdes |
 
 ## 📝 Anotado para depois
 

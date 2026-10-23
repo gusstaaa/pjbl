@@ -45,8 +45,8 @@
 | 2.6 | Listas de materiais escolares por turma | RF-11 | ✅ |
 | 2.7 | Relação de livros adotados e fornecidos | RF-12 | ✅ |
 | 2.8 | Solicitação de fardas escolares (tamanho/quantidade) | RF-10 | ✅ |
-| 2.9 | Formulários e autorizações digitais | RF-08, RF-09 | 🟡 |
-| 2.10 | Calendário de eventos escolares | RF-19 | 🔵 |
+| 2.9 | Formulários e autorizações digitais | RF-08, RF-09 | ✅ |
+| 2.10 | Calendário de eventos escolares | RF-19 | 🟡 |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |

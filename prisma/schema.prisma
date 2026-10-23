@@ -20,6 +20,7 @@ model Turma {
   comunicados        Comunicado[]
   materiais          MaterialEscolar[]
   livros             LivroEscolar[]
+  eventos            EventoEscolar[]
   createdAt          DateTime          @default(now())
   updatedAt          DateTime     @updatedAt
 }
@@ -213,4 +214,22 @@ model RespostaFormulario {
   createdAt       DateTime         @default(now())
 
   @@unique([formularioId, alunoId])
+}
+
+model EventoEscolar {
+  id          String    @id @default(uuid())
+  titulo      String
+  descricao   String
+  tipo        String    @default("REUNIAO_PAIS")
+  dataInicio  DateTime
+  dataFim     DateTime?
+  horario     String    @default("08:00")
+  local       String    @default("Auditório / Pátio Principal")
+  publicoAlvo String    @default("GERAL")
+  organizador String    @default("Coordenação Pedagógica")
+  perfilAutor String    @default("COORDENACAO")
+  turmaId     String?
+  turma       Turma?    @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

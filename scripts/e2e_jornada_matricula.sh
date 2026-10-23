@@ -13,7 +13,7 @@ echo "Ambiente: $BASE_URL"
 echo "=========================================================="
 
 PASSO=0
-TOTAL_PASSOS=15
+TOTAL_PASSOS=16
 
 passo_ok() {
   PASSO=$((PASSO + 1))
@@ -270,11 +270,27 @@ else
   passo_falha "Erro no fluxo de formulários e autorizações digitais (RF-08/RF-09): $RES_FORM_MODELO | $RES_FORM_RESP"
 fi
 
+# 16. Calendário de Eventos Escolares (RF-19)
+TITULO_EVENTO="Reunião de Pais E2E $TIMESTAMP"
+RES_EVENTO=$(curl -s -X POST "$BASE_URL/api/calendario" \
+  -H "Content-Type: application/json" \
+  -d "{\"titulo\":\"$TITULO_EVENTO\",\"descricao\":\"Apresentação pedagógica do bimestre e entrega de avaliações.\",\"tipo\":\"REUNIAO_PAIS\",\"dataInicio\":\"2026-11-15\",\"horario\":\"19:00\",\"local\":\"Auditório Central\",\"publicoAlvo\":\"TURMA\",\"turmaId\":\"$TURMA_ID\",\"perfilOperador\":\"COORDENACAO\"}")
+
+EVENTO_ID=$(echo "$RES_EVENTO" | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+CONSULTA_CALENDARIO=$(curl -s "$BASE_URL/api/calendario?turmaId=$TURMA_ID")
+
+if [ -n "$EVENTO_ID" ] && [[ "$CONSULTA_CALENDARIO" =~ "$TITULO_EVENTO" ]]; then
+  passo_ok "Evento escolar registrado pela coordenação e visível no calendário da turma (RF-19)!"
+else
+  passo_falha "Erro no registro ou consulta do calendário de eventos escolares (RF-19): $RES_EVENTO | $CONSULTA_CALENDARIO"
+fi
+
 # Limpeza automática dos dados do teste
 node -e "
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function clean() {
+  if ('$EVENTO_ID') await prisma.eventoEscolar.deleteMany({ where: { id: '$EVENTO_ID' } });
   if ('$FORM_ID') await prisma.formularioModelo.deleteMany({ where: { id: '$FORM_ID' } });
   await prisma.matricula.deleteMany({ where: { id: { in: ['$MAT_ID', '$REMAT_ID'] } } });
   await prisma.alunoResponsavel.deleteMany({ where: { alunoId: '$ALUNO_ID' } });

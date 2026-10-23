@@ -326,6 +326,28 @@ else
   fail "Resposta de formulário inválida não retornou HTTP 400 (retornou $FORM_DECISAO_INVALIDA_CODE)."
 fi
 
+# 29. Bloqueio de perfil não autorizado ao cadastrar evento no calendário (RF-19 -> HTTP 403)
+CALENDARIO_FORBIDDEN_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/calendario" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Feriado Inventado","descricao":"Tentativa de criar evento sem permissão","tipo":"FERIADO_RECESSO","dataInicio":"2026-11-20","perfilOperador":"RESPONSAVEL"}')
+
+if [ "$CALENDARIO_FORBIDDEN_CODE" = "403" ]; then
+  pass "Bloqueio RBAC (RF-19) ao tentar criar evento no calendário com perfil RESPONSAVEL (HTTP 403)."
+else
+  fail "Criação de evento escolar por perfil não autorizado não retornou HTTP 403 (retornou $CALENDARIO_FORBIDDEN_CODE)."
+fi
+
+# 30. Validação de data inválida ou categoria inválida no calendário (HTTP 400)
+CALENDARIO_INVALID_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/calendario" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Reunião Pedagógica","descricao":"Pauta pedagógica anual","tipo":"TIPO_INEXISTENTE","dataInicio":"2026-11-20","perfilOperador":"COORDENACAO"}')
+
+if [ "$CALENDARIO_INVALID_CODE" = "400" ]; then
+  pass "Validação de categoria inválida de evento escolar bloqueada com HTTP 400."
+else
+  fail "Categoria inválida de evento escolar não retornou HTTP 400 (retornou $CALENDARIO_INVALID_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

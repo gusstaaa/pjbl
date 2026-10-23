@@ -26,7 +26,7 @@
 | `start.sh` | Sincroniza schema e inicia o servidor Next.js | Ao iniciar o trabalho | Não toca em dados existentes |
 | `scripts/prepare-db.js` | Ajusta provider Prisma (`sqlite` local / `postgresql` nuvem) | Antes de `db push` e `build` | Lê protocolo da `DATABASE_URL` |
 | `scripts/smoke.sh` | Valida `/`, `/api/health` e `/api/health/db` | Em toda entrega | Não executa mutações |
-| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades, equipe, comunicados, materiais, livros, fardas e formulários (15/15) | Em entregas de fluxo | Limpa os dados de teste ao final |
+| `scripts/e2e_jornada_matricula.sh` | Valida ciclo completo da matrícula, rematrícula, documentos, mensalidades, equipe, comunicados, materiais, livros, fardas, formulários e calendário (16/16) | Em entregas de fluxo | Limpa os dados de teste ao final |
 | `scripts/test_seguranca.sh` | Valida headers, injeções, regras de negócio e histórico git | Em auditorias e antes de publicar | Somente testes de leitura e rejeição |
 | `scripts/test_backup.sh` | Executa backup do banco e testa restauração | Semanalmente e antes de deploy | Preserva integridade do banco |
 
@@ -42,6 +42,7 @@
 | 007_livros_escolares | `LivroEscolar` | Sim (validação RN-04, RN-07 + distinção adotado/fornecido RF-12 + Cascade Delete) | 2026-10-23 | 2.7 |
 | 008_solicitacoes_farda | `SolicitacaoFarda` | Sim (validação RF-10, RN-07 + demanda por tamanho + Cascade Delete) | 2026-10-23 | 2.8 |
 | 009_formularios_digitais | `FormularioModelo`, `RespostaFormulario` | Sim (validação RF-08, RF-09, RN-07 + unicidade por aluno/formulário + Cascade Delete) | 2026-10-23 | 2.9 |
+| 010_calendario_eventos | `EventoEscolar` | Sim (validação RF-19 + RBAC por perfil + filtro geral/turma + Cascade Delete) | 2026-10-23 | 2.10 |
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.
@@ -64,6 +65,7 @@ Pegadinhas do banco:
 | Relação de Livros (2.7) | `lib/livro.ts` | `/api/livros` | `/livros` |
 | Solicitação de Fardas (2.8) | `lib/farda.ts` | `/api/fardas`, `/api/fardas/[id]` | `/fardas` |
 | Formulários e Autorizações (2.9) | `lib/formulario.ts` | `/api/formularios`, `/api/formularios/respostas` | `/formularios` |
+| Calendário Escolar (2.10) | `lib/calendario.ts` | `/api/calendario` | `/calendario` |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |
