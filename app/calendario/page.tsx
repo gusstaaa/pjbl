@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao, BannerOperadorLogado } from '@/components/AuthProvider';
 import {
   Calendar,
   Clock,
@@ -75,8 +76,15 @@ export default function CalendarioPage() {
   const [local, setLocal] = useState('Auditório Principal');
   const [publicoAlvo, setPublicoAlvo] = useState('GERAL');
   const [turmaId, setTurmaId] = useState('');
+  const { sessao } = useSessao();
+  const perfilOperador = sessao.perfil;
   const [organizador, setOrganizador] = useState('Coordenação Pedagógica');
-  const [perfilOperador, setPerfilOperador] = useState('COORDENACAO');
+
+  useEffect(() => {
+    if (sessao?.nome) {
+      setOrganizador(sessao.nome);
+    }
+  }, [sessao]);
 
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -257,22 +265,11 @@ export default function CalendarioPage() {
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Perfil do Operador (Alçada RF-19)
-                </label>
-                <select
-                  value={perfilOperador}
-                  onChange={(e) => setPerfilOperador(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs bg-slate-50"
-                >
-                  <option value="COORDENACAO">Coordenação Pedagógica (Autorizado)</option>
-                  <option value="PROFESSOR">Professor / Corpo Docente (Autorizado)</option>
-                  <option value="SECRETARIA">Secretaria Escolar (Autorizado)</option>
-                  <option value="ADMINISTRACAO">Direção / Administração (Autorizado)</option>
-                  <option value="RESPONSAVEL">Responsável Legal (Somente Leitura - Testar 403)</option>
-                </select>
-              </div>
+              <BannerOperadorLogado
+                perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR']}
+                regraCodigo="RF-19"
+                descricaoAcao="agendar eventos no calendário escolar"
+              />
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

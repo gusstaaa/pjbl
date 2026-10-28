@@ -58,6 +58,7 @@ check_endpoint "Tela de Formulários e Autorizações" "$BASE_URL/formularios" "
 check_endpoint "API de Listagem de Formulários" "$BASE_URL/api/formularios" "200"
 check_endpoint "Tela de Calendário de Eventos" "$BASE_URL/calendario" "200"
 check_endpoint "API de Calendário Escolar" "$BASE_URL/api/calendario" "200"
+check_endpoint "Tela de Login e Troca de Perfil" "$BASE_URL/login" "200"
 
 echo "----------------------------------------"
 echo "Resultado: OK $OK_COUNT · FALHA $FAIL_COUNT"

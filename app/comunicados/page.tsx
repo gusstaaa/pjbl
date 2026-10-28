@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao, BannerOperadorLogado } from '@/components/AuthProvider';
 import {
   Megaphone,
   Send,
@@ -53,8 +54,9 @@ export default function ComunicadosPage() {
     totalUrgentes: 0,
   });
 
-  // Perfil Operador
-  const [perfilOperador, setPerfilOperador] = useState<string>('SECRETARIA');
+  // Perfil Operador da Sessão Ativa
+  const { sessao } = useSessao();
+  const perfilOperador = sessao.perfil;
 
   // Formulário de Publicação (RF-20)
   const [titulo, setTitulo] = useState<string>('');
@@ -120,6 +122,12 @@ export default function ComunicadosPage() {
   useEffect(() => {
     carregarComunicados();
   }, [carregarComunicados]);
+
+  useEffect(() => {
+    if (sessao?.nome) {
+      setAutorNome(sessao.nome);
+    }
+  }, [sessao]);
 
   async function handlePublicar(e: React.FormEvent) {
     e.preventDefault();
@@ -193,24 +201,11 @@ export default function ComunicadosPage() {
             </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0" />
-            <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Perfil Operador (RF-20)
-              </label>
-              <select
-                value={perfilOperador}
-                onChange={(e) => setPerfilOperador(e.target.value)}
-                className="mt-0.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
-              >
-                <option value="SECRETARIA">Secretaria Escolar (Publica Comunicados)</option>
-                <option value="ADMINISTRACAO">Direção / Administração (Publica Comunicados)</option>
-                <option value="COORDENACAO">Coordenação Pedagógica (Publica Comunicados)</option>
-                <option value="RESPONSAVEL">Responsável / Família (Somente Leitura)</option>
-              </select>
-            </div>
-          </div>
+          <BannerOperadorLogado
+            perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
+            regraCodigo="RF-20"
+            descricaoAcao="publicar comunicados oficiais no mural"
+          />
         </div>
 
         {/* Cards de Resumo */}

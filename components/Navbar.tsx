@@ -24,7 +24,9 @@ import {
   PlusCircle,
   LayoutDashboard,
   Sparkles,
+  LogIn,
 } from 'lucide-react';
+import { useSessao, PERFIS_META } from '@/components/AuthProvider';
 
 interface NavItem {
   href: string;
@@ -42,6 +44,14 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Visão geral da escola, indicadores e acesso rápido',
     category: 'Visão Geral',
     icon: LayoutDashboard,
+  },
+  {
+    href: '/login',
+    label: 'Login / Trocar Usuário',
+    description: 'Alternar entre Secretaria, Administração, Professor ou Responsável',
+    category: 'Visão Geral',
+    icon: LogIn,
+    tag: 'Acesso',
   },
   // Secretaria & Matrículas
   {
@@ -144,11 +154,13 @@ const CATEGORIES = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const { sessao } = useSessao();
   const [menuAberto, setMenuAberto] = useState(false);
   const [buscaMenu, setBuscaMenu] = useState('');
 
   const itemAtual =
     NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
+  const metaPerfil = PERFIS_META[sessao.perfil] || PERFIS_META.SECRETARIA;
 
   // Fecha o menu lateral automaticamente ao navegar de página
   useEffect(() => {
@@ -224,35 +236,27 @@ export function Navbar() {
             </span>
           </div>
 
-          {/* Direita: Atalhos de Ação Rápida para UX */}
+          {/* Direita: Perfil Logado + Botão de Matrícula */}
           <div className="flex items-center gap-2">
             <Link
-              href="/alunos"
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
-                pathname === '/alunos'
-                  ? 'bg-white/20 text-white border-white/40'
-                  : 'bg-white/10 hover:bg-white/20 text-blue-100 border-white/10'
-              }`}
+              href="/login"
+              title="Clique para trocar de usuário ou perfil de acesso"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-950 border border-blue-700 hover:border-emerald-400 text-xs transition"
             >
-              <UserCheck className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Alunos</span>
-            </Link>
-
-            <Link
-              href="/calendario"
-              className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
-                pathname === '/calendario'
-                  ? 'bg-white/20 text-white border-white/40'
-                  : 'bg-white/10 hover:bg-white/20 text-blue-100 border-white/10'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Calendário</span>
+              <LogIn className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <div className="text-left leading-tight">
+                <span className="block font-bold text-white truncate max-w-[110px] sm:max-w-[150px]">
+                  {sessao.nome}
+                </span>
+                <span className="block text-[10px] text-emerald-300 font-medium">
+                  {metaPerfil.rotulo} · Trocar
+                </span>
+              </div>
             </Link>
 
             <Link
               href="/matriculas"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Matrículas</span>
@@ -277,7 +281,7 @@ export function Navbar() {
             className="relative w-80 sm:w-96 max-w-[88vw] bg-white h-full shadow-2xl border-r border-slate-200 flex flex-col z-10 overflow-hidden"
           >
             {/* Cabeçalho do Menu Lateral */}
-            <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white p-5 border-b-2 border-emerald-500">
+            <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white p-5 border-b-2 border-emerald-500 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-500 text-slate-950 p-2.5 rounded-xl shadow-sm">
@@ -303,8 +307,30 @@ export function Navbar() {
                 </button>
               </div>
 
+              {/* Cartão do Usuário Logado no Menu Lateral */}
+              <div className="bg-blue-950/75 border border-blue-700/80 rounded-xl p-3 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-blue-300 font-semibold">
+                    Usuário Conectado
+                  </p>
+                  <p className="text-xs font-extrabold text-white truncate">
+                    {sessao.nome}
+                  </p>
+                  <p className="text-[11px] text-emerald-300 font-medium">
+                    {metaPerfil.rotulo}
+                  </p>
+                </div>
+                <Link
+                  href="/login"
+                  onClick={() => setMenuAberto(false)}
+                  className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] shrink-0 transition"
+                >
+                  Trocar
+                </Link>
+              </div>
+
               {/* Busca Rápida dentro do Menu Lateral */}
-              <div className="mt-4 relative">
+              <div className="relative">
                 <Search className="w-4 h-4 text-blue-200 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
@@ -418,7 +444,7 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-slate-700">
-                  12 Módulos Ativos
+                  13 Telas Disponíveis
                 </span>
               </div>
               <span>Pressione ESC para fechar</span>

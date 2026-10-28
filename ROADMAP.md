@@ -51,17 +51,19 @@
 ## Fase 3 — Experiência de Uso (UX) e Identidade Visual
 | # | Item | Requisito | Status |
 |---|---|---|---|
-| 3.1 | Menu lateral deslizante (Drawer) categorizado, barra superior com ações rápidas e identidade visual Azul Royal & Esmeralda | REQUISITOS §6 (Dispositivos e UX) | 🟡 |
+| 3.1 | Menu lateral deslizante (Drawer) categorizado, barra superior com ações rápidas e identidade visual Azul Royal & Esmeralda | REQUISITOS §6 (Dispositivos e UX) | ✅ |
+| 3.2 | Tela de Login por perfil (`Secretaria`, `Administração`, `Professor` e `Responsável` com escolha do responsável cadastrado) e remoção dos seletores manuais de operador nas telas | REQUISITOS §2 e §6 (Perfis e Sessão) | 🟡 |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |
 |---|---|---|
-| 1 | Definir se haverá portal com senha própria para responsáveis no MVP ou se o operador da secretaria alimenta tudo no início. (Recomendação: secretaria alimenta tudo no MVP da Fase 1). | Fase 2 |
+| 1 | Login inicial por seleção de perfil e escolha do responsável cadastrado (sem senha na 1ª etapa; evolução futura para usuário/ID e senha). | Resolvido em 3.2 |
 
 ## Ideias novas (caixa de entrada: nunca apagar, só mudar o status)
 | Data | Ideia | Status | Destino |
 |---|---|---|---|
-| 2026-10-28 | Menu lateral que abre ao clicar no ícone superior, identidade de cor Azul Royal & Esmeralda e melhorias de UX na navegação e painel inicial | 🟡 fazendo | Item 3.1 |
+| 2026-10-28 | Menu lateral que abre ao clicar no ícone superior, identidade de cor Azul Royal & Esmeralda e melhorias de UX na navegação e painel inicial | ✅ feito | Item 3.1 |
+| 2026-10-28 | Tela de login para entrar como Secretaria, Administração, Professor ou Responsável (escolhendo entre os responsáveis cadastrados) em vez de selecionar perfil em cada tela | 🟡 fazendo | Item 3.2 |
 
 ## Histórico
 | Data | Evento |

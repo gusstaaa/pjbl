@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao, BannerOperadorLogado } from '@/components/AuthProvider';
 import {
   FileSignature,
   PlusCircle,
@@ -68,8 +69,9 @@ export default function FormulariosPage() {
     totalContratosAssinados: 0,
   });
 
-  // Perfil Operador (RN-07)
-  const [perfilOperador, setPerfilOperador] = useState<string>('SECRETARIA');
+  // Perfil Operador da Sessão Ativa (RN-07)
+  const { sessao } = useSessao();
+  const perfilOperador = sessao.perfil;
 
   // Formulário 1: Criar Modelo (RF-08)
   const [titulo, setTitulo] = useState<string>('');
@@ -135,6 +137,15 @@ export default function FormulariosPage() {
   useEffect(() => {
     carregarDados();
   }, [carregarDados]);
+
+  useEffect(() => {
+    if (sessao.perfil === 'RESPONSAVEL') {
+      setResponsavelNome(sessao.nome);
+      if (sessao.alunosVinculados && sessao.alunosVinculados.length > 0 && !alunoId) {
+        setAlunoId(sessao.alunosVinculados[0].id);
+      }
+    }
+  }, [sessao, alunoId]);
 
   async function handleCriarModelo(e: React.FormEvent) {
     e.preventDefault();
@@ -241,23 +252,11 @@ export default function FormulariosPage() {
             </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-rose-600 shrink-0" />
-            <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Perfil Operador (RN-07)
-              </label>
-              <select
-                value={perfilOperador}
-                onChange={(e) => setPerfilOperador(e.target.value)}
-                className="mt-0.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
-              >
-                <option value="SECRETARIA">Secretaria Escolar (Cria Modelos RF-08)</option>
-                <option value="ADMINISTRACAO">Administração (Cria Modelos RF-08)</option>
-                <option value="RESPONSAVEL">Responsável / Família (Assina Autorizações RF-09)</option>
-              </select>
-            </div>
-          </div>
+          <BannerOperadorLogado
+            perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
+            regraCodigo="RN-07 / RF-08"
+            descricaoAcao="criar novos modelos de formulários (responsáveis podem assinar abaixo)"
+          />
         </div>
 
         {/* Cards de Resumo */}

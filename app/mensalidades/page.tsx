@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao, BannerOperadorLogado } from '@/components/AuthProvider';
 import {
   DollarSign,
   PlusCircle,
@@ -87,8 +88,9 @@ export default function MensalidadesPage() {
     valorPendente: 0,
   });
 
-  // Perfil do operador (RN-08)
-  const [perfilOperador, setPerfilOperador] = useState<string>('FINANCEIRO');
+  // Perfil do operador da Sessão Ativa (RN-08)
+  const { sessao } = useSessao();
+  const perfilOperador = sessao.perfil;
 
   // Formulário de lançamento de carnê (RF-15)
   const [matriculaId, setMatriculaId] = useState<string>('');
@@ -264,24 +266,11 @@ export default function MensalidadesPage() {
             </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0" />
-            <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Perfil Operador (Regra RN-08)
-              </label>
-              <select
-                value={perfilOperador}
-                onChange={(e) => setPerfilOperador(e.target.value)}
-                className="mt-0.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
-              >
-                <option value="FINANCEIRO">Setor Financeiro (Autorizado RN-08)</option>
-                <option value="ADMINISTRACAO">Administração Escolar (Autorizado RN-08)</option>
-                <option value="SECRETARIA">Secretaria (Somente Consulta - Bloqueia Baixa)</option>
-                <option value="PROFESSOR">Professor (Somente Consulta - Bloqueia Baixa)</option>
-              </select>
-            </div>
-          </div>
+          <BannerOperadorLogado
+            perfisAutorizados={['ADMINISTRACAO']}
+            regraCodigo="RN-08"
+            descricaoAcao="gerar carnês ou registrar baixa de pagamento de mensalidades"
+          />
         </div>
 
         {/* Cards de Resumo Financeiro */}

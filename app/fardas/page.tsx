@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao, BannerOperadorLogado } from '@/components/AuthProvider';
 import {
   Shirt,
   PlusCircle,
@@ -68,8 +69,9 @@ export default function FardasPage() {
     demandaPorTamanho: {},
   });
 
-  // Perfil Operador
-  const [perfilOperador, setPerfilOperador] = useState<string>('SECRETARIA');
+  // Perfil Operador da Sessão Ativa
+  const { sessao } = useSessao();
+  const perfilOperador = sessao.perfil;
 
   // Formulário de Solicitação (RF-10)
   const [alunoId, setAlunoId] = useState<string>('');
@@ -130,6 +132,17 @@ export default function FardasPage() {
   useEffect(() => {
     carregarSolicitacoes();
   }, [carregarSolicitacoes]);
+
+  useEffect(() => {
+    if (
+      sessao.perfil === 'RESPONSAVEL' &&
+      sessao.alunosVinculados &&
+      sessao.alunosVinculados.length > 0 &&
+      !alunoId
+    ) {
+      setAlunoId(sessao.alunosVinculados[0].id);
+    }
+  }, [sessao, alunoId]);
 
   async function handleSolicitar(e: React.FormEvent) {
     e.preventDefault();
@@ -221,23 +234,11 @@ export default function FardasPage() {
             </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-cyan-600 shrink-0" />
-            <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Perfil Operador (Baixa RN-07)
-              </label>
-              <select
-                value={perfilOperador}
-                onChange={(e) => setPerfilOperador(e.target.value)}
-                className="mt-0.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
-              >
-                <option value="SECRETARIA">Secretaria Escolar (Separa e Entrega)</option>
-                <option value="ADMINISTRACAO">Administração (Separa e Entrega)</option>
-                <option value="RESPONSAVEL">Responsável / Família (Solicita Tamanho)</option>
-              </select>
-            </div>
-          </div>
+          <BannerOperadorLogado
+            perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
+            regraCodigo="RN-07 / RF-10"
+            descricaoAcao="dar baixa de entrega nas fardas (responsáveis podem solicitar abaixo)"
+          />
         </div>
 
         {/* Cards de Resumo */}
