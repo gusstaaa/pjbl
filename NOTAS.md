@@ -81,6 +81,7 @@ Pegadinhas do banco:
 | 2026-09-11 | Vínculo explícito Aluno-Responsável (N:N) | Permitir múltiplos filhos para um responsável e múltiplos responsáveis por aluno | Campo texto solto no aluno | Sim |
 | 2026-10-23 | Reaproveitar tabela `Matricula` para histórico e rematrícula (RF-06) | Cada matrícula já possui `anoLetivo`, `turmaId` e `status`, formando o histórico anual sem duplicar tabelas | Criar tabela separada `HistoricoMatricula` | Sim |
 | 2026-10-23 | Inicializar os 5 documentos padrão sob demanda e sincronizar `RN-05` automaticamente | Garante compatibilidade retroativa com matrículas anteriores e atualiza o status da matrícula (`PENDENTE_DOCUMENTOS` ↔ `ATIVA`) sem ação manual extra | Exigir migração manual das matrículas antigas | Sim |
+| 2026-10-28 | Menu lateral deslizante (Drawer) categorizado + Identidade Azul Royal & Esmeralda (`Navbar.tsx`) | Com 12 módulos ativos, a barra horizontal ficava sobrecarregada; o menu lateral em gaveta agrupado em 4 setores com busca instantânea melhora a navegabilidade em desktop e celular | Manter todos os 12 links na barra horizontal | Sim |
 
 ## 8. Rotina de manutenção (Etapa 8)
 - **Toda sessão:** Ao comando "continuar" → fazer `git pull`, subir o sistema (`npm run dev -- -p 3000` ou `start.sh`) e validar `/health` e `/health/db`.

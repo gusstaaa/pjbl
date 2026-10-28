@@ -48,13 +48,20 @@
 | 2.9 | Formulários e autorizações digitais | RF-08, RF-09 | ✅ |
 | 2.10 | Calendário de eventos escolares | RF-19 | ✅ |
 
+## Fase 3 — Experiência de Uso (UX) e Identidade Visual
+| # | Item | Requisito | Status |
+|---|---|---|---|
+| 3.1 | Menu lateral deslizante (Drawer) categorizado, barra superior com ações rápidas e identidade visual Azul Royal & Esmeralda | REQUISITOS §6 (Dispositivos e UX) | 🟡 |
+
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |
 |---|---|---|
 | 1 | Definir se haverá portal com senha própria para responsáveis no MVP ou se o operador da secretaria alimenta tudo no início. (Recomendação: secretaria alimenta tudo no MVP da Fase 1). | Fase 2 |
 
 ## Ideias novas (caixa de entrada: nunca apagar, só mudar o status)
-*(vazio no momento)*
+| Data | Ideia | Status | Destino |
+|---|---|---|---|
+| 2026-10-28 | Menu lateral que abre ao clicar no ícone superior, identidade de cor Azul Royal & Esmeralda e melhorias de UX na navegação e painel inicial | 🟡 fazendo | Item 3.1 |
 
 ## Histórico
 | Data | Evento |
