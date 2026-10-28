@@ -24,15 +24,15 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 3, Item 3.2 — Tela de Login (`/login`) por perfil (`Secretaria`, `Administração`, `Professor`, `Responsável` com escolha do responsável cadastrado) e Sessão Unificada**: Validar com o usuário.
+**Projeto 100% concluído (Fases 0, 1, S, 2 e 3 — Todos os itens ✅ no `ROADMAP.md`)**: Em regime de operação e evolução contínua (`Etapa 8`).
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 3.2 implementado em `app/login/page.tsx`, `components/AuthProvider.tsx` e integrado nas 8 telas que antes tinham seletor manual de operador.
+- _(nenhum item pendente — Fase 3 concluída com menu lateral deslizante, identidade Azul Royal & Esmeralda e tela de Login unificada por perfil)_
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Conferir e aprovar a tela `/login` e a troca de usuário no topo/menu lateral para marcarmos ✅ no `ROADMAP.md`.
+- Indicar a próxima melhoria desejada (ex.: evolução do login com usuário/ID e senha, visão personalizada por perfil ou rotina de manutenção).
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 

@@ -52,7 +52,7 @@
 | # | Item | Requisito | Status |
 |---|---|---|---|
 | 3.1 | Menu lateral deslizante (Drawer) categorizado, barra superior com ações rápidas e identidade visual Azul Royal & Esmeralda | REQUISITOS §6 (Dispositivos e UX) | ✅ |
-| 3.2 | Tela de Login por perfil (`Secretaria`, `Administração`, `Professor` e `Responsável` com escolha do responsável cadastrado) e remoção dos seletores manuais de operador nas telas | REQUISITOS §2 e §6 (Perfis e Sessão) | 🟡 |
+| 3.2 | Tela de Login por perfil (`Secretaria`, `Administração`, `Professor` e `Responsável` com escolha do responsável cadastrado) e remoção dos seletores manuais de operador nas telas | REQUISITOS §2 e §6 (Perfis e Sessão) | ✅ |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |
@@ -63,10 +63,11 @@
 | Data | Ideia | Status | Destino |
 |---|---|---|---|
 | 2026-10-28 | Menu lateral que abre ao clicar no ícone superior, identidade de cor Azul Royal & Esmeralda e melhorias de UX na navegação e painel inicial | ✅ feito | Item 3.1 |
-| 2026-10-28 | Tela de login para entrar como Secretaria, Administração, Professor ou Responsável (escolhendo entre os responsáveis cadastrados) em vez de selecionar perfil em cada tela | 🟡 fazendo | Item 3.2 |
+| 2026-10-28 | Tela de login para entrar como Secretaria, Administração, Professor ou Responsável (escolhendo entre os responsáveis cadastrados) em vez de selecionar perfil em cada tela | ✅ feito | Item 3.2 |
 
 ## Histórico
 | Data | Evento |
 |---|---|
 | 2026-09-11 | Roadmap criado a partir do REQUISITOS v1.0 aprovado |
 | 2026-10-23 | Fases 0, 1, S e 2 (100% dos requisitos RF-01 a RF-20 e RN-01 a RN-08) concluídas e validadas |
+| 2026-10-28 | Fase 3 (Itens 3.1 e 3.2 — Menu lateral Drawer, identidade Azul Royal & Esmeralda, tela de Login por perfil e sessão unificada) concluída e validada |
