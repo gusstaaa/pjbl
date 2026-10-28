@@ -24,15 +24,15 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Fase 3 · Item 3.4 (Edição e Remoção — CRUD Completo de Alunos, Responsáveis, Turmas, Colaboradores e demais parâmetros)**: Aguardando validação e confirmação do usuário.
+**Projeto 100% entregue e em operação (Fases 0, 1, S, 2 e 3 concluídas)**: Pronto para uso ou novas evoluções sob demanda.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Item 3.4 concluído (rotas `PATCH`/`DELETE` e botões de **Editar** / **Remover** nas telas `/alunos`, `/responsaveis`, `/turmas`, `/colaboradores`, `/matriculas`, `/materiais`, `/livros`, `/comunicados`, `/calendario`, `/fardas` e `/formularios`), aguardando o "ok" do usuário para marcar como `✅` no `ROADMAP.md`.
+- Nenhuma tarefa pendente. Fases 0, 1, S, 2 e 3 (Itens 3.1 a 3.4) 100% concluídas, testadas e salvas no GitHub e na Vercel.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Testar a edição e remoção de Alunos, Responsáveis, Turmas, Colaboradores e demais parâmetros cadastráveis (logado como Secretaria ou Administração) e confirmar se o Item 3.4 está aprovado.
+- Utilizar o sistema em produção (`https://pjbl-gusta22.vercel.app`) ou solicitar novas melhorias quando desejar.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
