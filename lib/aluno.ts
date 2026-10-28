@@ -200,3 +200,107 @@ export async function criarAluno(input: CriarAlunoInput) {
     return aluno;
   });
 }
+
+export async function atualizarAluno(id: string, input: Partial<CriarAlunoInput>) {
+  const existente = await prisma.aluno.findUnique({
+    where: { id },
+    include: { responsaveis: true },
+  });
+
+  if (!existente) {
+    throw new Error('Aluno não encontrado no sistema.');
+  }
+
+  const dadosAtualizacao: {
+    nome?: string;
+    dataNascimento?: Date;
+    genero?: string | null;
+    certidaoNascimento?: string | null;
+    observacoesMedicas?: string | null;
+  } = {};
+
+  if (input.nome !== undefined) {
+    const nomeLimpo = input.nome.trim();
+    if (nomeLimpo.length < 3) {
+      throw new Error('O nome do aluno deve ter pelo menos 3 caracteres.');
+    }
+    dadosAtualizacao.nome = nomeLimpo;
+  }
+
+  if (input.dataNascimento !== undefined) {
+    const dataNasc = new Date(input.dataNascimento);
+    if (isNaN(dataNasc.getTime()) || dataNasc >= new Date()) {
+      throw new Error('Informe uma data de nascimento válida anterior à data de hoje.');
+    }
+    dadosAtualizacao.dataNascimento = dataNasc;
+  }
+
+  if (input.genero !== undefined) {
+    dadosAtualizacao.genero = input.genero ? input.genero.trim() : null;
+  }
+
+  if (input.certidaoNascimento !== undefined) {
+    dadosAtualizacao.certidaoNascimento = input.certidaoNascimento
+      ? input.certidaoNascimento.trim()
+      : null;
+  }
+
+  if (input.observacoesMedicas !== undefined) {
+    dadosAtualizacao.observacoesMedicas = input.observacoesMedicas
+      ? input.observacoesMedicas.trim()
+      : null;
+  }
+
+  if (input.responsavelId !== undefined) {
+    if (!input.responsavelId || input.responsavelId.trim() === '') {
+      throw new Error(
+        'Regra RN-01: É obrigatório manter ao menos um responsável legal vinculado ao aluno.'
+      );
+    }
+    const resp = await prisma.responsavel.findUnique({
+      where: { id: input.responsavelId },
+    });
+    if (!resp) {
+      throw new Error('O responsável legal selecionado não foi encontrado no sistema.');
+    }
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const alunoAtualizado = await tx.aluno.update({
+      where: { id },
+      data: dadosAtualizacao,
+    });
+
+    if (input.responsavelId) {
+      await tx.alunoResponsavel.deleteMany({
+        where: { alunoId: id },
+      });
+      await tx.alunoResponsavel.create({
+        data: {
+          alunoId: id,
+          responsavelId: input.responsavelId,
+          ehPrincipal: true,
+        },
+      });
+    }
+
+    return alunoAtualizado;
+  });
+}
+
+export async function excluirAluno(id: string) {
+  const existente = await prisma.aluno.findUnique({
+    where: { id },
+  });
+
+  if (!existente) {
+    throw new Error('Aluno não encontrado no sistema.');
+  }
+
+  await prisma.$transaction([
+    prisma.matricula.deleteMany({ where: { alunoId: id } }),
+    prisma.aluno.delete({ where: { id } }),
+  ]);
+
+  return { id, nome: existente.nome, removido: true };
+}

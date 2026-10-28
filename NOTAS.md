@@ -52,9 +52,9 @@ Pegadinhas do banco:
 | Módulo | Lógica (serviço) | Rotas | Telas |
 |---|---|---|---|
 | Fundação | Prisma Client | `/api/health`, `/api/health/db`, `/api/version` | `/` (Dashboard de Boas-Vindas) |
-| Turmas (1.1) | `lib/turma.ts` | `/api/turmas` | `/turmas` |
-| Responsáveis (1.2) | `lib/responsavel.ts` | `/api/responsaveis` | `/responsaveis` |
-| Alunos (1.3) | `lib/aluno.ts` | `/api/alunos` | `/alunos` |
+| Turmas (1.1) | `lib/turma.ts` | `/api/turmas`, `/api/turmas/[id]` | `/turmas` |
+| Responsáveis (1.2) | `lib/responsavel.ts` | `/api/responsaveis`, `/api/responsaveis/[id]` | `/responsaveis` |
+| Alunos (1.3) | `lib/aluno.ts` | `/api/alunos`, `/api/alunos/[id]` | `/alunos` |
 | Matrícula (1.4) | `lib/matricula.ts` | `/api/matriculas`, `/api/matriculas/[id]` | `/matriculas` |
 | Rematrícula e Histórico (2.1) | `lib/aluno.ts`, `lib/matricula.ts` | `/api/matriculas/rematricula`, `/api/alunos` | `/alunos`, `/matriculas` |
 | Checklist de Documentos (2.2) | `lib/matricula.ts` | `/api/matriculas/[id]/documentos` | `/matriculas` |

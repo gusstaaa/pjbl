@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   School,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 
 interface TurmaResumo {
@@ -198,6 +199,29 @@ export default function LivrosPage() {
       setErro('Falha de comunicação ao cadastrar livro escolar.');
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleRemoverLivro(livro: LivroItem) {
+    if (!window.confirm(`Deseja realmente remover o livro "${livro.titulo}" da relação?`)) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/livros?id=${encodeURIComponent(livro.id)}&perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover livro.');
+      } else {
+        setSucesso(`Livro "${livro.titulo}" removido da relação.`);
+        await carregarLivros();
+      }
+    } catch {
+      setErro('Falha ao remover livro da relação.');
     }
   }
 
@@ -599,6 +623,19 @@ export default function LivrosPage() {
                         {livro.observacao && <span>Obs.: {livro.observacao}</span>}
                       </div>
                     </div>
+
+                    {podeEditar && (
+                      <div className="shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoverLivro(livro)}
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition"
+                          title="Remover livro da relação"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

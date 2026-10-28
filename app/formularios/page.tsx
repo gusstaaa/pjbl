@@ -13,6 +13,7 @@ import {
   XCircle,
   FileText,
   Calendar,
+  Trash2,
 } from 'lucide-react';
 
 interface AlunoItem {
@@ -224,6 +225,35 @@ export default function FormulariosPage() {
       setErro('Falha ao enviar assinatura digital do formulário.');
     } finally {
       setEnviandoResposta(false);
+    }
+  }
+
+  async function handleRemoverModelo(f: FormularioModeloItem, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (
+      !window.confirm(
+        `Deseja realmente remover o modelo "${f.titulo}" e todas as suas respostas vinculadas?`
+      )
+    ) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/formularios?id=${encodeURIComponent(f.id)}&perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover modelo de formulário.');
+      } else {
+        if (formularioId === f.id) setFormularioId('');
+        setSucesso(`Modelo "${f.titulo}" removido com sucesso.`);
+        await carregarDados();
+      }
+    } catch {
+      setErro('Falha ao remover modelo de formulário.');
     }
   }
 
@@ -552,9 +582,21 @@ export default function FormulariosPage() {
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
                           {f.tipo}
                         </span>
-                        <span className="text-[11px] font-semibold text-slate-500">
-                          {f.totalRespostas} resposta(s)
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-slate-500">
+                            {f.totalRespostas} resposta(s)
+                          </span>
+                          {podeCriarModelo && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleRemoverModelo(f, e)}
+                              className="p-1 rounded text-rose-600 hover:bg-rose-100 transition"
+                              title="Remover modelo"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <h4 className="font-bold text-slate-800 text-xs">{f.titulo}</h4>
                       <p className="text-[11px] text-slate-500 line-clamp-2">{f.descricao}</p>

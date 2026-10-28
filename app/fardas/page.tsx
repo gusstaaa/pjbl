@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   PackageCheck,
+  Trash2,
 } from 'lucide-react';
 
 interface AlunoItem {
@@ -214,6 +215,33 @@ export default function FardasPage() {
       setErro('Erro ao atualizar status da solicitação.');
     } finally {
       setAtualizandoId(null);
+    }
+  }
+
+  async function handleRemoverFarda(item: SolicitacaoFardaItem) {
+    if (
+      !window.confirm(
+        `Deseja realmente remover a solicitação de farda (${item.tipoPeca} - ${item.alunoNome})?`
+      )
+    ) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/fardas/${item.id}?perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover solicitação de farda.');
+      } else {
+        setSucesso(`Solicitação de farda de ${item.alunoNome} removida.`);
+        await carregarSolicitacoes();
+      }
+    } catch {
+      setErro('Falha ao remover solicitação de farda.');
     }
   }
 
@@ -547,23 +575,33 @@ export default function FardasPage() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {podeDarBaixa ? (
-                        <select
-                          disabled={atualizandoId === item.id}
-                          value={item.status}
-                          onChange={(e) => handleAlterarStatus(item, e.target.value)}
-                          className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
-                            item.status === 'ENTREGUE'
-                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                              : item.status === 'SEPARADO'
-                              ? 'bg-blue-50 border-blue-200 text-blue-800'
-                              : 'bg-amber-50 border-amber-200 text-amber-800'
-                          }`}
-                        >
-                          <option value="SOLICITADO">SOLICITADO</option>
-                          <option value="SEPARADO">SEPARADO</option>
-                          <option value="ENTREGUE">ENTREGUE</option>
-                          <option value="CANCELADO">CANCELADO</option>
-                        </select>
+                        <>
+                          <select
+                            disabled={atualizandoId === item.id}
+                            value={item.status}
+                            onChange={(e) => handleAlterarStatus(item, e.target.value)}
+                            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                              item.status === 'ENTREGUE'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                : item.status === 'SEPARADO'
+                                ? 'bg-blue-50 border-blue-200 text-blue-800'
+                                : 'bg-amber-50 border-amber-200 text-amber-800'
+                            }`}
+                          >
+                            <option value="SOLICITADO">SOLICITADO</option>
+                            <option value="SEPARADO">SEPARADO</option>
+                            <option value="ENTREGUE">ENTREGUE</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoverFarda(item)}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition"
+                            title="Remover solicitação de farda"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
                       ) : (
                         <span
                           className={`rounded-lg border px-2.5 py-1 text-xs font-bold ${

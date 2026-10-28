@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { criarMaterialEscolar, listarMateriaisEscolares } from '@/lib/material';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,5 +48,22 @@ export async function POST(request: Request) {
     const mensagem = error.message || 'Erro ao cadastrar item de material escolar.';
     const statusHttp = mensagem.includes('RN-07') ? 403 : 400;
     return NextResponse.json({ erro: mensagem }, { status: statusHttp });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ erro: 'ID do material é obrigatório.' }, { status: 400 });
+    }
+    await prisma.materialEscolar.delete({ where: { id } });
+    return NextResponse.json({ id, removido: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { erro: error.message || 'Erro ao remover item da lista de materiais.' },
+      { status: 400 }
+    );
   }
 }

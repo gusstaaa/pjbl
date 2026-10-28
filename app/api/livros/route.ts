@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { criarLivroEscolar, listarLivrosEscolares } from '@/lib/livro';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,5 +49,22 @@ export async function POST(request: Request) {
     const mensagem = error.message || 'Erro ao cadastrar livro escolar.';
     const statusHttp = mensagem.includes('RN-07') ? 403 : 400;
     return NextResponse.json({ erro: mensagem }, { status: statusHttp });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ erro: 'ID do livro é obrigatório.' }, { status: 400 });
+    }
+    await prisma.livroEscolar.delete({ where: { id } });
+    return NextResponse.json({ id, removido: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { erro: error.message || 'Erro ao remover livro da relação.' },
+      { status: 400 }
+    );
   }
 }

@@ -12,6 +12,7 @@ import {
   UserCheck,
   CheckCircle2,
   Layers,
+  Trash2,
 } from 'lucide-react';
 
 interface TurmaResumo {
@@ -247,6 +248,29 @@ export default function MateriaisPage() {
       setErro('Falha de comunicação ao cadastrar item de material escolar.');
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleRemoverMaterial(item: MaterialItem) {
+    if (!window.confirm(`Deseja realmente remover o item "${item.nomeItem}" da lista de materiais?`)) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/materiais?id=${encodeURIComponent(item.id)}&perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover material.');
+      } else {
+        setSucesso(`Item "${item.nomeItem}" removido da lista de materiais.`);
+        await carregarMateriais();
+      }
+    } catch {
+      setErro('Falha ao remover item da lista de materiais.');
     }
   }
 
@@ -657,6 +681,16 @@ export default function MateriaisPage() {
                       <span className="px-3 py-1 rounded-lg bg-slate-900 text-white text-xs font-extrabold">
                         {item.quantidade} {item.unidade}
                       </span>
+                      {podeEditar && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoverMaterial(item)}
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition"
+                          title="Remover item da lista"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

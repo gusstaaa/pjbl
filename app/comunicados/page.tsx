@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Calendar,
   UserCheck,
+  Trash2,
 } from 'lucide-react';
 
 interface TurmaResumo {
@@ -169,6 +170,29 @@ export default function ComunicadosPage() {
       setErro('Falha de comunicação ao publicar comunicado.');
     } finally {
       setPublicando(false);
+    }
+  }
+
+  async function handleRemoverComunicado(item: ComunicadoItem) {
+    if (!window.confirm(`Deseja realmente remover o comunicado "${item.titulo}" do mural?`)) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/comunicados?id=${encodeURIComponent(item.id)}&perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover comunicado.');
+      } else {
+        setSucesso(`Comunicado "${item.titulo}" removido do mural.`);
+        await carregarComunicados();
+      }
+    } catch {
+      setErro('Falha ao remover comunicado.');
     }
   }
 
@@ -519,7 +543,20 @@ export default function ComunicadosPage() {
                         <UserCheck className="w-3.5 h-3.5 text-slate-400" />
                         Publicado por: {item.autorNome}
                       </span>
-                      <span>Público: {item.publicoAlvo}</span>
+                      <div className="flex items-center gap-3">
+                        <span>Público: {item.publicoAlvo}</span>
+                        {podePublicar && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoverComunicado(item)}
+                            className="inline-flex items-center gap-1 text-rose-600 font-semibold hover:underline cursor-pointer"
+                            title="Remover comunicado"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Remover
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </article>
                 ))}

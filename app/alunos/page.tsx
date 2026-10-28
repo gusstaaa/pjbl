@@ -18,6 +18,8 @@ import {
   History,
   RefreshCw,
   X,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 
 interface ResponsavelSelect {
@@ -104,7 +106,8 @@ export default function AlunosPage() {
   const [obsMedicasRematricula, setObsMedicasRematricula] = useState('');
   const [submittingRematricula, setSubmittingRematricula] = useState(false);
 
-  // Formulário de Novo Aluno
+  // Formulário de Novo / Editar Aluno
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
@@ -177,6 +180,50 @@ export default function AlunosPage() {
     carregarDados(busca);
   };
 
+  const iniciarEdicao = (a: Aluno) => {
+    setEditandoId(a.id);
+    setNome(a.nome);
+    setDataNascimento(a.dataNascimento ? a.dataNascimento.slice(0, 10) : '');
+    setResponsavelId(a.responsavelPrincipal?.id || (responsaveis[0]?.id ?? ''));
+    setGenero(a.genero || GENEROS[0]);
+    setCertidaoNascimento(a.certidaoNascimento === 'Não informada' ? '' : a.certidaoNascimento);
+    setObservacoesMedicas(a.observacoesMedicas || '');
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRemover = async (a: Aluno) => {
+    if (
+      !window.confirm(
+        `Deseja realmente remover o(a) aluno(a) "${a.nome}" e todo o seu histórico de matrículas?`
+      )
+    ) {
+      return;
+    }
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    try {
+      const res = await fetch(`/api/alunos/${a.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao remover aluno.');
+      }
+      if (alunoSelecionado?.id === a.id) {
+        setAlunoSelecionado(null);
+      }
+      if (editandoId === a.id) {
+        setEditandoId(null);
+        setShowForm(false);
+      }
+      setMensagemSucesso(`Aluno(a) "${a.nome}" removido(a) com sucesso.`);
+      await carregarDados(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao remover aluno.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagemErro(null);
@@ -184,8 +231,11 @@ export default function AlunosPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/alunos', {
-        method: 'POST',
+      const url = editandoId ? `/api/alunos/${editandoId}` : '/api/alunos';
+      const method = editandoId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome,
@@ -200,16 +250,21 @@ export default function AlunosPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao cadastrar aluno.');
+        throw new Error(data.error || 'Erro ao salvar dados do aluno.');
       }
 
-      setMensagemSucesso(`Aluno(a) "${data.nome}" cadastrado(a) com sucesso!`);
+      setMensagemSucesso(
+        editandoId
+          ? `Dados de "${data.nome}" atualizados com sucesso!`
+          : `Aluno(a) "${data.nome}" cadastrado(a) com sucesso!`
+      );
+      setEditandoId(null);
       setNome('');
       setDataNascimento('');
       setCertidaoNascimento('');
       setObservacoesMedicas('');
       setShowForm(false);
-      await carregarDados();
+      await carregarDados(busca);
     } catch (err: any) {
       setMensagemErro(err.message);
     } finally {
@@ -294,7 +349,17 @@ export default function AlunosPage() {
           {podeEditar && (
             <button
               onClick={() => {
-                setShowForm(!showForm);
+                if (showForm) {
+                  setShowForm(false);
+                  setEditandoId(null);
+                } else {
+                  setEditandoId(null);
+                  setNome('');
+                  setDataNascimento('');
+                  setCertidaoNascimento('');
+                  setObservacoesMedicas('');
+                  setShowForm(true);
+                }
                 setMensagemErro(null);
               }}
               className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
@@ -528,12 +593,14 @@ export default function AlunosPage() {
           </section>
         )}
 
-        {/* Formulário de Cadastro */}
+        {/* Formulário de Cadastro / Edição */}
         {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-emerald-600" />
-              <h2 className="text-base font-bold text-slate-800">Cadastrar Novo Aluno</h2>
+              <h2 className="text-base font-bold text-slate-800">
+                {editandoId ? 'Editar Dados do Aluno' : 'Cadastrar Novo Aluno'}
+              </h2>
             </div>
 
             {responsaveis.length === 0 ? (
@@ -658,7 +725,10 @@ export default function AlunosPage() {
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditandoId(null);
+                    }}
                     className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
                   >
                     Cancelar
@@ -668,7 +738,11 @@ export default function AlunosPage() {
                     disabled={submitting}
                     className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
                   >
-                    {submitting ? 'Salvando...' : 'Cadastrar Aluno'}
+                    {submitting
+                      ? 'Salvando...'
+                      : editandoId
+                      ? 'Salvar Alterações'
+                      : 'Cadastrar Aluno'}
                   </button>
                 </div>
               </form>
@@ -791,16 +865,40 @@ export default function AlunosPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
                     <span>Cadastrado em {new Date(a.createdAt).toLocaleDateString('pt-BR')}</span>
-                    <button
-                      type="button"
-                      onClick={() => abrirFichaAluno(a)}
-                      className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline cursor-pointer"
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      {podeEditar ? 'Histórico / Rematricular' : 'Ver Histórico Escolar'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => abrirFichaAluno(a)}
+                        className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline cursor-pointer"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        {podeEditar ? 'Histórico / Rematricular' : 'Ver Histórico Escolar'}
+                      </button>
+                      {podeEditar && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => iniciarEdicao(a)}
+                            className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:underline cursor-pointer"
+                            title="Editar dados do aluno"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemover(a)}
+                            className="inline-flex items-center gap-1 text-rose-600 font-semibold hover:underline cursor-pointer"
+                            title="Remover aluno"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Remover
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

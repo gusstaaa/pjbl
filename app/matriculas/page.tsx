@@ -19,6 +19,7 @@ import {
   FileCheck,
   FileWarning,
   X,
+  Trash2,
 } from 'lucide-react';
 
 interface HistoricoItem {
@@ -324,6 +325,32 @@ export default function MatriculasPage() {
       await carregarDados();
     } catch (err: any) {
       setMensagemErro(err.message);
+    }
+  };
+
+  const handleRemoverMatricula = async (m: MatriculaItem) => {
+    if (
+      !window.confirm(
+        `Deseja realmente remover a matrícula ${m.codigo} de "${m.aluno.nome}"? As mensalidades e documentos vinculados a esta matrícula também serão excluídos.`
+      )
+    ) {
+      return;
+    }
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    try {
+      const res = await fetch(`/api/matriculas/${m.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao remover matrícula.');
+      }
+      if (matriculaChecklist?.id === m.id) {
+        setMatriculaChecklist(null);
+      }
+      setMensagemSucesso(`Matrícula ${m.codigo} removida com sucesso.`);
+      await carregarDados(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao remover matrícula.');
     }
   };
 
@@ -974,25 +1001,35 @@ export default function MatriculasPage() {
                             Rematricular
                           </button>
 
-                          {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
-                                className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
-                              >
-                                Trancar
-                              </button>
-                              <span>·</span>
-                              <button
-                                onClick={() => handleMudarStatus(m.id, 'CANCELADA')}
-                                className="text-[11px] text-rose-600 hover:text-rose-800 font-medium transition"
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-slate-400">Em {m.dataMatriculaFormatada}</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') && (
+                              <>
+                                <button
+                                  onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
+                                  className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
+                                >
+                                  Trancar
+                                </button>
+                                <span>·</span>
+                                <button
+                                  onClick={() => handleMudarStatus(m.id, 'CANCELADA')}
+                                  className="text-[11px] text-amber-700 hover:text-amber-900 font-medium transition"
+                                >
+                                  Cancelar
+                                </button>
+                                <span>·</span>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoverMatricula(m)}
+                              className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-800 font-semibold transition cursor-pointer"
+                              title="Remover matrícula"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Remover
+                            </button>
+                          </div>
                         </>
                       ) : (
                         <span className="text-[11px] text-slate-400">Registrada em {m.dataMatriculaFormatada}</span>

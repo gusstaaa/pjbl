@@ -38,6 +38,10 @@ export interface CriarColaboradorInput {
 }
 
 export interface AtualizarColaboradorInput {
+  nome?: string;
+  cpf?: string;
+  telefone?: string;
+  email?: string;
   cargo?: string;
   setor?: string;
   especialidade?: string;
@@ -206,11 +210,45 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
   }
 
   const dadosAtualizacao: {
+    nome?: string;
+    cpf?: string;
+    telefone?: string | null;
+    email?: string | null;
     cargo?: string;
     setor?: string;
     especialidade?: string | null;
     ativo?: boolean;
   } = {};
+
+  if (input.nome !== undefined) {
+    const nomeLimpo = input.nome.trim();
+    if (nomeLimpo.length < 3) {
+      throw new Error('O nome completo do colaborador deve ter pelo menos 3 caracteres.');
+    }
+    dadosAtualizacao.nome = nomeLimpo;
+  }
+
+  if (input.cpf !== undefined) {
+    const cpfLimpo = limparDigitos(input.cpf);
+    if (!validarCPF(cpfLimpo)) {
+      throw new Error('O CPF informado para o colaborador é inválido.');
+    }
+    if (cpfLimpo !== colaborador.cpf) {
+      const outro = await prisma.colaborador.findUnique({ where: { cpf: cpfLimpo } });
+      if (outro && outro.id !== id) {
+        throw new Error(`Já existe outro colaborador cadastrado com o CPF ${formatarCPF(cpfLimpo)}.`);
+      }
+    }
+    dadosAtualizacao.cpf = cpfLimpo;
+  }
+
+  if (input.telefone !== undefined) {
+    dadosAtualizacao.telefone = input.telefone ? formatarTelefone(input.telefone.trim()) : null;
+  }
+
+  if (input.email !== undefined) {
+    dadosAtualizacao.email = input.email ? input.email.trim().toLowerCase() : null;
+  }
 
   if (input.cargo !== undefined) {
     if (!CARGOS_VALIDOS.includes(input.cargo as CargoValido)) {
@@ -268,7 +306,29 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
 
     return {
       ...atualizado,
-      cpfFormatado: formatarCPF(colaborador.cpf),
+      cpfFormatado: formatarCPF(atualizado?.cpf || colaborador.cpf),
     };
   });
+}
+
+export async function excluirColaborador(id: string, perfilOperador?: string) {
+  validarPermissaoCadastroRN07(perfilOperador);
+
+  const existente = await prisma.colaborador.findUnique({
+    where: { id },
+  });
+
+  if (!existente) {
+    throw new Error('Colaborador não encontrado no sistema.');
+  }
+
+  await prisma.$transaction([
+    prisma.turma.updateMany({
+      where: { professorTitularId: id },
+      data: { professorTitularId: null },
+    }),
+    prisma.colaborador.delete({ where: { id } }),
+  ]);
+
+  return { id, nome: existente.nome, removido: true };
 }

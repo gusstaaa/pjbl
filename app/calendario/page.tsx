@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 
 interface Turma {
@@ -172,6 +173,29 @@ export default function CalendarioPage() {
       setErro(err.message || 'Erro de comunicação com o servidor.');
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleRemoverEvento(ev: EventoEscolar) {
+    if (!window.confirm(`Deseja realmente remover o evento "${ev.titulo}" do calendário?`)) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/calendario?id=${encodeURIComponent(ev.id)}&perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover evento.');
+      } else {
+        setSucesso(`Evento "${ev.titulo}" removido do calendário.`);
+        await carregarDados();
+      }
+    } catch {
+      setErro('Falha ao remover evento do calendário.');
     }
   }
 
@@ -547,10 +571,23 @@ export default function CalendarioPage() {
                           )}
                         </div>
 
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-                          {ev.organizador} ({ev.perfilAutor})
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                            {ev.organizador} ({ev.perfilAutor})
+                          </span>
+                          {podeAgendar && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoverEvento(ev)}
+                              className="inline-flex items-center gap-1 text-[11px] text-rose-600 font-semibold hover:underline cursor-pointer"
+                              title="Remover evento"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Remover
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <h4 className="font-bold text-slate-800 text-base">{ev.titulo}</h4>

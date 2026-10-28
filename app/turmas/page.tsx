@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { useSessao } from '@/components/AuthProvider';
-import { BookOpen, Plus, Users, CheckCircle, AlertCircle, Sparkles, Filter } from 'lucide-react';
+import { BookOpen, Plus, Users, CheckCircle, AlertCircle, Sparkles, Filter, Pencil, Trash2 } from 'lucide-react';
 
 interface Turma {
   id: string;
@@ -45,6 +45,7 @@ export default function TurmasPage() {
   const [filtroSerie, setFiltroSerie] = useState<string>('TODAS');
 
   // Formulário
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [serie, setSerie] = useState(SERIES[0]);
   const [turno, setTurno] = useState(TURNOS[0]);
@@ -69,6 +70,46 @@ export default function TurmasPage() {
     carregarTurmas();
   }, []);
 
+  const iniciarEdicao = (t: Turma) => {
+    setEditandoId(t.id);
+    setNome(t.nome);
+    setSerie(t.serie);
+    setTurno(t.turno);
+    setAnoLetivo(t.anoLetivo.toString());
+    setCapacidade(t.capacidade.toString());
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRemover = async (t: Turma) => {
+    if (
+      !window.confirm(
+        `Deseja realmente remover a turma "${t.nome}" (${t.serie})? Matrículas associadas a esta turma também serão removidas.`
+      )
+    ) {
+      return;
+    }
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    try {
+      const res = await fetch(`/api/turmas/${t.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao remover turma.');
+      }
+      if (editandoId === t.id) {
+        setEditandoId(null);
+        setShowForm(false);
+      }
+      setMensagemSucesso(`Turma "${t.nome}" removida com sucesso.`);
+      await carregarTurmas();
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao remover turma.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagemErro(null);
@@ -76,8 +117,11 @@ export default function TurmasPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/turmas', {
-        method: 'POST',
+      const url = editandoId ? `/api/turmas/${editandoId}` : '/api/turmas';
+      const method = editandoId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome,
@@ -91,10 +135,15 @@ export default function TurmasPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao criar turma.');
+        throw new Error(data.error || 'Erro ao salvar turma.');
       }
 
-      setMensagemSucesso(`Turma "${data.nome}" criada com sucesso!`);
+      setMensagemSucesso(
+        editandoId
+          ? `Turma "${data.nome}" atualizada com sucesso!`
+          : `Turma "${data.nome}" criada com sucesso!`
+      );
+      setEditandoId(null);
       setNome('');
       setShowForm(false);
       await carregarTurmas();
@@ -136,7 +185,15 @@ export default function TurmasPage() {
           {podeEditar && (
             <button
               onClick={() => {
-                setShowForm(!showForm);
+                if (showForm) {
+                  setShowForm(false);
+                  setEditandoId(null);
+                } else {
+                  setEditandoId(null);
+                  setNome('');
+                  setCapacidade('25');
+                  setShowForm(true);
+                }
                 setMensagemErro(null);
               }}
               className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm"
@@ -198,12 +255,14 @@ export default function TurmasPage() {
           </div>
         </section>
 
-        {/* Formulário de Cadastro */}
+        {/* Formulário de Cadastro / Edição */}
         {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-blue-600" />
-              <h2 className="text-base font-bold text-slate-800">Cadastrar Nova Turma</h2>
+              <h2 className="text-base font-bold text-slate-800">
+                {editandoId ? 'Editar Turma' : 'Cadastrar Nova Turma'}
+              </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -296,7 +355,10 @@ export default function TurmasPage() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditandoId(null);
+                  }}
                   className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
                 >
                   Cancelar
@@ -306,7 +368,11 @@ export default function TurmasPage() {
                   disabled={submitting}
                   className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
                 >
-                  {submitting ? 'Salvando...' : 'Cadastrar Turma'}
+                  {submitting
+                    ? 'Salvando...'
+                    : editandoId
+                    ? 'Salvar Alterações'
+                    : 'Cadastrar Turma'}
                 </button>
               </div>
             </form>
@@ -417,9 +483,30 @@ export default function TurmasPage() {
 
                     <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                       <span>Criada em {new Date(turma.createdAt).toLocaleDateString('pt-BR')}</span>
-                      <span className="text-blue-600 font-medium hover:underline cursor-pointer">
-                        Ver detalhes
-                      </span>
+                      {podeEditar ? (
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => iniciarEdicao(turma)}
+                            className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:underline cursor-pointer"
+                            title="Editar turma"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemover(turma)}
+                            className="inline-flex items-center gap-1 text-rose-600 font-semibold hover:underline cursor-pointer"
+                            title="Remover turma"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Remover
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-blue-600 font-medium">Turma Homologada</span>
+                      )}
                     </div>
                   </div>
                 );

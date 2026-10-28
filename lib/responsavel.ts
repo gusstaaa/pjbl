@@ -170,3 +170,81 @@ export async function criarResponsavel(input: CriarResponsavelInput) {
     },
   });
 }
+
+export async function atualizarResponsavel(id: string, input: Partial<CriarResponsavelInput>) {
+  const existente = await prisma.responsavel.findUnique({
+    where: { id },
+  });
+
+  if (!existente) {
+    throw new Error('Responsável legal não encontrado no sistema.');
+  }
+
+  const dadosCompletos: CriarResponsavelInput = {
+    nome: input.nome !== undefined ? input.nome : existente.nome,
+    cpf: input.cpf !== undefined ? input.cpf : existente.cpf,
+    telefone: input.telefone !== undefined ? input.telefone : existente.telefone,
+    email: input.email !== undefined ? input.email : existente.email || '',
+    endereco: input.endereco !== undefined ? input.endereco : existente.endereco || '',
+    parentesco: input.parentesco !== undefined ? input.parentesco : existente.parentesco,
+  };
+
+  const validacao = validarDadosResponsavel(dadosCompletos);
+  if (!validacao.valido) {
+    throw new Error(validacao.erro);
+  }
+
+  const cpfLimpo = limparDigitos(dadosCompletos.cpf);
+  const telefoneLimpo = limparDigitos(dadosCompletos.telefone);
+
+  if (cpfLimpo !== existente.cpf) {
+    const outroComMesmoCpf = await prisma.responsavel.findUnique({
+      where: { cpf: cpfLimpo },
+    });
+    if (outroComMesmoCpf && outroComMesmoCpf.id !== id) {
+      throw new Error(`Já existe outro responsável cadastrado com o CPF ${formatarCPF(cpfLimpo)}.`);
+    }
+  }
+
+  return prisma.responsavel.update({
+    where: { id },
+    data: {
+      nome: dadosCompletos.nome.trim(),
+      cpf: cpfLimpo,
+      telefone: telefoneLimpo,
+      email: dadosCompletos.email ? dadosCompletos.email.trim().toLowerCase() : null,
+      endereco: dadosCompletos.endereco ? dadosCompletos.endereco.trim() : null,
+      parentesco: dadosCompletos.parentesco || 'Responsável',
+    },
+  });
+}
+
+export async function excluirResponsavel(id: string) {
+  const existente = await prisma.responsavel.findUnique({
+    where: { id },
+    include: {
+      alunos: {
+        include: {
+          aluno: true,
+        },
+      },
+    },
+  });
+
+  if (!existente) {
+    throw new Error('Responsável legal não encontrado no sistema.');
+  }
+
+  if (existente.alunos.length > 0) {
+    const nomes = existente.alunos.map((v) => v.aluno.nome).join(', ');
+    throw new Error(
+      `Regra RN-01: Não é possível remover "${existente.nome}" pois está vinculado(a) ao(s) aluno(s): ${nomes}. Transfira o aluno para outro responsável na tela de Alunos ou remova o aluno primeiro.`
+    );
+  }
+
+  await prisma.responsavel.delete({
+    where: { id },
+  });
+
+  return { id, nome: existente.nome, removido: true };
+}

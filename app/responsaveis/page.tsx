@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { useSessao } from '@/components/AuthProvider';
-import { Users, Plus, Search, CheckCircle, AlertCircle, Phone, Mail, MapPin, Sparkles, UserCheck } from 'lucide-react';
+import { Users, Plus, Search, CheckCircle, AlertCircle, Phone, Mail, MapPin, Sparkles, UserCheck, Pencil, Trash2 } from 'lucide-react';
 
 interface Responsavel {
   id: string;
@@ -35,6 +35,7 @@ export default function ResponsaveisPage() {
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
   // Formulário
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -66,6 +67,43 @@ export default function ResponsaveisPage() {
     carregarResponsaveis(busca);
   };
 
+  const iniciarEdicao = (r: Responsavel) => {
+    setEditandoId(r.id);
+    setNome(r.nome);
+    setCpf(r.cpfFormatado || r.cpf);
+    setTelefone(r.telefoneFormatado || r.telefone);
+    setEmail(r.email || '');
+    setParentesco(r.parentesco || PARENTESCOS[0]);
+    setEndereco(r.endereco || '');
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRemover = async (r: Responsavel) => {
+    if (!window.confirm(`Deseja realmente remover o responsável "${r.nome}"?`)) {
+      return;
+    }
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    try {
+      const res = await fetch(`/api/responsaveis/${r.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao remover responsável.');
+      }
+      if (editandoId === r.id) {
+        setEditandoId(null);
+        setShowForm(false);
+      }
+      setMensagemSucesso(`Responsável "${r.nome}" removido(a) com sucesso.`);
+      await carregarResponsaveis(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao remover responsável.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensagemErro(null);
@@ -73,8 +111,11 @@ export default function ResponsaveisPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/responsaveis', {
-        method: 'POST',
+      const url = editandoId ? `/api/responsaveis/${editandoId}` : '/api/responsaveis';
+      const method = editandoId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome,
@@ -89,17 +130,22 @@ export default function ResponsaveisPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Erro ao cadastrar responsável.');
+        throw new Error(data.error || 'Erro ao salvar responsável.');
       }
 
-      setMensagemSucesso(`Responsável "${data.nome}" cadastrado com sucesso!`);
+      setMensagemSucesso(
+        editandoId
+          ? `Dados de "${data.nome}" atualizados com sucesso!`
+          : `Responsável "${data.nome}" cadastrado com sucesso!`
+      );
+      setEditandoId(null);
       setNome('');
       setCpf('');
       setTelefone('');
       setEmail('');
       setEndereco('');
       setShowForm(false);
-      await carregarResponsaveis();
+      await carregarResponsaveis(busca);
     } catch (err: any) {
       setMensagemErro(err.message);
     } finally {
@@ -132,7 +178,18 @@ export default function ResponsaveisPage() {
           {podeEditar && (
             <button
               onClick={() => {
-                setShowForm(!showForm);
+                if (showForm) {
+                  setShowForm(false);
+                  setEditandoId(null);
+                } else {
+                  setEditandoId(null);
+                  setNome('');
+                  setCpf('');
+                  setTelefone('');
+                  setEmail('');
+                  setEndereco('');
+                  setShowForm(true);
+                }
                 setMensagemErro(null);
               }}
               className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
@@ -190,12 +247,14 @@ export default function ResponsaveisPage() {
           </div>
         </section>
 
-        {/* Formulário de Cadastro */}
+        {/* Formulário de Cadastro / Edição */}
         {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-base font-bold text-slate-800">Cadastrar Responsável Legal</h2>
+              <h2 className="text-base font-bold text-slate-800">
+                {editandoId ? 'Editar Responsável Legal' : 'Cadastrar Responsável Legal'}
+              </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -297,7 +356,10 @@ export default function ResponsaveisPage() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditandoId(null);
+                  }}
                   className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
                 >
                   Cancelar
@@ -307,7 +369,11 @@ export default function ResponsaveisPage() {
                   disabled={submitting}
                   className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
                 >
-                  {submitting ? 'Salvando...' : 'Cadastrar Responsável'}
+                  {submitting
+                    ? 'Salvando...'
+                    : editandoId
+                    ? 'Salvar Alterações'
+                    : 'Cadastrar Responsável'}
                 </button>
               </div>
             </form>
@@ -424,9 +490,30 @@ export default function ResponsaveisPage() {
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                     <span>Cadastrado em {new Date(r.createdAt).toLocaleDateString('pt-BR')}</span>
-                    <span className="text-indigo-600 font-medium hover:underline cursor-pointer">
-                      Ver ficha
-                    </span>
+                    {podeEditar ? (
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => iniciarEdicao(r)}
+                          className="inline-flex items-center gap-1 text-indigo-600 font-semibold hover:underline cursor-pointer"
+                          title="Editar responsável"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemover(r)}
+                          className="inline-flex items-center gap-1 text-rose-600 font-semibold hover:underline cursor-pointer"
+                          title="Remover responsável"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remover
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-indigo-600 font-medium">Responsável Legal</span>
+                    )}
                   </div>
                 </div>
               ))}

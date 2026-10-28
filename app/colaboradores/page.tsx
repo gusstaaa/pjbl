@@ -15,6 +15,8 @@ import {
   Phone,
   Mail,
   CheckCircle2,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 
 interface TurmaResumo {
@@ -78,7 +80,8 @@ export default function ColaboradoresPage() {
   const perfilOperador = sessao.perfil;
   const podeEditar = perfilOperador === 'SECRETARIA' || perfilOperador === 'ADMINISTRACAO';
 
-  // Formulário de cadastro (RF-04)
+  // Formulário de cadastro / edição (RF-04)
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [nome, setNome] = useState<string>('');
   const [cpf, setCpf] = useState<string>('');
   const [cargo, setCargo] = useState<string>('Professor(a)');
@@ -141,6 +144,53 @@ export default function ColaboradoresPage() {
     carregarColaboradores();
   }, [carregarColaboradores]);
 
+  function iniciarEdicao(colab: ColaboradorItem) {
+    setEditandoId(colab.id);
+    setNome(colab.nome);
+    setCpf(colab.cpfFormatado || colab.cpf);
+    setCargo(colab.cargo);
+    setSetor(colab.setor);
+    setTelefone(colab.telefone || '');
+    setEmail(colab.email || '');
+    setEspecialidade(colab.especialidade || '');
+    setTurmaId(colab.turmas[0]?.id || '');
+    setErro('');
+    setSucesso('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function handleRemover(colab: ColaboradorItem) {
+    if (!window.confirm(`Deseja realmente remover o colaborador "${colab.nome}"?`)) {
+      return;
+    }
+    setErro('');
+    setSucesso('');
+    try {
+      const res = await fetch(
+        `/api/colaboradores/${colab.id}?perfilOperador=${encodeURIComponent(perfilOperador)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Erro ao remover colaborador.');
+      } else {
+        if (editandoId === colab.id) {
+          setEditandoId(null);
+          setNome('');
+          setCpf('');
+          setTelefone('');
+          setEmail('');
+          setEspecialidade('');
+          setTurmaId('');
+        }
+        setSucesso(`Colaborador(a) "${colab.nome}" removido(a) com sucesso.`);
+        await carregarColaboradores();
+      }
+    } catch {
+      setErro('Erro de comunicação ao remover colaborador.');
+    }
+  }
+
   async function handleCadastrar(e: React.FormEvent) {
     e.preventDefault();
     setErro('');
@@ -148,8 +198,11 @@ export default function ColaboradoresPage() {
     setSalvando(true);
 
     try {
-      const res = await fetch('/api/colaboradores', {
-        method: 'POST',
+      const url = editandoId ? `/api/colaboradores/${editandoId}` : '/api/colaboradores';
+      const method = editandoId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome,
@@ -159,18 +212,21 @@ export default function ColaboradoresPage() {
           telefone,
           email,
           especialidade,
-          turmaId: turmaId || undefined,
+          turmaId: editandoId ? turmaId || null : turmaId || undefined,
           perfilOperador,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setErro(data.erro || 'Erro ao cadastrar colaborador.');
+        setErro(data.erro || 'Erro ao salvar colaborador.');
       } else {
         setSucesso(
-          `Colaborador(a) "${data.nome}" (${data.cargo} - ${data.setor}) cadastrado(a) com sucesso!`
+          editandoId
+            ? `Dados de "${data.nome}" atualizados com sucesso!`
+            : `Colaborador(a) "${data.nome}" (${data.cargo} - ${data.setor}) cadastrado(a) com sucesso!`
         );
+        setEditandoId(null);
         setNome('');
         setCpf('');
         setTelefone('');
@@ -308,12 +364,33 @@ export default function ColaboradoresPage() {
           {/* Formulário de Cadastro (RF-04 - Visível apenas para Secretaria e Administração) */}
           {podeEditar && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <UserPlus className="w-5 h-5 text-blue-600" />
-              <div>
-                <h3 className="font-bold text-slate-800 text-sm">Novo Funcionário / Professor</h3>
-                <p className="text-xs text-slate-500">Cadastro e alocação funcional (RF-04)</p>
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h3 className="font-bold text-slate-800 text-sm">
+                    {editandoId ? 'Editar Funcionário / Professor' : 'Novo Funcionário / Professor'}
+                  </h3>
+                  <p className="text-xs text-slate-500">Cadastro e alocação funcional (RF-04)</p>
+                </div>
               </div>
+              {editandoId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditandoId(null);
+                    setNome('');
+                    setCpf('');
+                    setTelefone('');
+                    setEmail('');
+                    setEspecialidade('');
+                    setTurmaId('');
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-800 underline"
+                >
+                  Cancelar
+                </button>
+              )}
             </div>
 
             <form onSubmit={handleCadastrar} className="space-y-3">
@@ -440,7 +517,11 @@ export default function ColaboradoresPage() {
                 disabled={salvando}
                 className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
               >
-                {salvando ? 'Salvando...' : 'Cadastrar Colaborador'}
+                {salvando
+                  ? 'Salvando...'
+                  : editandoId
+                  ? 'Salvar Alterações'
+                  : 'Cadastrar Colaborador'}
               </button>
             </form>
           </section>
@@ -585,7 +666,7 @@ export default function ColaboradoresPage() {
                       </div>
 
                       {podeEditar && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-3">
                           <select
                             disabled={alocandoId === colab.id}
                             value={colab.turmas[0]?.id || ''}
@@ -599,6 +680,24 @@ export default function ColaboradoresPage() {
                               </option>
                             ))}
                           </select>
+                          <button
+                            type="button"
+                            onClick={() => iniciarEdicao(colab)}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+                            title="Editar colaborador"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemover(colab)}
+                            className="inline-flex items-center gap-1 text-xs text-rose-600 font-semibold hover:underline cursor-pointer"
+                            title="Remover colaborador"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Remover
+                          </button>
                         </div>
                       )}
                     </div>

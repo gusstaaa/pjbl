@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { criarComunicado, listarComunicados } from '@/lib/comunicado';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,5 +46,22 @@ export async function POST(request: Request) {
     const mensagem = error.message || 'Erro ao publicar comunicado.';
     const statusHttp = mensagem.includes('Acesso negado') ? 403 : 400;
     return NextResponse.json({ erro: mensagem }, { status: statusHttp });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ erro: 'ID do comunicado é obrigatório.' }, { status: 400 });
+    }
+    await prisma.comunicado.delete({ where: { id } });
+    return NextResponse.json({ id, removido: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { erro: error.message || 'Erro ao remover comunicado.' },
+      { status: 400 }
+    );
   }
 }

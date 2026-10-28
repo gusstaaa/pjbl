@@ -121,3 +121,86 @@ export async function criarTurma(input: CriarTurmaInput) {
     },
   });
 }
+
+export async function atualizarTurma(id: string, input: Partial<CriarTurmaInput>) {
+  const existente = await prisma.turma.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          matriculas: {
+            where: { status: 'ATIVA' },
+          },
+        },
+      },
+    },
+  });
+
+  if (!existente) {
+    throw new Error('Turma não encontrada no sistema.');
+  }
+
+  const dadosCompletos: CriarTurmaInput = {
+    nome: input.nome !== undefined ? input.nome : existente.nome,
+    serie: input.serie !== undefined ? input.serie : existente.serie,
+    turno: input.turno !== undefined ? input.turno : existente.turno,
+    anoLetivo: input.anoLetivo !== undefined ? Number(input.anoLetivo) : existente.anoLetivo,
+    capacidade: input.capacidade !== undefined ? Number(input.capacidade) : existente.capacidade,
+  };
+
+  const validacao = validarDadosTurma(dadosCompletos);
+  if (!validacao.valido) {
+    throw new Error(validacao.erro);
+  }
+
+  const vagasOcupadas = existente._count.matriculas;
+  if (dadosCompletos.capacidade !== undefined && dadosCompletos.capacidade < vagasOcupadas) {
+    throw new Error(
+      `Regra RN-03: A capacidade da turma (${dadosCompletos.capacidade}) não pode ser menor que o número de alunos ativos já matriculados (${vagasOcupadas}).`
+    );
+  }
+
+  const nomeFormatado = dadosCompletos.nome.trim();
+  const duplicada = await prisma.turma.findFirst({
+    where: {
+      id: { not: id },
+      nome: { equals: nomeFormatado },
+      anoLetivo: dadosCompletos.anoLetivo,
+      turno: dadosCompletos.turno,
+    },
+  });
+
+  if (duplicada) {
+    throw new Error(
+      `Já existe outra turma cadastrada com o nome "${nomeFormatado}" no turno ${dadosCompletos.turno} para o ano ${dadosCompletos.anoLetivo}.`
+    );
+  }
+
+  return prisma.turma.update({
+    where: { id },
+    data: {
+      nome: nomeFormatado,
+      serie: dadosCompletos.serie,
+      turno: dadosCompletos.turno,
+      anoLetivo: dadosCompletos.anoLetivo,
+      capacidade: dadosCompletos.capacidade,
+    },
+  });
+}
+
+export async function excluirTurma(id: string) {
+  const existente = await prisma.turma.findUnique({
+    where: { id },
+  });
+
+  if (!existente) {
+    throw new Error('Turma não encontrada no sistema.');
+  }
+
+  await prisma.$transaction([
+    prisma.matricula.deleteMany({ where: { turmaId: id } }),
+    prisma.turma.delete({ where: { id } }),
+  ]);
+
+  return { id, nome: existente.nome, removido: true };
+}
