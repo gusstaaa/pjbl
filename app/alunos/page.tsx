@@ -253,9 +253,14 @@ export default function AlunosPage() {
     }
   };
 
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
   const alunosExibidos =
-    sessao.perfil === 'RESPONSAVEL' && sessao.responsavelId
-      ? alunos.filter((a) => a.responsavelPrincipal?.id === sessao.responsavelId)
+    sessao.perfil === 'RESPONSAVEL'
+      ? alunos.filter(
+          (a) =>
+            idsAlunosFiliados.has(a.id) ||
+            Boolean(sessao.responsavelId && a.responsavelPrincipal?.id === sessao.responsavelId)
+        )
       : alunos;
 
   const matriculadosCount = alunosExibidos.filter((a) => a.estaMatriculado).length;

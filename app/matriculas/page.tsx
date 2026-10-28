@@ -327,9 +327,10 @@ export default function MatriculasPage() {
     }
   };
 
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
   const matriculasPorPerfil =
-    sessao.perfil === 'RESPONSAVEL' && sessao.alunosVinculados?.length
-      ? matriculas.filter((m) => sessao.alunosVinculados!.some((av) => av.id === m.aluno.id))
+    sessao.perfil === 'RESPONSAVEL'
+      ? matriculas.filter((m) => idsAlunosFiliados.has(m.aluno.id))
       : matriculas;
 
   const matriculasFiltradas = filtroStatus === 'TODOS'
@@ -338,7 +339,10 @@ export default function MatriculasPage() {
 
   const ativasCount = matriculasPorPerfil.filter((m) => m.status === 'ATIVA').length;
   const pendentesCount = matriculasPorPerfil.filter((m) => m.status === 'PENDENTE_DOCUMENTOS').length;
-  const alunosSemMatricula = alunos.filter((a) => !a.estaMatriculado).length;
+  const alunosSemMatricula =
+    sessao.perfil === 'RESPONSAVEL'
+      ? alunos.filter((a) => idsAlunosFiliados.has(a.id) && !a.estaMatriculado).length
+      : alunos.filter((a) => !a.estaMatriculado).length;
 
   const alunoSelecionadoObj = alunos.find((a) => a.id === alunoId) || null;
   const opcoesAlunos =

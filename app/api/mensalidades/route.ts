@@ -7,12 +7,14 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const matriculaId = searchParams.get('matriculaId') || undefined;
+    const responsavelId = searchParams.get('responsavelId') || undefined;
     const status = searchParams.get('status') || undefined;
     const busca = searchParams.get('busca') || undefined;
     const inadimplentes = searchParams.get('inadimplentes') === 'true';
 
     const resultado = await listarMensalidades({
       matriculaId,
+      responsavelId,
       status,
       busca,
       inadimplentes,

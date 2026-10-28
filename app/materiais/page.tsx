@@ -100,6 +100,11 @@ export default function MateriaisPage() {
   const perfilOperador = sessao.perfil;
   const podeEditar =
     sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+  const ehResponsavel = sessao.perfil === 'RESPONSAVEL';
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+  const alunosVisiveis = ehResponsavel
+    ? alunos.filter((a) => idsAlunosFiliados.has(a.id))
+    : alunos;
 
   // Formulário de Cadastro de Material (RF-11)
   const [serie, setSerie] = useState<string>('2º ano');
@@ -533,7 +538,7 @@ export default function MateriaisPage() {
                   className="w-full rounded-lg border border-indigo-200 bg-indigo-50/30 px-2.5 py-2 text-xs text-slate-800"
                 >
                   <option value="">Selecionar aluno...</option>
-                  {alunos.map((a) => (
+                  {alunosVisiveis.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.nome} ({a.matriculaAtual?.serie} · {a.matriculaAtual?.turmaNome})
                     </option>

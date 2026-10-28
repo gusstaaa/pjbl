@@ -59,6 +59,7 @@ interface MensalidadeItem {
     serie: string;
   };
   responsavelFinanceiro: {
+    id?: string;
     nome: string;
     cpf: string;
     telefone: string;
@@ -88,10 +89,11 @@ export default function MensalidadesPage() {
     valorPendente: 0,
   });
 
-  // Perfil do operador da Sessão Ativa (RN-08)
-  const { sessao } = useSessao();
+  // Perfil do operador da Sessão Ativa (RN-06 / RN-08)
+  const { sessao, carregado } = useSessao();
   const perfilOperador = sessao.perfil;
   const podeOperarFinanceiro = perfilOperador === 'ADMINISTRACAO';
+  const ehResponsavel = perfilOperador === 'RESPONSAVEL';
 
   // Formulário de lançamento de carnê (RF-15)
   const [matriculaId, setMatriculaId] = useState<string>('');
@@ -126,10 +128,28 @@ export default function MensalidadesPage() {
   }, []);
 
   const carregarMensalidades = useCallback(async () => {
+    if (!carregado) return;
     setCarregando(true);
     try {
+      if (ehResponsavel && !sessao.responsavelId) {
+        setMensalidades([]);
+        setResumo({
+          totalParcelas: 0,
+          totalPagas: 0,
+          totalPendentes: 0,
+          totalEmAtraso: 0,
+          valorTotal: 0,
+          valorRecebido: 0,
+          valorPendente: 0,
+        });
+        return;
+      }
+
       const params = new URLSearchParams();
       if (filtroMatriculaId) params.set('matriculaId', filtroMatriculaId);
+      if (ehResponsavel && sessao.responsavelId) {
+        params.set('responsavelId', sessao.responsavelId);
+      }
       if (filtroStatus !== 'TODOS') params.set('status', filtroStatus);
       if (apenasInadimplentes) params.set('inadimplentes', 'true');
       if (busca.trim()) params.set('busca', busca.trim());
@@ -145,7 +165,15 @@ export default function MensalidadesPage() {
     } finally {
       setCarregando(false);
     }
-  }, [filtroMatriculaId, filtroStatus, apenasInadimplentes, busca]);
+  }, [
+    carregado,
+    ehResponsavel,
+    sessao.responsavelId,
+    filtroMatriculaId,
+    filtroStatus,
+    apenasInadimplentes,
+    busca,
+  ]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -244,6 +272,47 @@ export default function MensalidadesPage() {
     return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
+  // Isolamento de dados por perfil (RN-06):
+  // - Secretaria e Administração: visão geral financeira de toda a escola.
+  // - Responsável: vê estritamente as matrículas, parcelas e totais dos seus alunos filiados.
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+
+  const matriculasVisiveis = ehResponsavel
+    ? matriculas.filter((m) => idsAlunosFiliados.has(m.aluno.id))
+    : matriculas;
+
+  const mensalidadesVisiveis = ehResponsavel
+    ? mensalidades.filter(
+        (m) =>
+          idsAlunosFiliados.has(m.aluno.id) ||
+          Boolean(sessao.responsavelId && m.responsavelFinanceiro?.id === sessao.responsavelId)
+      )
+    : mensalidades;
+
+  const resumoVisivel: ResumoFinanceiro = ehResponsavel
+    ? {
+        totalParcelas: mensalidadesVisiveis.length,
+        totalPagas: mensalidadesVisiveis.filter((m) => m.status === 'PAGO').length,
+        totalPendentes: mensalidadesVisiveis.filter((m) => m.status === 'PENDENTE').length,
+        totalEmAtraso: mensalidadesVisiveis.filter((m) => m.emAtraso).length,
+        valorTotal: Number(
+          mensalidadesVisiveis.reduce((acc, m) => acc + m.valor, 0).toFixed(2)
+        ),
+        valorRecebido: Number(
+          mensalidadesVisiveis
+            .filter((m) => m.status === 'PAGO')
+            .reduce((acc, m) => acc + m.valor, 0)
+            .toFixed(2)
+        ),
+        valorPendente: Number(
+          mensalidadesVisiveis
+            .filter((m) => m.status === 'PENDENTE')
+            .reduce((acc, m) => acc + m.valor, 0)
+            .toFixed(2)
+        ),
+      }
+    : resumo;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -256,14 +325,18 @@ export default function MensalidadesPage() {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
                 Fase 2 · Item 2.3
               </span>
-              <span className="text-xs text-slate-500">RF-15 · RF-16 · RN-08</span>
+              <span className="text-xs text-slate-500">RF-15 · RF-16 · RN-06 · RN-08</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
               <DollarSign className="w-6 h-6 text-emerald-600" />
-              Controle de Mensalidades e Pagamentos
+              {ehResponsavel
+                ? 'Mensalidades dos Meus Filhos'
+                : 'Controle de Mensalidades e Pagamentos (Visão Geral)'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Lançamento de carnês anuais, baixa de pagamentos e acompanhamento de inadimplência.
+              {ehResponsavel
+                ? 'Acompanhe exclusivamente as parcelas, vencimentos e comprovantes de baixa dos alunos vinculados ao seu cadastro (RN-06).'
+                : 'Visão geral financeira da escola: lançamento de carnês anuais, baixa de pagamentos e controle de inadimplência.'}
             </p>
           </div>
 
@@ -278,35 +351,35 @@ export default function MensalidadesPage() {
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase">
-              <span>Total Lançado</span>
+              <span>{ehResponsavel ? 'Total do Carnê (Filhos)' : 'Total Lançado (Geral)'}</span>
               <DollarSign className="w-4 h-4 text-slate-400" />
             </div>
             <p className="text-xl font-extrabold text-slate-800 mt-1">
-              {formatarMoeda(resumo.valorTotal)}
+              {formatarMoeda(resumoVisivel.valorTotal)}
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">{resumo.totalParcelas} parcela(s) no carnê</p>
+            <p className="text-xs text-slate-400 mt-0.5">{resumoVisivel.totalParcelas} parcela(s) no carnê</p>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-xs">
             <div className="flex items-center justify-between text-xs font-semibold text-emerald-700 uppercase">
-              <span>Total Recebido (Pago)</span>
+              <span>{ehResponsavel ? 'Total Quitadas (Pago)' : 'Total Recebido (Pago)'}</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
             <p className="text-xl font-extrabold text-emerald-700 mt-1">
-              {formatarMoeda(resumo.valorRecebido)}
+              {formatarMoeda(resumoVisivel.valorRecebido)}
             </p>
-            <p className="text-xs text-emerald-600 mt-0.5">{resumo.totalPagas} parcela(s) quitada(s)</p>
+            <p className="text-xs text-emerald-600 mt-0.5">{resumoVisivel.totalPagas} parcela(s) quitada(s)</p>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-xs">
             <div className="flex items-center justify-between text-xs font-semibold text-amber-700 uppercase">
-              <span>A Receber (Pendente)</span>
+              <span>{ehResponsavel ? 'Em Aberto (Pendente)' : 'A Receber (Pendente)'}</span>
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
             <p className="text-xl font-extrabold text-amber-700 mt-1">
-              {formatarMoeda(resumo.valorPendente)}
+              {formatarMoeda(resumoVisivel.valorPendente)}
             </p>
-            <p className="text-xs text-amber-600 mt-0.5">{resumo.totalPendentes} parcela(s) em aberto</p>
+            <p className="text-xs text-amber-600 mt-0.5">{resumoVisivel.totalPendentes} parcela(s) em aberto</p>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-xs">
@@ -314,7 +387,7 @@ export default function MensalidadesPage() {
               <span>Vencidas / Atraso</span>
               <AlertTriangle className="w-4 h-4 text-rose-600" />
             </div>
-            <p className="text-xl font-extrabold text-rose-700 mt-1">{resumo.totalEmAtraso}</p>
+            <p className="text-xl font-extrabold text-rose-700 mt-1">{resumoVisivel.totalEmAtraso}</p>
             <p className="text-xs text-rose-600 mt-0.5">Parcelas vencidas não pagas</p>
           </div>
         </section>
@@ -452,10 +525,14 @@ export default function MensalidadesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
-                  Relação de Mensalidades e Baixa Financeira (RF-16)
+                  {ehResponsavel
+                    ? 'Parcelas dos Meus Alunos Filiados (RN-06)'
+                    : 'Relação Geral de Mensalidades e Baixa Financeira (RF-16)'}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Filtre por aluno, matrícula, status ou inadimplência
+                  {ehResponsavel
+                    ? 'Exibindo apenas as mensalidades dos alunos vinculados ao responsável logado'
+                    : 'Visão geral da Secretaria e Administração — filtre por aluno, matrícula, status ou inadimplência'}
                 </p>
               </div>
 
@@ -504,8 +581,10 @@ export default function MensalidadesPage() {
                   onChange={(e) => setFiltroMatriculaId(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800"
                 >
-                  <option value="">Todas as matrículas</option>
-                  {matriculas.map((m) => (
+                  <option value="">
+                    {ehResponsavel ? 'Todas as matrículas dos meus filhos' : 'Todas as matrículas da escola'}
+                  </option>
+                  {matriculasVisiveis.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.codigo} — {m.aluno.nome}
                     </option>
@@ -532,19 +611,23 @@ export default function MensalidadesPage() {
               <div className="py-10 text-center text-xs text-slate-400">
                 Carregando parcelas financeiras...
               </div>
-            ) : mensalidades.length === 0 ? (
+            ) : mensalidadesVisiveis.length === 0 ? (
               <div className="py-10 text-center space-y-2 border border-dashed border-slate-200 rounded-xl">
                 <DollarSign className="w-8 h-8 text-slate-300 mx-auto" />
                 <p className="text-sm font-semibold text-slate-600">
-                  Nenhuma mensalidade encontrada para os filtros selecionados.
+                  {ehResponsavel
+                    ? 'Nenhuma parcela financeira encontrada para os seus alunos filiados.'
+                    : 'Nenhuma mensalidade encontrada para os filtros selecionados.'}
                 </p>
                 <p className="text-xs text-slate-400">
-                  Utilize o formulário ao lado para gerar o carnê de uma matrícula ativa.
+                  {ehResponsavel
+                    ? 'As parcelas aparecerão aqui assim que o carnê da matrícula dos seus filhos for lançado pela administração.'
+                    : 'Utilize o formulário ao lado para gerar o carnê de uma matrícula ativa.'}
                 </p>
               </div>
             ) : (
               <div className="space-y-2.5 max-h-[560px] overflow-y-auto pr-1">
-                {mensalidades.map((item) => (
+                {mensalidadesVisiveis.map((item) => (
                   <div
                     key={item.id}
                     className={`p-3.5 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${

@@ -157,6 +157,7 @@ export async function gerarCarneMensalidades(input: GerarCarneInput) {
 
 export async function listarMensalidades(filtros?: {
   matriculaId?: string;
+  responsavelId?: string;
   status?: string;
   busca?: string;
   inadimplentes?: boolean;
@@ -171,15 +172,35 @@ export async function listarMensalidades(filtros?: {
     where.status = filtros.status;
   }
 
+  const condicoesMatricula: any[] = [];
+
+  if (filtros?.responsavelId && filtros.responsavelId.trim() !== '') {
+    condicoesMatricula.push({
+      aluno: {
+        responsaveis: {
+          some: {
+            responsavelId: filtros.responsavelId.trim(),
+          },
+        },
+      },
+    });
+  }
+
   if (filtros?.busca && filtros.busca.trim() !== '') {
     const termo = filtros.busca.trim();
-    where.matricula = {
+    condicoesMatricula.push({
       OR: [
         { codigo: { contains: termo } },
         { aluno: { nome: { contains: termo } } },
         { turma: { nome: { contains: termo } } },
       ],
-    };
+    });
+  }
+
+  if (condicoesMatricula.length === 1) {
+    where.matricula = condicoesMatricula[0];
+  } else if (condicoesMatricula.length > 1) {
+    where.matricula = { AND: condicoesMatricula };
   }
 
   const registros = await prisma.mensalidade.findMany({
@@ -237,6 +258,7 @@ export async function listarMensalidades(filtros?: {
       },
       responsavelFinanceiro: vinculoPrincipal
         ? {
+            id: vinculoPrincipal.responsavel.id,
             nome: vinculoPrincipal.responsavel.nome,
             cpf: vinculoPrincipal.responsavel.cpf,
             telefone: vinculoPrincipal.responsavel.telefone,

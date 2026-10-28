@@ -93,6 +93,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(salvo);
         if (parsed && parsed.perfil && PERFIS_META[parsed.perfil as PerfilUsuario]) {
           setSessao(parsed);
+          if (parsed.perfil === 'RESPONSAVEL' && parsed.responsavelId) {
+            fetch('/api/responsaveis')
+              .then((r) => (r.ok ? r.json() : null))
+              .then((dados) => {
+                if (!dados) return;
+                const lista = Array.isArray(dados) ? dados : dados.responsaveis || [];
+                const encontrado = lista.find((item: any) => item.id === parsed.responsavelId);
+                if (encontrado && Array.isArray(encontrado.alunos)) {
+                  const vinculados = encontrado.alunos.map((v: any) => ({
+                    id: v.aluno.id,
+                    nome: v.aluno.nome,
+                  }));
+                  const atualizado: SessaoUsuario = {
+                    ...parsed,
+                    nome: encontrado.nome,
+                    responsavelCpf: encontrado.cpf,
+                    alunosVinculados: vinculados,
+                  };
+                  setSessao(atualizado);
+                  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(atualizado));
+                }
+              })
+              .catch(() => {});
+          }
         }
       }
     } catch (e) {

@@ -217,6 +217,29 @@ export default function FardasPage() {
     }
   }
 
+  const ehResponsavel = sessao.perfil === 'RESPONSAVEL';
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+
+  const alunosVisiveis = ehResponsavel
+    ? alunos.filter((a) => idsAlunosFiliados.has(a.id))
+    : alunos;
+
+  const solicitacoesVisiveis = ehResponsavel
+    ? solicitacoes.filter((s) => idsAlunosFiliados.has(s.alunoId))
+    : solicitacoes;
+
+  const resumoVisivel: ResumoFardas = ehResponsavel
+    ? {
+        totalPedidos: solicitacoesVisiveis.length,
+        totalPecas: solicitacoesVisiveis.reduce((acc, s) => acc + s.quantidade, 0),
+        pendentesEntrega: solicitacoesVisiveis.filter(
+          (s) => s.status === 'SOLICITADO' || s.status === 'SEPARADO'
+        ).length,
+        totalEntregues: solicitacoesVisiveis.filter((s) => s.status === 'ENTREGUE').length,
+        demandaPorTamanho: {},
+      }
+    : resumo;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -254,7 +277,7 @@ export default function FardasPage() {
               <span>Pedidos Registrados</span>
               <Shirt className="w-4 h-4 text-slate-400" />
             </div>
-            <p className="text-2xl font-extrabold text-slate-800 mt-1">{resumo.totalPedidos}</p>
+            <p className="text-2xl font-extrabold text-slate-800 mt-1">{resumoVisivel.totalPedidos}</p>
             <p className="text-xs text-slate-400 mt-0.5">Solicitações de uniforme</p>
           </div>
 
@@ -263,7 +286,7 @@ export default function FardasPage() {
               <span>Total de Peças</span>
               <PackageCheck className="w-4 h-4 text-cyan-600" />
             </div>
-            <p className="text-2xl font-extrabold text-cyan-700 mt-1">{resumo.totalPecas}</p>
+            <p className="text-2xl font-extrabold text-cyan-700 mt-1">{resumoVisivel.totalPecas}</p>
             <p className="text-xs text-cyan-600 mt-0.5">Unidades demandadas</p>
           </div>
 
@@ -273,7 +296,7 @@ export default function FardasPage() {
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
             <p className="text-2xl font-extrabold text-amber-700 mt-1">
-              {resumo.pendentesEntrega}
+              {resumoVisivel.pendentesEntrega}
             </p>
             <p className="text-xs text-amber-600 mt-0.5">Aguardando retirada</p>
           </div>
@@ -283,7 +306,7 @@ export default function FardasPage() {
               <span>Pedidos Entregues</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
-            <p className="text-2xl font-extrabold text-emerald-700 mt-1">{resumo.totalEntregues}</p>
+            <p className="text-2xl font-extrabold text-emerald-700 mt-1">{resumoVisivel.totalEntregues}</p>
             <p className="text-xs text-emerald-600 mt-0.5">Entregues às famílias</p>
           </div>
         </section>
@@ -324,7 +347,7 @@ export default function FardasPage() {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800"
                 >
                   <option value="">Selecione o aluno...</option>
-                  {alunos.map((a) => (
+                  {alunosVisiveis.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.nome}{' '}
                       {a.matriculas?.[0]?.turma
@@ -426,10 +449,10 @@ export default function FardasPage() {
             </div>
 
             {/* Resumo rápido de demanda por tamanho */}
-            {Object.keys(resumo.demandaPorTamanho).length > 0 && (
+            {Object.keys(resumoVisivel.demandaPorTamanho).length > 0 && (
               <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span className="text-xs font-semibold text-slate-600">Demanda por Tamanho:</span>
-                {Object.entries(resumo.demandaPorTamanho).map(([tam, qtd]) => (
+                {Object.entries(resumoVisivel.demandaPorTamanho).map(([tam, qtd]) => (
                   <span
                     key={tam}
                     className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-100 text-cyan-800"
@@ -486,7 +509,7 @@ export default function FardasPage() {
               <div className="py-10 text-center text-xs text-slate-400">
                 Carregando solicitações de fardas...
               </div>
-            ) : solicitacoes.length === 0 ? (
+            ) : solicitacoesVisiveis.length === 0 ? (
               <div className="py-10 text-center space-y-2 border border-dashed border-slate-200 rounded-xl">
                 <Shirt className="w-8 h-8 text-slate-300 mx-auto" />
                 <p className="text-sm font-semibold text-slate-600">
@@ -498,7 +521,7 @@ export default function FardasPage() {
               </div>
             ) : (
               <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
-                {solicitacoes.map((item) => (
+                {solicitacoesVisiveis.map((item) => (
                   <div
                     key={item.id}
                     className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"

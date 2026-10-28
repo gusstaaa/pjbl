@@ -235,6 +235,17 @@ export default function FormulariosPage() {
     });
   }
 
+  const ehResponsavel = sessao.perfil === 'RESPONSAVEL';
+  const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+
+  const alunosVisiveis = ehResponsavel
+    ? alunos.filter((a) => idsAlunosFiliados.has(a.id))
+    : alunos;
+
+  const respostasVisiveis = ehResponsavel
+    ? respostas.filter((r) => idsAlunosFiliados.has(r.alunoId))
+    : respostas;
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
@@ -450,7 +461,7 @@ export default function FormulariosPage() {
                     className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-800"
                   >
                     <option value="">Selecione o aluno...</option>
-                    {alunos.map((a) => (
+                    {alunosVisiveis.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.nome}
                       </option>
@@ -598,7 +609,7 @@ export default function FormulariosPage() {
                 <div className="py-8 text-center text-xs text-slate-400">
                   Carregando confirmações recebidas...
                 </div>
-              ) : respostas.length === 0 ? (
+              ) : respostasVisiveis.length === 0 ? (
                 <div className="py-8 text-center space-y-1 border border-dashed border-slate-200 rounded-xl">
                   <FileSignature className="w-7 h-7 text-slate-300 mx-auto" />
                   <p className="text-xs font-semibold text-slate-600">
@@ -607,7 +618,7 @@ export default function FormulariosPage() {
                 </div>
               ) : (
                 <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
-                  {respostas.map((resp) => (
+                  {respostasVisiveis.map((resp) => (
                     <div
                       key={resp.id}
                       className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2"
