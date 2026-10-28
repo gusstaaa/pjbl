@@ -78,6 +78,10 @@ export default function CalendarioPage() {
   const [turmaId, setTurmaId] = useState('');
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podeAgendar =
+    sessao.perfil === 'SECRETARIA' ||
+    sessao.perfil === 'ADMINISTRACAO' ||
+    sessao.perfil === 'PROFESSOR';
   const [organizador, setOrganizador] = useState('Coordenação Pedagógica');
 
   useEffect(() => {
@@ -235,7 +239,8 @@ export default function CalendarioPage() {
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna Esquerda: Cadastro de Evento (RF-19) */}
+          {/* Coluna Esquerda: Cadastro de Evento (RF-19 — Oculto para Responsável) */}
+          {podeAgendar && (
           <div className="lg:col-span-1">
             <form
               onSubmit={handleCriarEvento}
@@ -431,9 +436,10 @@ export default function CalendarioPage() {
               </button>
             </form>
           </div>
+          )}
 
           {/* Coluna Direita: Agenda e Filtros */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={`${podeAgendar ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-4`}>
             {/* Barra de Filtros */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">

@@ -76,6 +76,7 @@ export default function ColaboradoresPage() {
   // Perfil Operador da Sessão Ativa (RN-07)
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podeEditar = perfilOperador === 'SECRETARIA' || perfilOperador === 'ADMINISTRACAO';
 
   // Formulário de cadastro (RF-04)
   const [nome, setNome] = useState<string>('');
@@ -304,7 +305,8 @@ export default function ColaboradoresPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Formulário de Cadastro (RF-04) */}
+          {/* Formulário de Cadastro (RF-04 - Visível apenas para Secretaria e Administração) */}
+          {podeEditar && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <UserPlus className="w-5 h-5 text-blue-600" />
@@ -442,9 +444,10 @@ export default function ColaboradoresPage() {
               </button>
             </form>
           </section>
+          )}
 
           {/* Listagem e Alocação de Colaboradores */}
-          <section className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+          <section className={`${podeEditar ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4`}>
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-800 text-sm">
                 Quadro Funcional e Alocação de Turmas
@@ -581,21 +584,23 @@ export default function ColaboradoresPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <select
-                          disabled={alocandoId === colab.id}
-                          value={colab.turmas[0]?.id || ''}
-                          onChange={(e) => handleAlocarTurma(colab, e.target.value)}
-                          className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-700 bg-slate-50"
-                        >
-                          <option value="">Alocar / Trocar turma...</option>
-                          {turmas.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              Vincular: {t.nome} ({t.serie} - {t.anoLetivo})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {podeEditar && (
+                        <div className="flex items-center gap-2">
+                          <select
+                            disabled={alocandoId === colab.id}
+                            value={colab.turmas[0]?.id || ''}
+                            onChange={(e) => handleAlocarTurma(colab, e.target.value)}
+                            className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-700 bg-slate-50"
+                          >
+                            <option value="">Alocar / Trocar turma...</option>
+                            {turmas.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                Vincular: {t.nome} ({t.serie} - {t.anoLetivo})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

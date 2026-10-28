@@ -72,6 +72,12 @@ export default function FormulariosPage() {
   // Perfil Operador da Sessão Ativa (RN-07)
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podeCriarModelo =
+    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+  const podeResponder =
+    sessao.perfil === 'RESPONSAVEL' ||
+    sessao.perfil === 'SECRETARIA' ||
+    sessao.perfil === 'ADMINISTRACAO';
 
   // Formulário 1: Criar Modelo (RF-08)
   const [titulo, setTitulo] = useState<string>('');
@@ -316,8 +322,10 @@ export default function FormulariosPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Coluna Esquerda: Criar Modelo (RF-08) + Responder Autorização (RF-09) */}
+          {(podeCriarModelo || podeResponder) && (
           <div className="space-y-6">
-            {/* 1. Criar Modelo (RF-08) */}
+            {/* 1. Criar Modelo (RF-08 — Oculto para Responsável) */}
+            {podeCriarModelo && (
             <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <PlusCircle className="w-5 h-5 text-rose-600" />
@@ -396,8 +404,10 @@ export default function FormulariosPage() {
                 </button>
               </form>
             </section>
+            )}
 
             {/* 2. Preencher e Assinar Autorização (RF-09) */}
+            {podeResponder && (
             <section className="bg-white p-5 rounded-xl border border-rose-200 shadow-xs space-y-3">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <Send className="w-5 h-5 text-rose-600" />
@@ -500,10 +510,16 @@ export default function FormulariosPage() {
                 </button>
               </form>
             </section>
+            )}
           </div>
+          )}
 
           {/* Colunas 2 e 3: Modelos Disponibilizados e Confirmações Recebidas */}
-          <section className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-5">
+          <section
+            className={`${
+              podeCriarModelo || podeResponder ? 'lg:col-span-2' : 'lg:col-span-3'
+            } bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-5`}
+          >
             {/* Lista de Modelos Disponíveis */}
             <div className="space-y-2.5">
               <h3 className="font-bold text-slate-800 text-sm">

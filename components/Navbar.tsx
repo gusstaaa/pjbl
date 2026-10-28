@@ -26,7 +26,11 @@ import {
   Sparkles,
   LogIn,
 } from 'lucide-react';
-import { useSessao, PERFIS_META } from '@/components/AuthProvider';
+import {
+  useSessao,
+  PERFIS_META,
+  type PerfilUsuario,
+} from '@/components/AuthProvider';
 
 interface NavItem {
   href: string;
@@ -35,6 +39,7 @@ interface NavItem {
   category: string;
   icon: any;
   tag?: string;
+  perfisPermitidos: PerfilUsuario[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -44,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Visão geral da escola, indicadores e acesso rápido',
     category: 'Visão Geral',
     icon: LayoutDashboard,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   {
     href: '/login',
@@ -52,22 +58,25 @@ const NAV_ITEMS: NavItem[] = [
     category: 'Visão Geral',
     icon: LogIn,
     tag: 'Acesso',
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   // Secretaria & Matrículas
   {
     href: '/matriculas',
     label: 'Matrículas & Documentos',
-    description: 'Matrícula inicial, rematrícula anual e checklist documental',
+    description: 'Situação da matrícula e checklist de documentação',
     category: 'Secretaria & Matrículas',
     icon: CheckCircle,
     tag: 'Principal',
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'RESPONSAVEL'],
   },
   {
     href: '/alunos',
     label: 'Alunos & Histórico',
-    description: 'Cadastro de estudantes, ficha médica e vínculos',
+    description: 'Ficha de estudantes, saúde e histórico escolar',
     category: 'Secretaria & Matrículas',
     icon: UserCheck,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   {
     href: '/responsaveis',
@@ -75,6 +84,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Pais e tutores com CPF, WhatsApp e endereço',
     category: 'Secretaria & Matrículas',
     icon: Users,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO'],
   },
   {
     href: '/formularios',
@@ -82,6 +92,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Termos digitais, passeios, uso de imagem e contratos',
     category: 'Secretaria & Matrículas',
     icon: FileSignature,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'RESPONSAVEL'],
   },
   // Pedagógico & Estrutura
   {
@@ -90,6 +101,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Maternal 1 ao 5º Ano, turnos e controle de vagas',
     category: 'Pedagógico & Estrutura',
     icon: BookOpen,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR'],
   },
   {
     href: '/colaboradores',
@@ -97,6 +109,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Corpo docente, coordenação e funcionários',
     category: 'Pedagógico & Estrutura',
     icon: Briefcase,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO'],
   },
   {
     href: '/materiais',
@@ -104,6 +117,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Materiais individuais e coletivos por série e turma',
     category: 'Pedagógico & Estrutura',
     icon: Package,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   {
     href: '/livros',
@@ -111,14 +125,16 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Relação de livros adotados e fornecidos pela escola',
     category: 'Pedagógico & Estrutura',
     icon: Library,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   // Financeiro & Atendimento
   {
     href: '/mensalidades',
     label: 'Mensalidades & Carnês',
-    description: 'Lançamento de carnês anuais e baixa de pagamentos',
+    description: 'Acompanhamento de carnês anuais e status de pagamento',
     category: 'Financeiro & Atendimento',
     icon: DollarSign,
+    perfisPermitidos: ['ADMINISTRACAO', 'SECRETARIA', 'RESPONSAVEL'],
   },
   {
     href: '/fardas',
@@ -126,6 +142,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Pedidos de uniformes por tamanho, peça e aluno',
     category: 'Financeiro & Atendimento',
     icon: Shirt,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'RESPONSAVEL'],
   },
   // Comunicação & Agenda
   {
@@ -134,6 +151,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Avisos oficiais para toda a escola ou por turma',
     category: 'Comunicação & Agenda',
     icon: Megaphone,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
   {
     href: '/calendario',
@@ -141,6 +159,7 @@ const NAV_ITEMS: NavItem[] = [
     description: 'Reuniões de pais, avaliações, feriados e eventos',
     category: 'Comunicação & Agenda',
     icon: Calendar,
+    perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'],
   },
 ];
 
@@ -161,6 +180,8 @@ export function Navbar() {
   const itemAtual =
     NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
   const metaPerfil = PERFIS_META[sessao.perfil] || PERFIS_META.SECRETARIA;
+  const podeGerirMatriculas =
+    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
 
   // Fecha o menu lateral automaticamente ao navegar de página
   useEffect(() => {
@@ -179,7 +200,11 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const itensFiltrados = NAV_ITEMS.filter((item) => {
+  const itensPermitidos = NAV_ITEMS.filter((item) =>
+    item.perfisPermitidos.includes(sessao.perfil)
+  );
+
+  const itensFiltrados = itensPermitidos.filter((item) => {
     if (!buscaMenu.trim()) return true;
     const termo = buscaMenu.toLowerCase();
     return (
@@ -201,7 +226,7 @@ export function Navbar() {
               onClick={() => setMenuAberto(true)}
               aria-label="Abrir menu lateral de navegação"
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-white text-white border border-white/15 transition shadow-xs cursor-pointer group"
-              title="Abrir menu de todas as páginas"
+              title="Abrir menu de páginas disponíveis para o seu perfil"
             >
               <Menu className="w-5 h-5 text-emerald-300 group-hover:text-white transition" />
               <span className="text-xs font-bold tracking-wide uppercase">
@@ -236,7 +261,7 @@ export function Navbar() {
             </span>
           </div>
 
-          {/* Direita: Perfil Logado + Botão de Matrícula */}
+          {/* Direita: Perfil Logado + Botão de Matrícula (apenas para Secretaria/Admin) */}
           <div className="flex items-center gap-2">
             <Link
               href="/login"
@@ -254,13 +279,15 @@ export function Navbar() {
               </div>
             </Link>
 
-            <Link
-              href="/matriculas"
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Matrículas</span>
-            </Link>
+            {podeGerirMatriculas && (
+              <Link
+                href="/matriculas"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Matrículas</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -336,13 +363,13 @@ export function Navbar() {
                   type="text"
                   value={buscaMenu}
                   onChange={(e) => setBuscaMenu(e.target.value)}
-                  placeholder="Buscar página (ex: fardas, livros, turmas)..."
+                  placeholder="Buscar página disponível..."
                   className="w-full pl-9 pr-3 py-2 rounded-xl bg-blue-950/80 border border-blue-700 text-xs text-white placeholder-blue-300 focus:border-emerald-400"
                 />
               </div>
             </div>
 
-            {/* Lista de Módulos Agrupados por Setor */}
+            {/* Lista de Módulos Agrupados por Setor (Filtrados pelo Perfil Logado) */}
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
               {CATEGORIES.map((categoria) => {
                 const itensDaCategoria = itensFiltrados.filter(
@@ -444,10 +471,10 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-slate-700">
-                  13 Telas Disponíveis
+                  {itensPermitidos.length} Telas Liberadas ({metaPerfil.rotulo})
                 </span>
               </div>
-              <span>Pressione ESC para fechar</span>
+              <span>ESC para fechar</span>
             </div>
           </aside>
         </div>

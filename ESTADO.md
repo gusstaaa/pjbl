@@ -24,25 +24,25 @@
 
 ## ▶ PRÓXIMO PASSO
 
-**Projeto 100% concluído (Fases 0, 1, S, 2 e 3 — Todos os itens ✅ no `ROADMAP.md`)**: Em regime de operação e evolução contínua (`Etapa 8`).
+**Fase 3 · Item 3.3 (Ocultação dinâmica de funções bloqueadas por perfil / RBAC Visual Completo)**: Aguardando validação e confirmação do usuário.
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- _(nenhum item pendente — Fase 3 concluída com menu lateral deslizante, identidade Azul Royal & Esmeralda e tela de Login unificada por perfil)_
+- Item 3.3 concluído em todas as 12 telas, menu lateral e painel inicial (`HomeDashboardClient.tsx`), aguardando o "ok" do usuário para marcar como `✅` no `ROADMAP.md`.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
-- Indicar a próxima melhoria desejada (ex.: evolução do login com usuário/ID e senha, visão personalizada por perfil ou rotina de manutenção).
+- Testar a alternância de perfis em `/login` (ex.: entrar como Responsável ou Professor e confirmar que formulários e menus bloqueados estão ocultos) e confirmar se o Item 3.3 está aprovado.
 
 ## ✅ Últimas entregas (a partir da Etapa 6; no máximo 5)
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-28 | 3.3 Ocultação Dinâmica de Funções Bloqueadas por Perfil (RBAC Visual) | 12 telas + `Navbar.tsx` + `HomeDashboardClient.tsx`, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.2 Tela de Login por Perfil e Sessão Unificada (`/login`) | `app/login/page.tsx`, `AuthProvider.tsx`, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.1 Menu Lateral (Drawer), UX e Identidade Azul Royal & Esmeralda | `Navbar.tsx`, `app/page.tsx`, `globals.css`, e2e 16/16, segurança 30/30 e smoke 27/27 verdes |
 | 2026-10-23 | 2.10 Calendário de Eventos Escolares (RF-19) | `/api/calendario`, tela `/calendario`, e2e 16/16, segurança 30/30 e smoke 27/27 verdes |
 | 2026-10-23 | 2.9 Formulários e Autorizações (RF-08, RF-09) | `/api/formularios`, tela `/formularios`, e2e 15/15, segurança 28/28 e smoke 25/25 verdes |
-| 2026-10-23 | 2.8 Solicitação de Fardas (RF-10) | `/api/fardas`, tela `/fardas`, e2e 14/14, segurança 26/26 e smoke 23/23 verdes |
 
 ## 📝 Anotado para depois
 

@@ -72,6 +72,12 @@ export default function FardasPage() {
   // Perfil Operador da Sessão Ativa
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podeDarBaixa =
+    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+  const podeSolicitar =
+    sessao.perfil === 'RESPONSAVEL' ||
+    sessao.perfil === 'SECRETARIA' ||
+    sessao.perfil === 'ADMINISTRACAO';
 
   // Formulário de Solicitação (RF-10)
   const [alunoId, setAlunoId] = useState<string>('');
@@ -296,6 +302,7 @@ export default function FardasPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Formulário de Solicitação (RF-10) */}
+          {podeSolicitar && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <PlusCircle className="w-5 h-5 text-cyan-600" />
@@ -401,9 +408,14 @@ export default function FardasPage() {
               </button>
             </form>
           </section>
+          )}
 
           {/* Painel de Demanda da Secretaria (RF-10) */}
-          <section className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+          <section
+            className={`${
+              podeSolicitar ? 'lg:col-span-2' : 'lg:col-span-3'
+            } bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4`}
+          >
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-800 text-sm">
                 Painel de Demanda de Fardas da Secretaria (RF-10)
@@ -511,23 +523,37 @@ export default function FardasPage() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <select
-                        disabled={atualizandoId === item.id}
-                        value={item.status}
-                        onChange={(e) => handleAlterarStatus(item, e.target.value)}
-                        className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
-                          item.status === 'ENTREGUE'
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                            : item.status === 'SEPARADO'
-                            ? 'bg-blue-50 border-blue-200 text-blue-800'
-                            : 'bg-amber-50 border-amber-200 text-amber-800'
-                        }`}
-                      >
-                        <option value="SOLICITADO">SOLICITADO</option>
-                        <option value="SEPARADO">SEPARADO</option>
-                        <option value="ENTREGUE">ENTREGUE</option>
-                        <option value="CANCELADO">CANCELADO</option>
-                      </select>
+                      {podeDarBaixa ? (
+                        <select
+                          disabled={atualizandoId === item.id}
+                          value={item.status}
+                          onChange={(e) => handleAlterarStatus(item, e.target.value)}
+                          className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                            item.status === 'ENTREGUE'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              : item.status === 'SEPARADO'
+                              ? 'bg-blue-50 border-blue-200 text-blue-800'
+                              : 'bg-amber-50 border-amber-200 text-amber-800'
+                          }`}
+                        >
+                          <option value="SOLICITADO">SOLICITADO</option>
+                          <option value="SEPARADO">SEPARADO</option>
+                          <option value="ENTREGUE">ENTREGUE</option>
+                          <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                      ) : (
+                        <span
+                          className={`rounded-lg border px-2.5 py-1 text-xs font-bold ${
+                            item.status === 'ENTREGUE'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              : item.status === 'SEPARADO'
+                              ? 'bg-blue-50 border-blue-200 text-blue-800'
+                              : 'bg-amber-50 border-amber-200 text-amber-800'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

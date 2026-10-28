@@ -67,6 +67,7 @@ Pegadinhas do banco:
 | Formulários e Autorizações (2.9) | `lib/formulario.ts` | `/api/formularios`, `/api/formularios/respostas` | `/formularios` |
 | Calendário Escolar (2.10) | `lib/calendario.ts` | `/api/calendario` | `/calendario` |
 | Sessão e Login por Perfil (3.2) | `components/AuthProvider.tsx` | `/api/responsaveis`, `/api/colaboradores` | `/login` |
+| RBAC Visual Completo (3.3) | `components/AuthProvider.tsx`, `components/Navbar.tsx`, `components/HomeDashboardClient.tsx` | Todas as rotas de consulta e escrita | Todas as 12 telas do sistema |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)
 | Data | Sintoma | Causa real | Lição (regra que evita a família do erro) |
@@ -83,6 +84,7 @@ Pegadinhas do banco:
 | 2026-10-23 | Reaproveitar tabela `Matricula` para histórico e rematrícula (RF-06) | Cada matrícula já possui `anoLetivo`, `turmaId` e `status`, formando o histórico anual sem duplicar tabelas | Criar tabela separada `HistoricoMatricula` | Sim |
 | 2026-10-23 | Inicializar os 5 documentos padrão sob demanda e sincronizar `RN-05` automaticamente | Garante compatibilidade retroativa com matrículas anteriores e atualiza o status da matrícula (`PENDENTE_DOCUMENTOS` ↔ `ATIVA`) sem ação manual extra | Exigir migração manual das matrículas antigas | Sim |
 | 2026-10-28 | Menu lateral deslizante (Drawer) categorizado + Identidade Azul Royal & Esmeralda (`Navbar.tsx`) | Com 12 módulos ativos, a barra horizontal ficava sobrecarregada; o menu lateral em gaveta agrupado em 4 setores com busca instantânea melhora a navegabilidade em desktop e celular | Manter todos os 12 links na barra horizontal | Sim |
+| 2026-10-28 | Ocultação dinâmica de funções bloqueadas por perfil (RBAC Visual + Backend) | Garante que cada perfil (`SECRETARIA`, `ADMINISTRACAO`, `PROFESSOR`, `RESPONSAVEL`) veja apenas os itens de menu, formulários e botões de ação permitidos para sua função, expandindo os painéis de consulta para tela cheia quando o formulário lateral está oculto | Exibir formulários bloqueados com aviso de restrição | Em validação |
 
 ## 8. Rotina de manutenção (Etapa 8)
 - **Toda sessão:** Ao comando "continuar" → fazer `git pull`, subir o sistema (`npm run dev -- -p 3000` ou `start.sh`) e validar `/health` e `/health/db`.

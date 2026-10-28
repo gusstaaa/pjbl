@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { useSessao } from '@/components/AuthProvider';
 import {
   CheckCircle,
   Plus,
@@ -107,6 +108,9 @@ interface MatriculaItem {
 }
 
 export default function MatriculasPage() {
+  const { sessao } = useSessao();
+  const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+
   const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
   const [alunos, setAlunos] = useState<AlunoOption[]>([]);
   const [turmas, setTurmas] = useState<TurmaOption[]>([]);
@@ -323,12 +327,17 @@ export default function MatriculasPage() {
     }
   };
 
-  const matriculasFiltradas = filtroStatus === 'TODOS'
-    ? matriculas
-    : matriculas.filter((m) => m.status === filtroStatus);
+  const matriculasPorPerfil =
+    sessao.perfil === 'RESPONSAVEL' && sessao.alunosVinculados?.length
+      ? matriculas.filter((m) => sessao.alunosVinculados!.some((av) => av.id === m.aluno.id))
+      : matriculas;
 
-  const ativasCount = matriculas.filter((m) => m.status === 'ATIVA').length;
-  const pendentesCount = matriculas.filter((m) => m.status === 'PENDENTE_DOCUMENTOS').length;
+  const matriculasFiltradas = filtroStatus === 'TODOS'
+    ? matriculasPorPerfil
+    : matriculasPorPerfil.filter((m) => m.status === filtroStatus);
+
+  const ativasCount = matriculasPorPerfil.filter((m) => m.status === 'ATIVA').length;
+  const pendentesCount = matriculasPorPerfil.filter((m) => m.status === 'PENDENTE_DOCUMENTOS').length;
   const alunosSemMatricula = alunos.filter((a) => !a.estaMatriculado).length;
 
   const alunoSelecionadoObj = alunos.find((a) => a.id === alunoId) || null;
@@ -355,36 +364,38 @@ export default function MatriculasPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => {
-                setModoFormulario('REMATRICULA');
-                const veteranos = alunos.filter((a) => a.ehVeterano);
-                if (veteranos.length > 0) {
-                  setAlunoId(veteranos[0].id);
-                  setObservacoesMedicas(veteranos[0].observacoesMedicas || '');
-                }
-                setShowForm(true);
-                setMensagemErro(null);
-              }}
-              className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Rematricular Veterano (RF-06)
-            </button>
+          {podeEditar && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setModoFormulario('REMATRICULA');
+                  const veteranos = alunos.filter((a) => a.ehVeterano);
+                  if (veteranos.length > 0) {
+                    setAlunoId(veteranos[0].id);
+                    setObservacoesMedicas(veteranos[0].observacoesMedicas || '');
+                  }
+                  setShowForm(true);
+                  setMensagemErro(null);
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Rematricular Veterano (RF-06)
+              </button>
 
-            <button
-              onClick={() => {
-                setModoFormulario('MATRICULA');
-                setShowForm(!showForm);
-                setMensagemErro(null);
-              }}
-              className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              {showForm && modoFormulario === 'MATRICULA' ? 'Fechar Formulário' : 'Nova Matrícula'}
-            </button>
-          </div>
+              <button
+                onClick={() => {
+                  setModoFormulario('MATRICULA');
+                  setShowForm(!showForm);
+                  setMensagemErro(null);
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                {showForm && modoFormulario === 'MATRICULA' ? 'Fechar Formulário' : 'Nova Matrícula'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Notificações */}
@@ -519,22 +530,34 @@ export default function MatriculasPage() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={atualizandoDocId === doc.id}
-                      onClick={() => handleAlternarDocumento(matriculaChecklist.id, doc)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
-                        entregue
-                          ? 'bg-white border border-amber-300 text-amber-800 hover:bg-amber-100'
-                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      } disabled:opacity-50`}
-                    >
-                      {atualizandoDocId === doc.id
-                        ? 'Salvando...'
-                        : entregue
-                        ? 'Marcar Pendente'
-                        : 'Confirmar Entrega'}
-                    </button>
+                    {podeEditar ? (
+                      <button
+                        type="button"
+                        disabled={atualizandoDocId === doc.id}
+                        onClick={() => handleAlternarDocumento(matriculaChecklist.id, doc)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
+                          entregue
+                            ? 'bg-white border border-amber-300 text-amber-800 hover:bg-amber-100'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        } disabled:opacity-50`}
+                      >
+                        {atualizandoDocId === doc.id
+                          ? 'Salvando...'
+                          : entregue
+                          ? 'Marcar Pendente'
+                          : 'Confirmar Entrega'}
+                      </button>
+                    ) : (
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
+                          entregue
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {entregue ? 'Entregue' : 'Pendente'}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -543,7 +566,7 @@ export default function MatriculasPage() {
         )}
 
         {/* Formulário Unificado de Matrícula Inicial e Rematrícula Simplificada */}
-        {showForm && (
+        {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-violet-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -936,33 +959,39 @@ export default function MatriculasPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <button
-                        type="button"
-                        onClick={() => iniciarRematriculaRapida(m.aluno.id)}
-                        className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Rematricular
-                      </button>
+                      {podeEditar ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => iniciarRematriculaRapida(m.aluno.id)}
+                            className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Rematricular
+                          </button>
 
-                      {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
-                            className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
-                          >
-                            Trancar
-                          </button>
-                          <span>·</span>
-                          <button
-                            onClick={() => handleMudarStatus(m.id, 'CANCELADA')}
-                            className="text-[11px] text-rose-600 hover:text-rose-800 font-medium transition"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
+                          {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
+                                className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
+                              >
+                                Trancar
+                              </button>
+                              <span>·</span>
+                              <button
+                                onClick={() => handleMudarStatus(m.id, 'CANCELADA')}
+                                className="text-[11px] text-rose-600 hover:text-rose-800 font-medium transition"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">Em {m.dataMatriculaFormatada}</span>
+                          )}
+                        </>
                       ) : (
-                        <span className="text-[11px] text-slate-400">Em {m.dataMatriculaFormatada}</span>
+                        <span className="text-[11px] text-slate-400">Registrada em {m.dataMatriculaFormatada}</span>
                       )}
                     </div>
                   </div>

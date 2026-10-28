@@ -57,6 +57,8 @@ export default function ComunicadosPage() {
   // Perfil Operador da Sessão Ativa
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podePublicar =
+    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
 
   // Formulário de Publicação (RF-20)
   const [titulo, setTitulo] = useState<string>('');
@@ -260,7 +262,8 @@ export default function ComunicadosPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Formulário de Publicação (RF-20) */}
+          {/* Formulário de Publicação (RF-20 — Visível apenas para Secretaria e Administração) */}
+          {podePublicar && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Send className="w-5 h-5 text-amber-600" />
@@ -377,9 +380,14 @@ export default function ComunicadosPage() {
               </button>
             </form>
           </section>
+          )}
 
           {/* Mural de Comunicados e Filtro por Turma (RF-20) */}
-          <section className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+          <section
+            className={`${
+              podePublicar ? 'lg:col-span-2' : 'lg:col-span-3'
+            } bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4`}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Mural Oficial de Comunicados</h3>

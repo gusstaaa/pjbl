@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao } from '@/components/AuthProvider';
 import { Users, Plus, Search, CheckCircle, AlertCircle, Phone, Mail, MapPin, Sparkles, UserCheck } from 'lucide-react';
 
 interface Responsavel {
@@ -22,6 +23,9 @@ interface Responsavel {
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
 
 export default function ResponsaveisPage() {
+  const { sessao } = useSessao();
+  const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -125,16 +129,18 @@ export default function ResponsaveisPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setMensagemErro(null);
-            }}
-            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            {showForm ? 'Fechar Formulário' : 'Novo Responsável'}
-          </button>
+          {podeEditar && (
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                setMensagemErro(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              {showForm ? 'Fechar Formulário' : 'Novo Responsável'}
+            </button>
+          )}
         </div>
 
         {/* Notificações */}
@@ -185,7 +191,7 @@ export default function ResponsaveisPage() {
         </section>
 
         {/* Formulário de Cadastro */}
-        {showForm && (
+        {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-indigo-600" />

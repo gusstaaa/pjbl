@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useSessao } from '@/components/AuthProvider';
 import { BookOpen, Plus, Users, CheckCircle, AlertCircle, Sparkles, Filter } from 'lucide-react';
 
 interface Turma {
@@ -32,6 +33,9 @@ const SERIES = [
 const TURNOS = ['Manhã', 'Tarde', 'Integral'];
 
 export default function TurmasPage() {
+  const { sessao } = useSessao();
+  const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -129,16 +133,18 @@ export default function TurmasPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setMensagemErro(null);
-            }}
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {showForm ? 'Fechar Formulário' : 'Nova Turma'}
-          </button>
+          {podeEditar && (
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                setMensagemErro(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              {showForm ? 'Fechar Formulário' : 'Nova Turma'}
+            </button>
+          )}
         </div>
 
         {/* Notificações */}
@@ -193,7 +199,7 @@ export default function TurmasPage() {
         </section>
 
         {/* Formulário de Cadastro */}
-        {showForm && (
+        {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-blue-600" />

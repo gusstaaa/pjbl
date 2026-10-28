@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, UserCheck, LogIn, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, UserCheck, LogIn } from 'lucide-react';
 
 export type PerfilUsuario =
   | 'SECRETARIA'
@@ -52,14 +52,14 @@ export const PERFIS_META: Record<
     cargoPadrao: 'Corpo Docente',
     corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
     resumoPermissoes:
-      'Consulta de turmas, alunos, materiais e livros, e agendamento de eventos no calendário escolar (RF-19).',
+      'Consulta de turmas, alunos, materiais, livros e comunicados, e agendamento de eventos no calendário escolar (RF-19).',
   },
   RESPONSAVEL: {
     rotulo: 'Responsável Legal',
     cargoPadrao: 'Mãe / Pai / Tutor',
     corBadge: 'bg-purple-100 text-purple-900 border-purple-300',
     resumoPermissoes:
-      'Consulta da situação dos filhos vinculados, comunicados, materiais, livros, calendário, pedido de fardas (RF-10) e assinatura de autorizações (RF-09).',
+      'Consulta da situação dos filhos vinculados, mural de comunicados, materiais, livros, calendário, pedido de fardas (RF-10) e assinatura de autorizações (RF-09).',
   },
 };
 
@@ -128,29 +128,14 @@ interface BannerOperadorProps {
   descricaoAcao?: string;
 }
 
-export function BannerOperadorLogado({
-  perfisAutorizados = ['SECRETARIA', 'ADMINISTRACAO'],
-  regraCodigo = 'RN-07',
-  descricaoAcao = 'realizar cadastros ou alterações neste módulo',
-}: BannerOperadorProps) {
+export function BannerOperadorLogado(_props?: BannerOperadorProps) {
   const { sessao } = useSessao();
   const meta = PERFIS_META[sessao.perfil] || PERFIS_META.SECRETARIA;
-  const autorizado = perfisAutorizados.includes(sessao.perfil);
 
   return (
-    <div
-      className={`rounded-xl p-3.5 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-        autorizado
-          ? 'bg-blue-50/70 border-blue-200 text-slate-800'
-          : 'bg-amber-50/90 border-amber-200 text-amber-900'
-      }`}
-    >
+    <div className="rounded-xl p-3 border bg-blue-50/70 border-blue-200 text-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div className="flex items-start gap-2.5">
-        {autorizado ? (
-          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-        ) : (
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-        )}
+        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
         <div className="text-xs space-y-0.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-medium text-slate-600">Conectado como:</span>
@@ -175,18 +160,6 @@ export function BannerOperadorLogado({
                 </span>
               </p>
             )}
-
-          {!autorizado && (
-            <p className="text-[11px] text-amber-800">
-              Perfil em modo de consulta ({regraCodigo}): para {descricaoAcao}, acesse como{' '}
-              <strong>
-                {perfisAutorizados
-                  .map((p) => PERFIS_META[p].rotulo)
-                  .join(' ou ')}
-              </strong>
-              .
-            </p>
-          )}
         </div>
       </div>
 

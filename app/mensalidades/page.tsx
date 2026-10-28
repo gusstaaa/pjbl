@@ -91,6 +91,7 @@ export default function MensalidadesPage() {
   // Perfil do operador da Sessão Ativa (RN-08)
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
+  const podeOperarFinanceiro = perfilOperador === 'ADMINISTRACAO';
 
   // Formulário de lançamento de carnê (RF-15)
   const [matriculaId, setMatriculaId] = useState<string>('');
@@ -331,7 +332,8 @@ export default function MensalidadesPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Coluna 1: Gerar Carnê de Mensalidades (RF-15) */}
+          {/* Coluna 1: Gerar Carnê de Mensalidades (RF-15 - Visível apenas para Administração) */}
+          {podeOperarFinanceiro && (
           <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <PlusCircle className="w-5 h-5 text-emerald-600" />
@@ -443,9 +445,10 @@ export default function MensalidadesPage() {
               </button>
             </form>
           </section>
+          )}
 
           {/* Colunas 2 e 3: Listagem de Parcelas e Baixa de Pagamento (RF-16) */}
-          <section className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+          <section className={`${podeOperarFinanceiro ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
@@ -603,28 +606,30 @@ export default function MensalidadesPage() {
                         {formatarMoeda(item.valor)}
                       </span>
 
-                      <button
-                        type="button"
-                        disabled={processandoId === item.id}
-                        onClick={() => handleAlternarPagamento(item)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
-                          item.status === 'PAGO'
-                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs'
-                        }`}
-                      >
-                        {item.status === 'PAGO' ? (
-                          <>
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            <span>Reabrir</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Dar Baixa (Pago)</span>
-                          </>
-                        )}
-                      </button>
+                      {podeOperarFinanceiro && (
+                        <button
+                          type="button"
+                          disabled={processandoId === item.id}
+                          onClick={() => handleAlternarPagamento(item)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                            item.status === 'PAGO'
+                              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs'
+                          }`}
+                        >
+                          {item.status === 'PAGO' ? (
+                            <>
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Reabrir</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Dar Baixa (Pago)</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

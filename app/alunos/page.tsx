@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { useSessao } from '@/components/AuthProvider';
 import {
   UserCheck,
   Plus,
@@ -84,6 +85,9 @@ interface Aluno {
 const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 
 export default function AlunosPage() {
+  const { sessao } = useSessao();
+  const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [responsaveis, setResponsaveis] = useState<ResponsavelSelect[]>([]);
   const [turmas, setTurmas] = useState<TurmaOption[]>([]);
@@ -249,7 +253,12 @@ export default function AlunosPage() {
     }
   };
 
-  const matriculadosCount = alunos.filter((a) => a.estaMatriculado).length;
+  const alunosExibidos =
+    sessao.perfil === 'RESPONSAVEL' && sessao.responsavelId
+      ? alunos.filter((a) => a.responsavelPrincipal?.id === sessao.responsavelId)
+      : alunos;
+
+  const matriculadosCount = alunosExibidos.filter((a) => a.estaMatriculado).length;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -265,22 +274,30 @@ export default function AlunosPage() {
               </span>
               <span className="text-xs text-slate-500">RF-01 · RF-03 · RF-06 · RN-01 · RN-02</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Alunos, Histórico Escolar e Rematrícula</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mt-1">
+              {sessao.perfil === 'RESPONSAVEL'
+                ? 'Meus Filhos e Histórico Escolar'
+                : 'Alunos, Histórico Escolar e Rematrícula'}
+            </h1>
             <p className="text-sm text-slate-500">
-              Cadastre estudantes, consulte o histórico de turmas por ano letivo e realize a rematrícula simplificada.
+              {sessao.perfil === 'RESPONSAVEL'
+                ? 'Consulte a ficha escolar e o histórico de turmas por ano letivo dos alunos sob sua responsabilidade.'
+                : 'Cadastre estudantes, consulte o histórico de turmas por ano letivo e realize a rematrícula simplificada.'}
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setMensagemErro(null);
-            }}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            {showForm ? 'Fechar Formulário' : 'Novo Aluno'}
-          </button>
+          {podeEditar && (
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                setMensagemErro(null);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              {showForm ? 'Fechar Formulário' : 'Novo Aluno'}
+            </button>
+          )}
         </div>
 
         {/* Notificações */}
@@ -318,7 +335,7 @@ export default function AlunosPage() {
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total de Alunos</span>
-            <p className="text-2xl font-extrabold text-slate-800 mt-1">{alunos.length}</p>
+            <p className="text-2xl font-extrabold text-slate-800 mt-1">{alunosExibidos.length}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Matriculados em Turma</span>
@@ -326,7 +343,7 @@ export default function AlunosPage() {
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Aguardando Matrícula</span>
-            <p className="text-2xl font-extrabold text-amber-600 mt-1">{alunos.length - matriculadosCount}</p>
+            <p className="text-2xl font-extrabold text-amber-600 mt-1">{alunosExibidos.length - matriculadosCount}</p>
           </div>
         </section>
 
@@ -360,7 +377,7 @@ export default function AlunosPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className={`grid grid-cols-1 ${podeEditar ? 'lg:grid-cols-2' : ''} gap-6`}>
               {/* Coluna 1: Histórico de Matrículas */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -370,11 +387,7 @@ export default function AlunosPage() {
 
                 {!alunoSelecionado.historicoMatriculas || alunoSelecionado.historicoMatriculas.length === 0 ? (
                   <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-500">
-                    Este aluno ainda não possui matrículas registradas. Realize a primeira matrícula na aba{' '}
-                    <Link href="/matriculas" className="text-emerald-700 font-semibold underline">
-                      Matrículas
-                    </Link>
-                    .
+                    Este aluno ainda não possui matrículas registradas.
                   </div>
                 ) : (
                   <div className="space-y-2.5">
@@ -414,7 +427,7 @@ export default function AlunosPage() {
                 {alunoSelecionado.responsavelPrincipal && (
                   <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-slate-700 space-y-1">
                     <span className="font-bold text-blue-900 block">
-                      Dados do Responsável Legal (Reaproveitados automaticamente):
+                      Dados do Responsável Legal:
                     </span>
                     <p>
                       {alunoSelecionado.responsavelPrincipal.parentesco}:{' '}
@@ -428,7 +441,8 @@ export default function AlunosPage() {
                 )}
               </div>
 
-              {/* Coluna 2: Rematrícula Simplificada (RF-06) */}
+              {/* Coluna 2: Rematrícula Simplificada (RF-06 - Visível apenas para Secretaria e Administração) */}
+              {podeEditar && (
               <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-4">
                 <div>
                   <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
@@ -504,12 +518,13 @@ export default function AlunosPage() {
                   </form>
                 )}
               </div>
+              )}
             </div>
           </section>
         )}
 
         {/* Formulário de Cadastro */}
-        {showForm && (
+        {podeEditar && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-emerald-600" />
@@ -661,7 +676,7 @@ export default function AlunosPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-emerald-600" />
-              Alunos Cadastrados ({alunos.length})
+              Alunos Cadastrados ({alunosExibidos.length})
             </h2>
 
             {/* Barra de Busca */}
@@ -693,19 +708,19 @@ export default function AlunosPage() {
               <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
               <p className="text-xs text-slate-500">Carregando lista de alunos...</p>
             </div>
-          ) : alunos.length === 0 ? (
+          ) : alunosExibidos.length === 0 ? (
             <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center">
               <UserCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-slate-700 text-sm">Nenhum aluno cadastrado</h3>
+              <h3 className="font-semibold text-slate-700 text-sm">Nenhum aluno encontrado</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                 {busca
                   ? `Nenhum resultado para a busca "${busca}". Tente outro termo.`
-                  : 'Comece clicando em "Novo Aluno" para cadastrar o primeiro estudante.'}
+                  : 'Nenhum aluno vinculado ou cadastrado no momento.'}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {alunos.map((a) => (
+              {alunosExibidos.map((a) => (
                 <div
                   key={a.id}
                   className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-emerald-200 transition"
@@ -779,7 +794,7 @@ export default function AlunosPage() {
                       className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline cursor-pointer"
                     >
                       <History className="w-3.5 h-3.5" />
-                      Histórico / Rematricular
+                      {podeEditar ? 'Histórico / Rematricular' : 'Ver Histórico Escolar'}
                     </button>
                   </div>
                 </div>
