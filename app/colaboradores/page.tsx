@@ -89,7 +89,7 @@ export default function ColaboradoresPage() {
   const [telefone, setTelefone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [especialidade, setEspecialidade] = useState<string>('');
-  const [turmaId, setTurmaId] = useState<string>('');
+  const [turmasIds, setTurmasIds] = useState<string[]>([]);
   const [salvando, setSalvando] = useState<boolean>(false);
 
   // Filtros
@@ -153,10 +153,16 @@ export default function ColaboradoresPage() {
     setTelefone(colab.telefone || '');
     setEmail(colab.email || '');
     setEspecialidade(colab.especialidade || '');
-    setTurmaId(colab.turmas[0]?.id || '');
+    setTurmasIds(colab.turmas.map((t) => t.id));
     setErro('');
     setSucesso('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function alternarTurmaNoFormulario(idTurma: string) {
+    setTurmasIds((atual) =>
+      atual.includes(idTurma) ? atual.filter((id) => id !== idTurma) : [...atual, idTurma]
+    );
   }
 
   async function handleRemover(colab: ColaboradorItem) {
@@ -181,7 +187,7 @@ export default function ColaboradoresPage() {
           setTelefone('');
           setEmail('');
           setEspecialidade('');
-          setTurmaId('');
+          setTurmasIds([]);
         }
         setSucesso(`Colaborador(a) "${colab.nome}" removido(a) com sucesso.`);
         await carregarColaboradores();
@@ -212,7 +218,7 @@ export default function ColaboradoresPage() {
           telefone,
           email,
           especialidade,
-          turmaId: editandoId ? turmaId || null : turmaId || undefined,
+          turmasIds,
           perfilOperador,
         }),
       });
@@ -232,7 +238,7 @@ export default function ColaboradoresPage() {
         setTelefone('');
         setEmail('');
         setEspecialidade('');
-        setTurmaId('');
+        setTurmasIds([]);
         await carregarColaboradores();
       }
     } catch {
@@ -243,6 +249,7 @@ export default function ColaboradoresPage() {
   }
 
   async function handleAlocarTurma(colaborador: ColaboradorItem, novaTurmaId: string) {
+    if (!novaTurmaId) return;
     setErro('');
     setSucesso('');
     setAlocandoId(colaborador.id);
@@ -252,24 +259,49 @@ export default function ColaboradoresPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          turmaId: novaTurmaId || null,
+          turmaId: novaTurmaId,
           perfilOperador,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setErro(data.erro || 'Não foi possível atualizar a alocação de turma.');
+        setErro(data.erro || 'Não foi possível vincular o colaborador à turma.');
       } else {
-        setSucesso(
-          novaTurmaId
-            ? `${colaborador.nome} alocado(a) como titular da turma selecionada!`
-            : `Alocação de turma atualizada para ${colaborador.nome}.`
-        );
+        setSucesso(`${colaborador.nome} vinculado(a) à turma selecionada com sucesso!`);
         await carregarColaboradores();
       }
     } catch {
       setErro('Erro de conexão ao atualizar alocação do colaborador.');
+    } finally {
+      setAlocandoId(null);
+    }
+  }
+
+  async function handleDesvincularTurma(colaborador: ColaboradorItem, idTurma: string) {
+    setErro('');
+    setSucesso('');
+    setAlocandoId(colaborador.id);
+
+    try {
+      const res = await fetch(`/api/colaboradores/${colaborador.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          desvincularTurmaId: idTurma,
+          perfilOperador,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErro(data.erro || 'Não foi possível desvincular o colaborador da turma.');
+      } else {
+        setSucesso(`Turma desvinculada de ${colaborador.nome}.`);
+        await carregarColaboradores();
+      }
+    } catch {
+      setErro('Erro de conexão ao desvincular turma.');
     } finally {
       setAlocandoId(null);
     }
@@ -384,7 +416,7 @@ export default function ColaboradoresPage() {
                     setTelefone('');
                     setEmail('');
                     setEspecialidade('');
-                    setTurmaId('');
+                    setTurmasIds([]);
                   }}
                   className="text-xs text-slate-500 hover:text-slate-800 underline"
                 >
@@ -495,21 +527,39 @@ export default function ColaboradoresPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Alocar como Professor Titular em Turma (Opcional)
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Turmas em que Leciona / Atua (Pode selecionar várias turmas)
                 </label>
-                <select
-                  value={turmaId}
-                  onChange={(e) => setTurmaId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800"
-                >
-                  <option value="">Sem turma vinculada no momento</option>
-                  {turmas.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nome} ({t.serie} · {t.turno} · {t.anoLetivo})
-                    </option>
-                  ))}
-                </select>
+                {turmas.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Nenhuma turma cadastrada.</p>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-300 p-2.5 space-y-1.5 bg-slate-50/50">
+                    {turmas.map((t) => {
+                      const marcado = turmasIds.includes(t.id);
+                      return (
+                        <label
+                          key={t.id}
+                          className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:text-slate-900"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={marcado}
+                            onChange={() => alternarTurmaNoFormulario(t.id)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span>
+                            <strong>{t.nome}</strong> ({t.serie} · {t.turno} · {t.anoLetivo})
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {turmasIds.length === 0
+                    ? 'Nenhuma turma selecionada.'
+                    : `${turmasIds.length} turma(s) selecionada(s).`}
+                </p>
               </div>
 
               <button
@@ -642,12 +692,12 @@ export default function ColaboradoresPage() {
                       </div>
                     </div>
 
-                    {/* Alocação de Turmas */}
+                    {/* Alocação de Turmas (N:N — múltiplas turmas por professor e múltiplos professores por turma) */}
                     <div className="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                           <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-                          Turmas Alocadas:
+                          Turmas ({colab.turmas.length}):
                         </span>
                         {colab.turmas.length === 0 ? (
                           <span className="text-xs text-slate-400 italic">
@@ -657,9 +707,22 @@ export default function ColaboradoresPage() {
                           colab.turmas.map((t) => (
                             <span
                               key={t.id}
-                              className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold"
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold"
                             >
-                              {t.nome} ({t.serie} · {t.anoLetivo})
+                              <span>
+                                {t.nome} ({t.serie} · {t.anoLetivo})
+                              </span>
+                              {podeEditar && (
+                                <button
+                                  type="button"
+                                  disabled={alocandoId === colab.id}
+                                  onClick={() => handleDesvincularTurma(colab, t.id)}
+                                  className="text-rose-600 hover:text-rose-800 font-bold ml-0.5 cursor-pointer"
+                                  title="Desvincular desta turma"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </span>
                           ))
                         )}
@@ -669,16 +732,18 @@ export default function ColaboradoresPage() {
                         <div className="flex flex-wrap items-center gap-3">
                           <select
                             disabled={alocandoId === colab.id}
-                            value={colab.turmas[0]?.id || ''}
+                            value=""
                             onChange={(e) => handleAlocarTurma(colab, e.target.value)}
                             className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-700 bg-slate-50"
                           >
-                            <option value="">Alocar / Trocar turma...</option>
-                            {turmas.map((t) => (
-                              <option key={t.id} value={t.id}>
-                                Vincular: {t.nome} ({t.serie} - {t.anoLetivo})
-                              </option>
-                            ))}
+                            <option value="">+ Vincular a mais uma turma...</option>
+                            {turmas
+                              .filter((t) => !colab.turmas.some((ct) => ct.id === t.id))
+                              .map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  + {t.nome} ({t.serie} - {t.anoLetivo})
+                                </option>
+                              ))}
                           </select>
                           <button
                             type="button"

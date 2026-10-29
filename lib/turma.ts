@@ -23,6 +23,9 @@ export interface CriarTurmaInput {
   anoLetivo: number;
   turno: string;
   capacidade?: number;
+  professoresIds?: string[];
+  adicionarProfessorId?: string;
+  removerProfessorId?: string;
 }
 
 export function validarDadosTurma(data: Partial<CriarTurmaInput>): { valido: boolean; erro?: string } {
@@ -62,6 +65,32 @@ export async function listarTurmas() {
     orderBy: [{ anoLetivo: 'desc' }, { serie: 'asc' }, { nome: 'asc' }],
     include: {
       professorTitular: true,
+      professores: {
+        include: {
+          colaborador: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+      matriculas: {
+        where: {
+          status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS'] },
+        },
+        orderBy: {
+          aluno: { nome: 'asc' },
+        },
+        include: {
+          aluno: {
+            include: {
+              responsaveis: {
+                orderBy: [{ ehPrincipal: 'desc' }, { createdAt: 'asc' }],
+                include: {
+                  responsavel: true,
+                },
+              },
+            },
+          },
+        },
+      },
       _count: {
         select: {
           matriculas: {
@@ -77,11 +106,73 @@ export async function listarTurmas() {
   return turmas.map((turma) => {
     const vagasOcupadas = turma._count.matriculas;
     const vagasRestantes = Math.max(0, turma.capacidade - vagasOcupadas);
+
+    // Unifica professores da tabela N:N (TurmaProfessor) e professorTitular (legado) sem duplicatas
+    const mapaProfessores = new Map<
+      string,
+      {
+        id: string;
+        nome: string;
+        cargo: string;
+        setor: string;
+        especialidade: string | null;
+        telefone: string | null;
+        email: string | null;
+      }
+    >();
+
+    if (turma.professorTitular) {
+      mapaProfessores.set(turma.professorTitular.id, {
+        id: turma.professorTitular.id,
+        nome: turma.professorTitular.nome,
+        cargo: turma.professorTitular.cargo,
+        setor: turma.professorTitular.setor,
+        especialidade: turma.professorTitular.especialidade,
+        telefone: turma.professorTitular.telefone,
+        email: turma.professorTitular.email,
+      });
+    }
+
+    for (const vinculo of turma.professores) {
+      const c = vinculo.colaborador;
+      if (c && !mapaProfessores.has(c.id)) {
+        mapaProfessores.set(c.id, {
+          id: c.id,
+          nome: c.nome,
+          cargo: c.cargo,
+          setor: c.setor,
+          especialidade: c.especialidade,
+          telefone: c.telefone,
+          email: c.email,
+        });
+      }
+    }
+
+    const professoresPresentes = Array.from(mapaProfessores.values());
+
+    const alunosPresentes = turma.matriculas.map((m) => ({
+      id: m.aluno.id,
+      nome: m.aluno.nome,
+      dataNascimentoFormatada: new Date(m.aluno.dataNascimento).toLocaleDateString('pt-BR'),
+      matriculaId: m.id,
+      matriculaCodigo: m.codigo,
+      matriculaStatus: m.status,
+      responsaveis: m.aluno.responsaveis.map((r) => ({
+        id: r.responsavel.id,
+        nome: r.responsavel.nome,
+        parentesco: r.responsavel.parentesco,
+        telefone: r.responsavel.telefone,
+        ehPrincipal: r.ehPrincipal,
+      })),
+    }));
+
     return {
       ...turma,
       vagasOcupadas,
       vagasRestantes,
       lotada: vagasRestantes === 0,
+      professoresPresentes,
+      alunosPresentes,
     };
   });
 }
@@ -176,15 +267,82 @@ export async function atualizarTurma(id: string, input: Partial<CriarTurmaInput>
     );
   }
 
-  return prisma.turma.update({
-    where: { id },
-    data: {
-      nome: nomeFormatado,
-      serie: dadosCompletos.serie,
-      turno: dadosCompletos.turno,
-      anoLetivo: dadosCompletos.anoLetivo,
-      capacidade: dadosCompletos.capacidade,
-    },
+  return prisma.$transaction(async (tx) => {
+    if (input.adicionarProfessorId) {
+      const colab = await tx.colaborador.findUnique({
+        where: { id: input.adicionarProfessorId },
+      });
+      if (!colab) {
+        throw new Error('Professor/colaborador selecionado não encontrado.');
+      }
+      await tx.turmaProfessor.upsert({
+        where: {
+          turmaId_colaboradorId: {
+            turmaId: id,
+            colaboradorId: input.adicionarProfessorId,
+          },
+        },
+        update: {},
+        create: {
+          turmaId: id,
+          colaboradorId: input.adicionarProfessorId,
+        },
+      });
+      if (!existente.professorTitularId) {
+        await tx.turma.update({
+          where: { id },
+          data: { professorTitularId: input.adicionarProfessorId },
+        });
+      }
+    }
+
+    if (input.removerProfessorId) {
+      await tx.turmaProfessor.deleteMany({
+        where: {
+          turmaId: id,
+          colaboradorId: input.removerProfessorId,
+        },
+      });
+      if (existente.professorTitularId === input.removerProfessorId) {
+        const outroVinculo = await tx.turmaProfessor.findFirst({
+          where: { turmaId: id },
+        });
+        await tx.turma.update({
+          where: { id },
+          data: { professorTitularId: outroVinculo ? outroVinculo.colaboradorId : null },
+        });
+      }
+    }
+
+    if (Array.isArray(input.professoresIds)) {
+      const idsUnicos = Array.from(
+        new Set(input.professoresIds.map((pid) => (pid || '').trim()).filter(Boolean))
+      );
+      await tx.turmaProfessor.deleteMany({ where: { turmaId: id } });
+      for (const colabId of idsUnicos) {
+        await tx.turmaProfessor.create({
+          data: {
+            turmaId: id,
+            colaboradorId: colabId,
+          },
+        });
+      }
+      await tx.turma.update({
+        where: { id },
+        data: { professorTitularId: idsUnicos[0] || null },
+      });
+    }
+
+    return tx.turma.update({
+      where: { id },
+      data: {
+        nome: nomeFormatado,
+        serie: dadosCompletos.serie,
+        turno: dadosCompletos.turno,
+        anoLetivo: dadosCompletos.anoLetivo,
+        capacidade: dadosCompletos.capacidade,
+      },
+    });
   });
 }
 

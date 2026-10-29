@@ -8,21 +8,22 @@ generator client {
 }
 
 model Turma {
-  id                 String       @id @default(uuid())
+  id                 String           @id @default(uuid())
   nome               String
   serie              String
   anoLetivo          Int
   turno              String
-  capacidade         Int          @default(25)
+  capacidade         Int              @default(25)
   professorTitularId String?
-  professorTitular   Colaborador? @relation(fields: [professorTitularId], references: [id], onDelete: SetNull)
+  professorTitular   Colaborador?     @relation(fields: [professorTitularId], references: [id], onDelete: SetNull)
+  professores        TurmaProfessor[]
   matriculas         Matricula[]
   comunicados        Comunicado[]
   materiais          MaterialEscolar[]
   livros             LivroEscolar[]
   eventos            EventoEscolar[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 }
 
 model Responsavel {
@@ -115,18 +116,30 @@ model Mensalidade {
 }
 
 model Colaborador {
-  id            String   @id @default(uuid())
-  nome          String
-  cpf           String   @unique
-  cargo         String
-  setor         String   @default("Pedagógico")
-  email         String?
-  telefone      String?
-  especialidade String?
-  ativo         Boolean  @default(true)
-  turmas        Turma[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String           @id @default(uuid())
+  nome            String
+  cpf             String           @unique
+  cargo           String
+  setor           String           @default("Pedagógico")
+  email           String?
+  telefone        String?
+  especialidade   String?
+  ativo           Boolean          @default(true)
+  turmas          Turma[]
+  turmasAlocadas  TurmaProfessor[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model TurmaProfessor {
+  id            String      @id @default(uuid())
+  turmaId       String
+  colaboradorId String
+  turma         Turma       @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  colaborador   Colaborador @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([turmaId, colaboradorId])
 }
 
 model Comunicado {

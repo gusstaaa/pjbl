@@ -21,6 +21,8 @@ export async function PATCH(
       especialidade: body.especialidade,
       ativo: body.ativo,
       turmaId: body.turmaId,
+      turmasIds: body.turmasIds,
+      desvincularTurmaId: body.desvincularTurmaId,
       perfilOperador: body.perfilOperador,
     });
 

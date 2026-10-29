@@ -17,6 +17,9 @@ export async function PATCH(
       turno: body.turno,
       anoLetivo: body.anoLetivo !== undefined ? Number(body.anoLetivo) : undefined,
       capacidade: body.capacidade !== undefined ? Number(body.capacidade) : undefined,
+      professoresIds: body.professoresIds,
+      adicionarProfessorId: body.adicionarProfessorId,
+      removerProfessorId: body.removerProfessorId,
     });
 
     return NextResponse.json(turma);

@@ -43,6 +43,7 @@
 | 008_solicitacoes_farda | `SolicitacaoFarda` | Sim (validação RF-10, RN-07 + demanda por tamanho + Cascade Delete) | 2026-10-23 | 2.8 |
 | 009_formularios_digitais | `FormularioModelo`, `RespostaFormulario` | Sim (validação RF-08, RF-09, RN-07 + unicidade por aluno/formulário + Cascade Delete) | 2026-10-23 | 2.9 |
 | 010_calendario_eventos | `EventoEscolar` | Sim (validação RF-19 + RBAC por perfil + filtro geral/turma + Cascade Delete) | 2026-10-23 | 2.10 |
+| 011_turma_professor_nn | `TurmaProfessor` | Sim (vínculo N:N entre `Turma` e `Colaborador` + unicidade `[turmaId, colaboradorId]` + Cascade Delete) | 2026-10-29 | 3.5 |
 
 Pegadinhas do banco:
 - Chaves estrangeiras e integridade referencial ativadas via Prisma.

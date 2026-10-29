@@ -12,6 +12,8 @@ export interface CriarAlunoInput {
   nome: string;
   dataNascimento: string;
   responsavelId: string;
+  segundoResponsavelId?: string | null;
+  responsaveisIds?: string[];
   genero?: string;
   certidaoNascimento?: string;
   observacoesMedicas?: string;
@@ -90,6 +92,7 @@ export async function listarAlunos(busca?: string) {
     orderBy: { nome: 'asc' },
     include: {
       responsaveis: {
+        orderBy: [{ ehPrincipal: 'desc' }, { createdAt: 'asc' }],
         include: {
           responsavel: true,
         },
@@ -104,7 +107,16 @@ export async function listarAlunos(busca?: string) {
   });
 
   return alunos.map((aluno) => {
-    const responsavelPrincipal = aluno.responsaveis.find((r) => r.ehPrincipal)?.responsavel || aluno.responsaveis[0]?.responsavel;
+    const responsaveisFormatados = aluno.responsaveis.map((v) => ({
+      id: v.responsavel.id,
+      nome: v.responsavel.nome,
+      cpf: v.responsavel.cpf,
+      telefone: v.responsavel.telefone,
+      parentesco: v.responsavel.parentesco,
+      ehPrincipal: v.ehPrincipal,
+    }));
+    const responsavelPrincipal = responsaveisFormatados[0] || null;
+    const segundoResponsavel = responsaveisFormatados[1] || null;
     const matriculaAtiva = aluno.matriculas.find((m) => m.status === 'ATIVA') || null;
     const ultimaMatricula = aluno.matriculas[0] || null;
 
@@ -130,15 +142,9 @@ export async function listarAlunos(busca?: string) {
       genero: aluno.genero || 'Não informado',
       certidaoNascimento: aluno.certidaoNascimento || 'Não informada',
       observacoesMedicas: aluno.observacoesMedicas || null,
-      responsavelPrincipal: responsavelPrincipal
-        ? {
-            id: responsavelPrincipal.id,
-            nome: responsavelPrincipal.nome,
-            cpf: responsavelPrincipal.cpf,
-            telefone: responsavelPrincipal.telefone,
-            parentesco: responsavelPrincipal.parentesco,
-          }
-        : null,
+      responsavelPrincipal,
+      segundoResponsavel,
+      responsaveis: responsaveisFormatados,
       matriculaAtiva: matriculaAtiva
         ? {
             id: matriculaAtiva.id,
@@ -159,25 +165,61 @@ export async function listarAlunos(busca?: string) {
   });
 }
 
+function extrairResponsaveisIds(input: {
+  responsavelId?: string;
+  segundoResponsavelId?: string | null;
+  responsaveisIds?: string[];
+}): string[] {
+  if (Array.isArray(input.responsaveisIds) && input.responsaveisIds.length > 0) {
+    const limpos = Array.from(
+      new Set(input.responsaveisIds.map((id) => (id || '').trim()).filter(Boolean))
+    );
+    if (limpos.length > 2) {
+      throw new Error('Cada aluno pode ter no máximo 2 responsáveis legais cadastrados.');
+    }
+    return limpos;
+  }
+
+  const lista: string[] = [];
+  if (input.responsavelId && input.responsavelId.trim()) {
+    lista.push(input.responsavelId.trim());
+  }
+  if (
+    input.segundoResponsavelId &&
+    input.segundoResponsavelId.trim() &&
+    input.segundoResponsavelId.trim() !== lista[0]
+  ) {
+    lista.push(input.segundoResponsavelId.trim());
+  }
+  return lista;
+}
+
 export async function criarAluno(input: CriarAlunoInput) {
   const validacao = validarDadosAluno(input);
   if (!validacao.valido) {
     throw new Error(validacao.erro);
   }
 
-  // Confere se o responsável existe no banco
-  const responsavel = await prisma.responsavel.findUnique({
-    where: { id: input.responsavelId },
+  const idsResponsaveis = extrairResponsaveisIds(input);
+  if (idsResponsaveis.length === 0) {
+    throw new Error(
+      'Regra RN-01: É obrigatório vincular ao menos um responsável legal maior de idade ao aluno.'
+    );
+  }
+
+  // Confere se todos os responsáveis existem no banco
+  const responsaveisEncontrados = await prisma.responsavel.findMany({
+    where: { id: { in: idsResponsaveis } },
   });
 
-  if (!responsavel) {
-    throw new Error('O responsável legal selecionado não foi encontrado no sistema.');
+  if (responsaveisEncontrados.length !== idsResponsaveis.length) {
+    throw new Error('Um ou mais responsáveis legais selecionados não foram encontrados no sistema.');
   }
 
   const nomeFormatado = input.nome.trim();
   const dataNasc = new Date(input.dataNascimento);
 
-  // Transação atômica: cria aluno e vincula o responsável
+  // Transação atômica: cria aluno e vincula até 2 responsáveis
   return prisma.$transaction(async (tx) => {
     const aluno = await tx.aluno.create({
       data: {
@@ -189,13 +231,15 @@ export async function criarAluno(input: CriarAlunoInput) {
       },
     });
 
-    await tx.alunoResponsavel.create({
-      data: {
-        alunoId: aluno.id,
-        responsavelId: responsavel.id,
-        ehPrincipal: true,
-      },
-    });
+    for (let i = 0; i < idsResponsaveis.length; i++) {
+      await tx.alunoResponsavel.create({
+        data: {
+          alunoId: aluno.id,
+          responsavelId: idsResponsaveis[i],
+          ehPrincipal: i === 0,
+        },
+      });
+    }
 
     return aluno;
   });
@@ -251,17 +295,39 @@ export async function atualizarAluno(id: string, input: Partial<CriarAlunoInput>
       : null;
   }
 
-  if (input.responsavelId !== undefined) {
-    if (!input.responsavelId || input.responsavelId.trim() === '') {
+  const deveAtualizarResponsaveis =
+    input.responsavelId !== undefined ||
+    input.segundoResponsavelId !== undefined ||
+    input.responsaveisIds !== undefined;
+
+  let idsResponsaveisAtualizados: string[] = [];
+
+  if (deveAtualizarResponsaveis) {
+    const principalAtual =
+      existente.responsaveis.find((r) => r.ehPrincipal)?.responsavelId ||
+      existente.responsaveis[0]?.responsavelId ||
+      '';
+    const segundoAtual =
+      existente.responsaveis.find((r) => r.responsavelId !== principalAtual)?.responsavelId || '';
+
+    idsResponsaveisAtualizados = extrairResponsaveisIds({
+      responsavelId: input.responsavelId !== undefined ? input.responsavelId : principalAtual,
+      segundoResponsavelId:
+        input.segundoResponsavelId !== undefined ? input.segundoResponsavelId : segundoAtual,
+      responsaveisIds: input.responsaveisIds,
+    });
+
+    if (idsResponsaveisAtualizados.length === 0) {
       throw new Error(
         'Regra RN-01: É obrigatório manter ao menos um responsável legal vinculado ao aluno.'
       );
     }
-    const resp = await prisma.responsavel.findUnique({
-      where: { id: input.responsavelId },
+
+    const encontrados = await prisma.responsavel.findMany({
+      where: { id: { in: idsResponsaveisAtualizados } },
     });
-    if (!resp) {
-      throw new Error('O responsável legal selecionado não foi encontrado no sistema.');
+    if (encontrados.length !== idsResponsaveisAtualizados.length) {
+      throw new Error('Um ou mais responsáveis legais selecionados não foram encontrados no sistema.');
     }
   }
 
@@ -271,17 +337,19 @@ export async function atualizarAluno(id: string, input: Partial<CriarAlunoInput>
       data: dadosAtualizacao,
     });
 
-    if (input.responsavelId) {
+    if (deveAtualizarResponsaveis) {
       await tx.alunoResponsavel.deleteMany({
         where: { alunoId: id },
       });
-      await tx.alunoResponsavel.create({
-        data: {
-          alunoId: id,
-          responsavelId: input.responsavelId,
-          ehPrincipal: true,
-        },
-      });
+      for (let i = 0; i < idsResponsaveisAtualizados.length; i++) {
+        await tx.alunoResponsavel.create({
+          data: {
+            alunoId: id,
+            responsavelId: idsResponsaveisAtualizados[i],
+            ehPrincipal: i === 0,
+          },
+        });
+      }
     }
 
     return alunoAtualizado;

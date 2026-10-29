@@ -4,7 +4,7 @@
 > cada passo concluído. Não é diário: **teto ~60 linhas** (entrega antiga sai
 > daqui; o `git log` guarda).
 
-**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-28
+**Projeto:** Sistema de Gestão Escolar · **Pasta:** pjbl · **Última atualização:** 2026-10-29
 **Salvo no GitHub?** sim · **No ar?** sim (conferido em https://pjbl-gusta22.vercel.app/ com /health/db ok)
 
 ## 🧭 Trilha
@@ -28,7 +28,7 @@
 
 ## 🟡 Em andamento (onde parei dentro do passo)
 
-- Nenhuma tarefa pendente. Fases 0, 1, S, 2 e 3 (Itens 3.1 a 3.4) 100% concluídas, testadas e salvas no GitHub e na Vercel.
+- Nenhuma tarefa pendente. Fases 0, 1, S, 2 e 3 (Itens 3.1 a 3.5) 100% concluídas, testadas e salvas no GitHub e na Vercel.
 
 ## 🙋 Aguardando o usuário (só ele pode fazer)
 
@@ -38,11 +38,11 @@
 
 | Data | Entrega | Prova |
 |---|---|---|
+| 2026-10-29 | 3.5 Até 2 responsáveis por aluno + N:N Professores/Turmas + Painel de Alunos e Professores ao clicar na Turma | `TurmaProfessor`, `/alunos`, `/turmas`, `/colaboradores`, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.4 Edição e Remoção (CRUD Completo) em Alunos, Responsáveis, Turmas e Parâmetros | Rotas `PATCH`/`DELETE` + UI em 10 módulos, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.3 RBAC Visual Completo + Isolamento Financeiro Familiar (RN-06) | 12 telas + `Navbar.tsx` + `HomeDashboardClient.tsx`, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.2 Tela de Login por Perfil e Sessão Unificada (`/login`) | `app/login/page.tsx`, `AuthProvider.tsx`, e2e 16/16, segurança 30/30 e smoke 28/28 verdes |
 | 2026-10-28 | 3.1 Menu Lateral (Drawer), UX e Identidade Azul Royal & Esmeralda | `Navbar.tsx`, `app/page.tsx`, `globals.css`, e2e 16/16, segurança 30/30 e smoke 27/27 verdes |
-| 2026-10-23 | 2.10 Calendário de Eventos Escolares (RF-19) | `/api/calendario`, tela `/calendario`, e2e 16/16, segurança 30/30 e smoke 27/27 verdes |
 
 ## 📝 Anotado para depois
 

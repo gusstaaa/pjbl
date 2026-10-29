@@ -15,6 +15,8 @@ export async function PATCH(
       nome: body.nome,
       dataNascimento: body.dataNascimento,
       responsavelId: body.responsavelId,
+      segundoResponsavelId: body.segundoResponsavelId,
+      responsaveisIds: body.responsaveisIds,
       genero: body.genero,
       certidaoNascimento: body.certidaoNascimento,
       observacoesMedicas: body.observacoesMedicas,

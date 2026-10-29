@@ -34,6 +34,7 @@ export interface CriarColaboradorInput {
   telefone?: string;
   especialidade?: string;
   turmaId?: string;
+  turmasIds?: string[];
   perfilOperador?: string;
 }
 
@@ -47,7 +48,30 @@ export interface AtualizarColaboradorInput {
   especialidade?: string;
   ativo?: boolean;
   turmaId?: string | null;
+  turmasIds?: string[];
+  desvincularTurmaId?: string;
   perfilOperador?: string;
+}
+
+function unificarTurmasDoColaborador(colab: {
+  turmas?: Array<{ id: string; nome: string; serie: string; anoLetivo: number; turno: string }>;
+  turmasAlocadas?: Array<{
+    turma: { id: string; nome: string; serie: string; anoLetivo: number; turno: string };
+  }>;
+}) {
+  const mapa = new Map<
+    string,
+    { id: string; nome: string; serie: string; anoLetivo: number; turno: string }
+  >();
+  for (const t of colab.turmas || []) {
+    mapa.set(t.id, t);
+  }
+  for (const vinculo of colab.turmasAlocadas || []) {
+    if (vinculo.turma && !mapa.has(vinculo.turma.id)) {
+      mapa.set(vinculo.turma.id, vinculo.turma);
+    }
+  }
+  return Array.from(mapa.values());
 }
 
 export function validarPermissaoCadastroRN07(perfilOperador?: string): PerfilCadastroRN07 {
@@ -98,11 +122,17 @@ export async function criarColaborador(input: CriarColaboradorInput) {
   const telefoneFormatado = input.telefone ? formatarTelefone(input.telefone.trim()) : null;
   const emailFormatado = input.email ? input.email.trim().toLowerCase() : null;
   const especialidadeFormatada = input.especialidade ? input.especialidade.trim() : null;
-  const turmaId = input.turmaId ? input.turmaId.trim() : '';
+
+  const idsTurmasSolicitadas = Array.from(
+    new Set([
+      ...(Array.isArray(input.turmasIds) ? input.turmasIds : []),
+      ...(input.turmaId ? [input.turmaId] : []),
+    ].map((id) => (id || '').trim()).filter(Boolean))
+  );
 
   return prisma.$transaction(async (tx) => {
-    if (turmaId) {
-      const turma = await tx.turma.findUnique({ where: { id: turmaId } });
+    for (const tid of idsTurmasSolicitadas) {
+      const turma = await tx.turma.findUnique({ where: { id: tid } });
       if (!turma) {
         throw new Error('A turma selecionada para alocação não foi encontrada.');
       }
@@ -121,20 +151,41 @@ export async function criarColaborador(input: CriarColaboradorInput) {
       },
     });
 
-    if (turmaId) {
-      await tx.turma.update({
-        where: { id: turmaId },
-        data: { professorTitularId: novoColaborador.id },
+    for (const tid of idsTurmasSolicitadas) {
+      await tx.turmaProfessor.upsert({
+        where: {
+          turmaId_colaboradorId: {
+            turmaId: tid,
+            colaboradorId: novoColaborador.id,
+          },
+        },
+        update: {},
+        create: {
+          turmaId: tid,
+          colaboradorId: novoColaborador.id,
+        },
       });
+
+      const turmaAtual = await tx.turma.findUnique({ where: { id: tid } });
+      if (turmaAtual && !turmaAtual.professorTitularId) {
+        await tx.turma.update({
+          where: { id: tid },
+          data: { professorTitularId: novoColaborador.id },
+        });
+      }
     }
 
     const colaboradorCompleto = await tx.colaborador.findUnique({
       where: { id: novoColaborador.id },
-      include: { turmas: true },
+      include: {
+        turmas: true,
+        turmasAlocadas: { include: { turma: true } },
+      },
     });
 
     return {
       ...colaboradorCompleto,
+      turmas: colaboradorCompleto ? unificarTurmasDoColaborador(colaboradorCompleto) : [],
       cpfFormatado: formatarCPF(cpfLimpo),
     };
   });
@@ -171,12 +222,19 @@ export async function listarColaboradores(filtros?: {
       turmas: {
         orderBy: [{ anoLetivo: 'desc' }, { nome: 'asc' }],
       },
+      turmasAlocadas: {
+        include: {
+          turma: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      },
     },
     orderBy: [{ ativo: 'desc' }, { nome: 'asc' }],
   });
 
   const colaboradores = registros.map((c) => ({
     ...c,
+    turmas: unificarTurmasDoColaborador(c),
     cpfFormatado: formatarCPF(c.cpf),
   }));
 
@@ -280,9 +338,64 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
       });
     }
 
-    if (input.turmaId !== undefined) {
+    if (Array.isArray(input.turmasIds)) {
+      const idsUnicos = Array.from(
+        new Set(input.turmasIds.map((tid) => (tid || '').trim()).filter(Boolean))
+      );
+
+      for (const tid of idsUnicos) {
+        const turma = await tx.turma.findUnique({ where: { id: tid } });
+        if (!turma) {
+          throw new Error('Uma das turmas selecionadas não foi encontrada.');
+        }
+      }
+
+      await tx.turmaProfessor.deleteMany({
+        where: { colaboradorId: id },
+      });
+
+      await tx.turma.updateMany({
+        where: {
+          professorTitularId: id,
+          ...(idsUnicos.length > 0 ? { id: { notIn: idsUnicos } } : {}),
+        },
+        data: { professorTitularId: null },
+      });
+
+      for (const tid of idsUnicos) {
+        await tx.turmaProfessor.create({
+          data: {
+            turmaId: tid,
+            colaboradorId: id,
+          },
+        });
+        const turmaAtual = await tx.turma.findUnique({ where: { id: tid } });
+        if (turmaAtual && !turmaAtual.professorTitularId) {
+          await tx.turma.update({
+            where: { id: tid },
+            data: { professorTitularId: id },
+          });
+        }
+      }
+    } else if (input.desvincularTurmaId) {
+      await tx.turmaProfessor.deleteMany({
+        where: {
+          turmaId: input.desvincularTurmaId,
+          colaboradorId: id,
+        },
+      });
+      await tx.turma.updateMany({
+        where: {
+          id: input.desvincularTurmaId,
+          professorTitularId: id,
+        },
+        data: { professorTitularId: null },
+      });
+    } else if (input.turmaId !== undefined) {
       if (input.turmaId === null || input.turmaId === '') {
-        // Desvincula das turmas atuais
+        await tx.turmaProfessor.deleteMany({
+          where: { colaboradorId: id },
+        });
         await tx.turma.updateMany({
           where: { professorTitularId: id },
           data: { professorTitularId: null },
@@ -292,20 +405,39 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
         if (!turma) {
           throw new Error('Turma selecionada para alocação não encontrada.');
         }
-        await tx.turma.update({
-          where: { id: input.turmaId },
-          data: { professorTitularId: id },
+        await tx.turmaProfessor.upsert({
+          where: {
+            turmaId_colaboradorId: {
+              turmaId: input.turmaId,
+              colaboradorId: id,
+            },
+          },
+          update: {},
+          create: {
+            turmaId: input.turmaId,
+            colaboradorId: id,
+          },
         });
+        if (!turma.professorTitularId) {
+          await tx.turma.update({
+            where: { id: input.turmaId },
+            data: { professorTitularId: id },
+          });
+        }
       }
     }
 
     const atualizado = await tx.colaborador.findUnique({
       where: { id },
-      include: { turmas: true },
+      include: {
+        turmas: true,
+        turmasAlocadas: { include: { turma: true } },
+      },
     });
 
     return {
       ...atualizado,
+      turmas: atualizado ? unificarTurmasDoColaborador(atualizado) : [],
       cpfFormatado: formatarCPF(atualizado?.cpf || colaborador.cpf),
     };
   });
