@@ -18,10 +18,12 @@ export interface AlunoResumoSessao {
 export interface SessaoUsuario {
   perfil: PerfilUsuario;
   nome: string;
+  identificador?: string;
   responsavelId?: string;
   responsavelCpf?: string;
   alunosVinculados?: AlunoResumoSessao[];
   colaboradorId?: string;
+  cargoColaborador?: string;
 }
 
 export const PERFIS_META: Record<
@@ -68,6 +70,7 @@ const STORAGE_KEY = 'escola_sessao_ativa_v1';
 const SESSAO_PADRAO: SessaoUsuario = {
   perfil: 'SECRETARIA',
   nome: 'Secretaria Escolar',
+  identificador: 'sec',
 };
 
 interface AuthContextValue {
@@ -164,6 +167,11 @@ export function BannerOperadorLogado(_props?: BannerOperadorProps) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-medium text-slate-600">Conectado como:</span>
             <strong className="text-slate-900">{sessao.nome}</strong>
+            {sessao.identificador && (
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700">
+                login: {sessao.identificador}
+              </span>
+            )}
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.corBadge}`}
             >

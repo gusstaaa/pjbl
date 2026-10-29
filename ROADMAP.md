@@ -56,11 +56,12 @@
 | 3.3 | Ocultação dinâmica de funções, formulários, botões e itens de menu bloqueados para cada perfil logado e isolamento financeiro por família (RBAC visual completo + RN-06) | REQUISITOS §2, §5 (RN-06, RN-07, RN-08) e §6 | ✅ |
 | 3.4 | Edição e Remoção (CRUD Completo) para Alunos, Responsáveis, Turmas, Colaboradores e demais parâmetros cadastráveis do sistema | RF-01 a RF-20, RN-01, RN-04, RN-07, RN-08 | ✅ |
 | 3.5 | Até 2 responsáveis legais por aluno, vínculo N:N entre Professores e Turmas (múltiplos professores por turma e múltiplas turmas por professor) e painel de detalhes ao clicar na turma (listando alunos e professores presentes) | RF-02, RF-03, RF-04, RF-18, RN-01, RN-02 | ✅ |
+| 3.6 | Sistema de Login com CPF/Identificador e Senha Padrão (`adm` para Administração, `sec` para Secretaria, CPF para Professores/Colaboradores e Responsáveis, com senha padrão `123456`) | REQUISITOS §2, §5 (RN-06, RN-07, RN-08) e §6 | ✅ |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |
 |---|---|---|
-| 1 | Login inicial por seleção de perfil e escolha do responsável cadastrado (sem senha na 1ª etapa; evolução futura para usuário/ID e senha). | Resolvido em 3.2 |
+| 1 | Login por CPF ou atalho (`adm` / `sec`) com senha padrão inicial (`123456`). | Resolvido em 3.6 |
 
 ## Ideias novas (caixa de entrada: nunca apagar, só mudar o status)
 | Data | Ideia | Status | Destino |
@@ -70,6 +71,7 @@
 | 2026-10-28 | Ocultar todas as funções, formulários e telas bloqueadas para o perfil logado (ex.: responsável vê apenas o mural de comunicados, sem o formulário de publicação) | ✅ feito | Item 3.3 |
 | 2026-10-28 | Adicionar funções de editar e remover para alunos, responsáveis, turmas e demais parâmetros cadastráveis do sistema | ✅ feito | Item 3.4 |
 | 2026-10-29 | Permitir até 2 responsáveis por aluno, painel de alunos e professores ao clicar na turma e vínculo N:N entre professores e turmas | ✅ feito | Item 3.5 |
+| 2026-10-29 | Sistema de login com CPF e senha padrão (`123456`), usando `adm` para Administração e `sec` para Secretaria | ✅ feito | Item 3.6 |
 
 ## Histórico
 | Data | Evento |

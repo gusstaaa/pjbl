@@ -67,7 +67,7 @@ Pegadinhas do banco:
 | Solicitação de Fardas (2.8) | `lib/farda.ts` | `/api/fardas`, `/api/fardas/[id]` | `/fardas` |
 | Formulários e Autorizações (2.9) | `lib/formulario.ts` | `/api/formularios`, `/api/formularios/respostas` | `/formularios` |
 | Calendário Escolar (2.10) | `lib/calendario.ts` | `/api/calendario` | `/calendario` |
-| Sessão e Login por Perfil (3.2) | `components/AuthProvider.tsx` | `/api/responsaveis`, `/api/colaboradores` | `/login` |
+| Sessão e Login por Perfil e CPF (3.2 / 3.6) | `lib/auth.ts`, `components/AuthProvider.tsx` | `/api/auth/login`, `/api/responsaveis`, `/api/colaboradores` | `/login` |
 | RBAC Visual Completo (3.3) | `components/AuthProvider.tsx`, `components/Navbar.tsx`, `components/HomeDashboardClient.tsx` | Todas as rotas de consulta e escrita | Todas as 12 telas do sistema |
 
 ## 6. Erros já enfrentados (consultar AO ESCREVER, não só ao depurar)

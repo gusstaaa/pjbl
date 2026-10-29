@@ -348,6 +348,31 @@ else
   fail "Categoria inválida de evento escolar não retornou HTTP 400 (retornou $CALENDARIO_INVALID_CODE)."
 fi
 
+# 31. Bloqueio de tentativa de login com senha incorreta (HTTP 401)
+LOGIN_SENHA_ERRADA_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"identificador":"adm","senha":"senha_errada_999"}')
+
+if [ "$LOGIN_SENHA_ERRADA_CODE" = "401" ]; then
+  pass "Tentativa de login com senha incorreta bloqueada em /api/auth/login (HTTP 401)."
+else
+  fail "Login com senha incorreta não retornou HTTP 401 (retornou $LOGIN_SENHA_ERRADA_CODE)."
+fi
+
+# 32. Autenticação válida para credenciais 'adm' e 'sec' com senha padrão (HTTP 200)
+LOGIN_ADM_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"identificador":"adm","senha":"123456"}')
+LOGIN_SEC_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"identificador":"sec","senha":"123456"}')
+
+if [ "$LOGIN_ADM_CODE" = "200" ] && [ "$LOGIN_SEC_CODE" = "200" ]; then
+  pass "Autenticação de Administração (adm) e Secretaria (sec) com senha padrão validada (HTTP 200)."
+else
+  fail "Autenticação de adm ($LOGIN_ADM_CODE) ou sec ($LOGIN_SEC_CODE) falhou."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------
