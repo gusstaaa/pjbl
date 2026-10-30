@@ -57,6 +57,7 @@
 | 3.4 | Edição e Remoção (CRUD Completo) para Alunos, Responsáveis, Turmas, Colaboradores e demais parâmetros cadastráveis do sistema | RF-01 a RF-20, RN-01, RN-04, RN-07, RN-08 | ✅ |
 | 3.5 | Até 2 responsáveis legais por aluno, vínculo N:N entre Professores e Turmas (múltiplos professores por turma e múltiplas turmas por professor) e painel de detalhes ao clicar na turma (listando alunos e professores presentes) | RF-02, RF-03, RF-04, RF-18, RN-01, RN-02 | ✅ |
 | 3.6 | Sistema de Login com CPF/Identificador e Senha Padrão (`adm` para Administração, `sec` para Secretaria, CPF para Professores/Colaboradores e Responsáveis, com senha padrão `123456`) | REQUISITOS §2, §5 (RN-06, RN-07, RN-08) e §6 | ✅ |
+| 3.7 | Portal de Login com Abas por Perfil (Responsável, Professor, Colaborador) por CPF, Tela Inicial Protegida para Visitantes e Bloqueio de Acesso Cruzado | REQUISITOS §2, §5 e §6 | ✅ |
 
 ## Decisões pendentes do usuário
 | # | Decisão | Bloqueia |

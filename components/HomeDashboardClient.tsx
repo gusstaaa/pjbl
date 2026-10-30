@@ -22,6 +22,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { useSessao, PERFIS_META } from '@/components/AuthProvider';
+import { LoginForm } from '@/components/LoginForm';
 
 interface HomeDashboardProps {
   dbStatus: string;
@@ -42,7 +43,24 @@ export function HomeDashboardClient({
   comunicadoCount,
   eventoCount,
 }: HomeDashboardProps) {
-  const { sessao } = useSessao();
+  const { sessao, carregado } = useSessao();
+
+  if (!carregado) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-20 flex-1 w-full flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-blue-900 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-semibold text-slate-500">Carregando portal escolar...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // A tela de login é a principal quando o usuário não estiver autenticado
+  if (!sessao.autenticado) {
+    return <LoginForm modoPaginaPrincipal={true} />;
+  }
+
   const perfil = sessao.perfil;
   const metaPerfil = PERFIS_META[perfil] || PERFIS_META.SECRETARIA;
 

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, UserCheck, LogIn } from 'lucide-react';
+import { ShieldCheck, UserCheck, LogIn, LogOut, Lock } from 'lucide-react';
 
 export type PerfilUsuario =
   | 'SECRETARIA'
@@ -10,20 +10,25 @@ export type PerfilUsuario =
   | 'PROFESSOR'
   | 'RESPONSAVEL';
 
+export type CategoriaUsuario = 'RESPONSAVEL' | 'PROFESSOR' | 'COLABORADOR';
+
 export interface AlunoResumoSessao {
   id: string;
   nome: string;
 }
 
 export interface SessaoUsuario {
+  autenticado?: boolean;
   perfil: PerfilUsuario;
   nome: string;
   identificador?: string;
+  categoriaLogin?: CategoriaUsuario;
   responsavelId?: string;
   responsavelCpf?: string;
   alunosVinculados?: AlunoResumoSessao[];
   colaboradorId?: string;
   cargoColaborador?: string;
+  setorColaborador?: string;
 }
 
 export const PERFIS_META: Record<
@@ -67,26 +72,30 @@ export const PERFIS_META: Record<
 
 const STORAGE_KEY = 'escola_sessao_ativa_v1';
 
-const SESSAO_PADRAO: SessaoUsuario = {
+export const SESSAO_DESLOGADA: SessaoUsuario = {
+  autenticado: false,
   perfil: 'SECRETARIA',
-  nome: 'Secretaria Escolar',
-  identificador: 'sec',
+  nome: 'Visitante (Não autenticado)',
 };
 
 interface AuthContextValue {
   sessao: SessaoUsuario;
   carregado: boolean;
+  estaAutenticado: boolean;
   definirSessao: (novaSessao: SessaoUsuario) => void;
+  encerrarSessao: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
-  sessao: SESSAO_PADRAO,
+  sessao: SESSAO_DESLOGADA,
   carregado: false,
+  estaAutenticado: false,
   definirSessao: () => {},
+  encerrarSessao: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [sessao, setSessao] = useState<SessaoUsuario>(SESSAO_PADRAO);
+  const [sessao, setSessao] = useState<SessaoUsuario>(SESSAO_DESLOGADA);
   const [carregado, setCarregado] = useState(false);
 
   useEffect(() => {
@@ -95,7 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (salvo) {
         const parsed = JSON.parse(salvo);
         if (parsed && parsed.perfil && PERFIS_META[parsed.perfil as PerfilUsuario]) {
-          setSessao(parsed);
+          const sessaoCarregada: SessaoUsuario = {
+            ...parsed,
+            autenticado: parsed.autenticado !== undefined ? Boolean(parsed.autenticado) : true,
+          };
+          setSessao(sessaoCarregada);
+
           if (parsed.perfil === 'RESPONSAVEL' && parsed.responsavelId) {
             fetch('/api/responsaveis')
               .then((r) => (r.ok ? r.json() : null))
@@ -109,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     nome: v.aluno.nome,
                   }));
                   const atualizado: SessaoUsuario = {
-                    ...parsed,
+                    ...sessaoCarregada,
                     nome: encontrado.nome,
                     responsavelCpf: encontrado.cpf,
                     alunosVinculados: vinculados,
@@ -130,16 +144,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   function definirSessao(novaSessao: SessaoUsuario) {
-    setSessao(novaSessao);
+    const atualizada: SessaoUsuario = {
+      ...novaSessao,
+      autenticado: true,
+    };
+    setSessao(atualizada);
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(novaSessao));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(atualizada));
     } catch (e) {
       console.error('Erro ao salvar sessão local:', e);
     }
   }
 
+  function encerrarSessao() {
+    setSessao(SESSAO_DESLOGADA);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.error('Erro ao limpar sessão local:', e);
+    }
+  }
+
+  const estaAutenticado = Boolean(sessao?.autenticado);
+
   return (
-    <AuthContext.Provider value={{ sessao, carregado, definirSessao }}>
+    <AuthContext.Provider
+      value={{
+        sessao,
+        carregado,
+        estaAutenticado,
+        definirSessao,
+        encerrarSessao,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -156,8 +193,32 @@ interface BannerOperadorProps {
 }
 
 export function BannerOperadorLogado(_props?: BannerOperadorProps) {
-  const { sessao } = useSessao();
+  const { sessao, encerrarSessao } = useSessao();
   const meta = PERFIS_META[sessao.perfil] || PERFIS_META.SECRETARIA;
+
+  if (!sessao.autenticado) {
+    return (
+      <div className="rounded-xl p-3 border bg-amber-50 border-amber-200 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-start gap-2.5">
+          <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <div className="text-xs space-y-0.5">
+            <p className="font-bold text-amber-900">Acesso Não Autenticado</p>
+            <p className="text-[11px] text-amber-800">
+              Para liberar as ações e os cadastros da escola, faça login com seu CPF ou credencial administrativa.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition shrink-0 self-start sm:self-center"
+        >
+          <LogIn className="w-3.5 h-3.5" />
+          <span>Fazer Login</span>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl p-3 border bg-blue-50/70 border-blue-200 text-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -195,13 +256,28 @@ export function BannerOperadorLogado(_props?: BannerOperadorProps) {
         </div>
       </div>
 
-      <Link
-        href="/login"
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-blue-900 border border-slate-300 shadow-2xs transition shrink-0 self-start sm:self-center"
-      >
-        <LogIn className="w-3.5 h-3.5 text-emerald-600" />
-        <span>Trocar Usuário</span>
-      </Link>
+      <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-blue-900 border border-slate-300 shadow-2xs transition"
+          title="Alternar perfil ou logar com outro usuário"
+        >
+          <LogIn className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Trocar</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            encerrarSessao();
+            window.location.href = '/login';
+          }}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs transition"
+          title="Encerrar sessão ativa"
+        >
+          <LogOut className="w-3.5 h-3.5 text-rose-600" />
+          <span>Sair</span>
+        </button>
+      </div>
     </div>
   );
 }

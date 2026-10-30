@@ -12,15 +12,42 @@ export const CARGOS_VALIDOS = [
 
 export type CargoValido = (typeof CARGOS_VALIDOS)[number];
 
-export const SETORES_VALIDOS = [
-  'Pedagógico',
+export const SETORES_OFICIAIS = [
   'Secretaria',
   'Administração',
+  'Pedagógico (Professor)',
+] as const;
+
+export const SETORES_VALIDOS = [
+  'Secretaria',
+  'Administração',
+  'Pedagógico (Professor)',
+  // Retrocompatibilidade para dados legados e testes automatizados:
+  'Pedagógico',
   'Financeiro',
   'Apoio Operacional',
 ] as const;
 
 export type SetorValido = (typeof SETORES_VALIDOS)[number];
+
+export function normalizarSetor(setorRaw?: string | null): string {
+  const s = (setorRaw || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  if (s.includes('admin') || s.includes('direc') || s.includes('financeir')) {
+    return 'Administração';
+  }
+  if (s.includes('secretar')) {
+    return 'Secretaria';
+  }
+  if (s.includes('pedagog') || s.includes('prof') || s.includes('docent')) {
+    return 'Pedagógico (Professor)';
+  }
+  return setorRaw?.trim() || 'Pedagógico (Professor)';
+}
 
 export const PERFIS_CADASTRO_RN07 = ['SECRETARIA', 'ADMINISTRACAO'] as const;
 export type PerfilCadastroRN07 = (typeof PERFIS_CADASTRO_RN07)[number];
@@ -104,12 +131,18 @@ export async function criarColaborador(input: CriarColaboradorInput) {
     );
   }
 
-  const setor = (input.setor || 'Pedagógico').trim();
-  if (!SETORES_VALIDOS.includes(setor as SetorValido)) {
+  const setorNormalizado = normalizarSetor(input.setor || 'Pedagógico (Professor)');
+  if (
+    !SETORES_VALIDOS.includes(setorNormalizado as SetorValido) &&
+    !SETORES_VALIDOS.includes((input.setor || '') as SetorValido)
+  ) {
     throw new Error(
-      `Setor inválido. Escolha uma das opções: ${SETORES_VALIDOS.join(', ')}.`
+      `Setor inválido. Escolha uma das opções: ${SETORES_OFICIAIS.join(', ')}.`
     );
   }
+  const setor = SETORES_OFICIAIS.includes(setorNormalizado as any)
+    ? setorNormalizado
+    : (input.setor || 'Pedagógico (Professor)').trim();
 
   const existente = await prisma.colaborador.findUnique({
     where: { cpf: cpfLimpo },
@@ -202,8 +235,13 @@ export async function listarColaboradores(filtros?: {
     where.cargo = filtros.cargo;
   }
 
-  if (filtros?.setor && SETORES_VALIDOS.includes(filtros.setor as SetorValido)) {
-    where.setor = filtros.setor;
+  if (filtros?.setor) {
+    const s = normalizarSetor(filtros.setor);
+    if (s === 'Pedagógico (Professor)') {
+      where.setor = { in: ['Pedagógico (Professor)', 'Pedagógico'] };
+    } else {
+      where.setor = s;
+    }
   }
 
   if (filtros?.busca && filtros.busca.trim() !== '') {
@@ -316,10 +354,16 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
   }
 
   if (input.setor !== undefined) {
-    if (!SETORES_VALIDOS.includes(input.setor as SetorValido)) {
-      throw new Error(`Setor inválido. Escolha: ${SETORES_VALIDOS.join(', ')}.`);
+    const setorNormalizado = normalizarSetor(input.setor);
+    if (
+      !SETORES_VALIDOS.includes(setorNormalizado as SetorValido) &&
+      !SETORES_VALIDOS.includes(input.setor as SetorValido)
+    ) {
+      throw new Error(`Setor inválido. Escolha: ${SETORES_OFICIAIS.join(', ')}.`);
     }
-    dadosAtualizacao.setor = input.setor;
+    dadosAtualizacao.setor = SETORES_OFICIAIS.includes(setorNormalizado as any)
+      ? setorNormalizado
+      : input.setor;
   }
 
   if (input.especialidade !== undefined) {

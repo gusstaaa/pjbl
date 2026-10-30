@@ -373,6 +373,17 @@ else
   fail "Autenticação de adm ($LOGIN_ADM_CODE) ou sec ($LOGIN_SEC_CODE) falhou."
 fi
 
+# 33. Bloqueio de credencial administrativa fora da aba Colaborador (HTTP 403)
+LOGIN_ADM_RESP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"categoria":"RESPONSAVEL","identificador":"adm","senha":"123456"}')
+
+if [ "$LOGIN_ADM_RESP_CODE" = "403" ]; then
+  pass "Tentativa de login de credencial administrativa fora da aba Colaborador bloqueada (HTTP 403)."
+else
+  fail "Login curinga fora de Colaborador não retornou HTTP 403 (retornou $LOGIN_ADM_RESP_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

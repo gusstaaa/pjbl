@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const sessao = await autenticarUsuario({
+      categoria: body.categoria,
       identificador: body.identificador ?? body.login ?? body.cpf ?? '',
       senha: body.senha ?? '',
       perfilPreferido: body.perfilPreferido,

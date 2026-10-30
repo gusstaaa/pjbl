@@ -173,7 +173,7 @@ const CATEGORIES = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { sessao } = useSessao();
+  const { sessao, encerrarSessao } = useSessao();
   const [menuAberto, setMenuAberto] = useState(false);
   const [buscaMenu, setBuscaMenu] = useState('');
 
@@ -261,25 +261,49 @@ export function Navbar() {
             </span>
           </div>
 
-          {/* Direita: Perfil Logado + Botão de Matrícula (apenas para Secretaria/Admin) */}
+          {/* Direita: Perfil Logado ou Botão de Login */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              title="Clique para trocar de usuário ou perfil de acesso"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-950 border border-blue-700 hover:border-emerald-400 text-xs transition"
-            >
-              <LogIn className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <div className="text-left leading-tight">
-                <span className="block font-bold text-white truncate max-w-[110px] sm:max-w-[150px]">
-                  {sessao.nome}
-                </span>
-                <span className="block text-[10px] text-emerald-300 font-medium">
-                  {metaPerfil.rotulo} · Trocar
-                </span>
-              </div>
-            </Link>
+            {sessao.autenticado ? (
+              <>
+                <Link
+                  href="/login"
+                  title="Clique para trocar de usuário ou perfil de acesso"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-950 border border-blue-700 hover:border-emerald-400 text-xs transition"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <div className="text-left leading-tight">
+                    <span className="block font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">
+                      {sessao.nome}
+                    </span>
+                    <span className="block text-[10px] text-emerald-300 font-medium">
+                      {metaPerfil.rotulo}
+                    </span>
+                  </div>
+                </Link>
 
-            {podeGerirMatriculas && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    encerrarSessao();
+                    window.location.href = '/login';
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-rose-600 text-white text-xs font-bold transition border border-white/15 cursor-pointer"
+                  title="Encerrar sessão ativa"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Fazer Login</span>
+              </Link>
+            )}
+
+            {podeGerirMatriculas && sessao.autenticado && (
               <Link
                 href="/matriculas"
                 className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"

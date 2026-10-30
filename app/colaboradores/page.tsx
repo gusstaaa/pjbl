@@ -58,11 +58,9 @@ const CARGOS = [
 ];
 
 const SETORES = [
-  'Pedagógico',
   'Secretaria',
   'Administração',
-  'Financeiro',
-  'Apoio Operacional',
+  'Pedagógico (Professor)',
 ];
 
 export default function ColaboradoresPage() {
@@ -85,7 +83,7 @@ export default function ColaboradoresPage() {
   const [nome, setNome] = useState<string>('');
   const [cpf, setCpf] = useState<string>('');
   const [cargo, setCargo] = useState<string>('Professor(a)');
-  const [setor, setSetor] = useState<string>('Pedagógico');
+  const [setor, setSetor] = useState<string>('Pedagógico (Professor)');
   const [telefone, setTelefone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [especialidade, setEspecialidade] = useState<string>('');
@@ -149,7 +147,14 @@ export default function ColaboradoresPage() {
     setNome(colab.nome);
     setCpf(colab.cpfFormatado || colab.cpf);
     setCargo(colab.cargo);
-    setSetor(colab.setor);
+    const sNorm = colab.setor?.includes('Pedag')
+      ? 'Pedagógico (Professor)'
+      : colab.setor?.includes('Admin')
+      ? 'Administração'
+      : colab.setor?.includes('Secret')
+      ? 'Secretaria'
+      : colab.setor || 'Pedagógico (Professor)';
+    setSetor(sNorm);
     setTelefone(colab.telefone || '');
     setEmail(colab.email || '');
     setEspecialidade(colab.especialidade || '');
@@ -235,6 +240,8 @@ export default function ColaboradoresPage() {
         setEditandoId(null);
         setNome('');
         setCpf('');
+        setCargo('Professor(a)');
+        setSetor('Pedagógico (Professor)');
         setTelefone('');
         setEmail('');
         setEspecialidade('');
@@ -413,6 +420,8 @@ export default function ColaboradoresPage() {
                     setEditandoId(null);
                     setNome('');
                     setCpf('');
+                    setCargo('Professor(a)');
+                    setSetor('Pedagógico (Professor)');
                     setTelefone('');
                     setEmail('');
                     setEspecialidade('');
