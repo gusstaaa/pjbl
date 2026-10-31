@@ -131,10 +131,10 @@ export async function listarAlunos(busca?: string) {
       status: m.status,
       dataMatricula: m.dataMatricula.toISOString(),
       dataMatriculaFormatada: new Date(m.dataMatricula).toLocaleDateString('pt-BR'),
-      turmaId: m.turma.id,
-      turmaNome: m.turma.nome,
-      turmaSerie: m.turma.serie,
-      turmaTurno: m.turma.turno,
+      turmaId: m.turma?.id || '',
+      turmaNome: m.turma?.nome || 'Aguardando definição de turma',
+      turmaSerie: m.turma?.serie || m.serieSolicitada || 'Não definida',
+      turmaTurno: m.turma?.turno || 'A definir',
     }));
 
     return {
@@ -154,9 +154,9 @@ export async function listarAlunos(busca?: string) {
             id: matriculaAtiva.id,
             codigo: matriculaAtiva.codigo,
             status: matriculaAtiva.status,
-            turmaNome: matriculaAtiva.turma.nome,
-            turmaSerie: matriculaAtiva.turma.serie,
-            turmaTurno: matriculaAtiva.turma.turno,
+            turmaNome: matriculaAtiva.turma?.nome || 'Aguardando definição de turma',
+            turmaSerie: matriculaAtiva.turma?.serie || matriculaAtiva.serieSolicitada || 'Não definida',
+            turmaTurno: matriculaAtiva.turma?.turno || 'A definir',
             anoLetivo: matriculaAtiva.anoLetivo,
           }
         : null,
@@ -165,15 +165,17 @@ export async function listarAlunos(busca?: string) {
             id: matriculaSolicitada.id,
             codigo: matriculaSolicitada.codigo,
             status: matriculaSolicitada.status,
-            turmaNome: matriculaSolicitada.turma.nome,
-            turmaSerie: matriculaSolicitada.turma.serie,
-            turmaTurno: matriculaSolicitada.turma.turno,
+            turmaNome: matriculaSolicitada.turma?.nome || 'Aguardando definição de turma',
+            turmaSerie: matriculaSolicitada.turma?.serie || matriculaSolicitada.serieSolicitada || 'Não definida',
+            turmaTurno: matriculaSolicitada.turma?.turno || 'A definir',
             anoLetivo: matriculaSolicitada.anoLetivo,
           }
         : null,
       historicoMatriculas,
       ehVeterano: historicoMatriculas.length > 0,
-      sugestaoProximaSerie: ultimaMatricula ? sugerirProximaSerie(ultimaMatricula.turma.serie) : null,
+      sugestaoProximaSerie: ultimaMatricula
+        ? sugerirProximaSerie(ultimaMatricula.turma?.serie || ultimaMatricula.serieSolicitada || '')
+        : null,
       sugestaoProximoAno: ultimaMatricula ? ultimaMatricula.anoLetivo + 1 : new Date().getFullYear() + 1,
       estaMatriculado: Boolean(matriculaAtiva),
       createdAt: aluno.createdAt.toISOString(),

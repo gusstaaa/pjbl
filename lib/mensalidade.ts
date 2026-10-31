@@ -148,7 +148,7 @@ export async function gerarCarneMensalidades(input: GerarCarneInput) {
       codigo: matricula.codigo,
       anoLetivo: matricula.anoLetivo,
       alunoNome: matricula.aluno.nome,
-      turmaNome: matricula.turma.nome,
+      turmaNome: matricula.turma?.nome || 'Aguardando definição de turma',
     },
     parcelasGeradas: parcelasParaCriar.length,
     ...todasMensalidades,
@@ -252,9 +252,9 @@ export async function listarMensalidades(filtros?: {
         nome: item.matricula.aluno.nome,
       },
       turma: {
-        id: item.matricula.turma.id,
-        nome: item.matricula.turma.nome,
-        serie: item.matricula.turma.serie,
+        id: item.matricula.turma?.id || '',
+        nome: item.matricula.turma?.nome || 'Aguardando definição de turma',
+        serie: item.matricula.turma?.serie || item.matricula.serieSolicitada || 'Não definida',
       },
       responsavelFinanceiro: vinculoPrincipal
         ? {

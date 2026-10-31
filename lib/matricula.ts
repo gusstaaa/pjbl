@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { calcularIdade } from '@/lib/aluno';
+import { SERIES_PERMITIDAS, SeriePermitida } from '@/lib/turma';
 
 export const STATUS_MATRICULA = [
   'ATIVA',
@@ -24,7 +25,8 @@ export const DOCUMENTOS_PADRAO_MATRICULA = [
 
 export interface EfetivarMatriculaInput {
   alunoId: string;
-  turmaId: string;
+  turmaId?: string;
+  serieSolicitada?: string;
   anoLetivo?: number;
   status?: string;
 }
@@ -190,12 +192,15 @@ export async function listarMatriculas(filtros?: {
   return matriculas.map((m) => {
     const resp = m.aluno.responsaveis.find((r) => r.ehPrincipal)?.responsavel || m.aluno.responsaveis[0]?.responsavel;
     const { documentos, resumoDocumentos } = formatarDocumentos(m.documentos);
+    const serieEfetiva = m.turma?.serie || m.serieSolicitada || 'Não definida';
 
     return {
       id: m.id,
       codigo: m.codigo,
       anoLetivo: m.anoLetivo,
       status: m.status,
+      serieSolicitada: serieEfetiva,
+      turmaId: m.turmaId || null,
       dataMatricula: m.dataMatricula.toISOString(),
       dataMatriculaFormatada: new Date(m.dataMatricula).toLocaleDateString('pt-BR'),
       aluno: {
@@ -204,13 +209,21 @@ export async function listarMatriculas(filtros?: {
         idade: calcularIdade(new Date(m.aluno.dataNascimento)),
         genero: m.aluno.genero || 'Não informado',
       },
-      turma: {
-        id: m.turma.id,
-        nome: m.turma.nome,
-        serie: m.turma.serie,
-        turno: m.turma.turno,
-        capacidade: m.turma.capacidade,
-      },
+      turma: m.turma
+        ? {
+            id: m.turma.id,
+            nome: m.turma.nome,
+            serie: m.turma.serie,
+            turno: m.turma.turno,
+            capacidade: m.turma.capacidade,
+          }
+        : {
+            id: '',
+            nome: 'Aguardando definição de turma',
+            serie: serieEfetiva,
+            turno: 'A definir',
+            capacidade: 0,
+          },
       responsavel: resp
         ? {
             id: resp.id,
@@ -232,13 +245,24 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
     throw new Error('O aluno deve ser selecionado para realização da matrícula.');
   }
 
-  if (!input.turmaId) {
-    throw new Error('A turma de destino deve ser selecionada.');
-  }
-
   const statusFinal = input.status && STATUS_MATRICULA.includes(input.status as StatusMatricula)
     ? input.status
     : 'ATIVA';
+
+  const temTurmaId = Boolean(input.turmaId && input.turmaId.trim() !== '');
+  const serieDesejada = (input.serieSolicitada || '').trim();
+
+  if (!temTurmaId && statusFinal !== 'SOLICITADA') {
+    throw new Error('A turma de destino deve ser selecionada.');
+  }
+
+  if (!temTurmaId && statusFinal === 'SOLICITADA') {
+    if (!serieDesejada || !SERIES_PERMITIDAS.includes(serieDesejada as SeriePermitida)) {
+      throw new Error(
+        `Selecione a série desejada entre as opções: ${SERIES_PERMITIDAS.join(', ')}.`
+      );
+    }
+  }
 
   return prisma.$transaction(async (tx) => {
     // 1. Confere aluno
@@ -257,29 +281,35 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
       throw new Error('Regra RN-01 violada: O aluno não possui nenhum responsável legal vinculado.');
     }
 
-    // 2. Confere turma
-    const turma = await tx.turma.findUnique({
-      where: { id: input.turmaId },
-    });
+    // 2. Confere turma (se informada)
+    let turma: { id: string; nome: string; serie: string; anoLetivo: number; capacidade: number } | null = null;
+    if (temTurmaId) {
+      turma = await tx.turma.findUnique({
+        where: { id: input.turmaId!.trim() },
+      });
 
-    if (!turma) {
-      throw new Error('Turma não encontrada.');
+      if (!turma) {
+        throw new Error('Turma não encontrada.');
+      }
     }
 
-    const ano = input.anoLetivo || turma.anoLetivo;
+    const ano = input.anoLetivo || turma?.anoLetivo || new Date().getFullYear();
+    const serieFinal = turma?.serie || serieDesejada || null;
 
-    // 3. Regra RN-03: Vagas disponíveis na turma
-    const matriculasAtivasTurma = await tx.matricula.count({
-      where: {
-        turmaId: turma.id,
-        status: 'ATIVA',
-      },
-    });
+    // 3. Regra RN-03: Vagas disponíveis na turma (quando turma foi selecionada)
+    if (turma && statusFinal === 'ATIVA') {
+      const matriculasAtivasTurma = await tx.matricula.count({
+        where: {
+          turmaId: turma.id,
+          status: 'ATIVA',
+        },
+      });
 
-    if (statusFinal === 'ATIVA' && matriculasAtivasTurma >= turma.capacidade) {
-      throw new Error(
-        `Regra RN-03 violada: A turma "${turma.nome}" está com as vagas esgotadas (${matriculasAtivasTurma}/${turma.capacidade} alunos). Selecione outra turma.`
-      );
+      if (matriculasAtivasTurma >= turma.capacidade) {
+        throw new Error(
+          `Regra RN-03 violada: A turma "${turma.nome}" está com as vagas esgotadas (${matriculasAtivasTurma}/${turma.capacidade} alunos). Selecione outra turma.`
+        );
+      }
     }
 
     // 4. Confere se o aluno já possui matrícula ativa ou solicitada neste ano letivo
@@ -293,8 +323,11 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
     });
 
     if (matriculaExistente) {
+      const descDestino = matriculaExistente.turma?.nome
+        ? `na turma "${matriculaExistente.turma.nome}"`
+        : `para a série "${matriculaExistente.serieSolicitada || 'solicitada'}"`;
       throw new Error(
-        `O aluno "${aluno.nome}" já está matriculado na turma "${matriculaExistente.turma.nome}" para o ano letivo ${ano} (Código: ${matriculaExistente.codigo}).`
+        `O aluno "${aluno.nome}" já possui matrícula ou solicitação registrada ${descDestino} para o ano letivo ${ano} (Código: ${matriculaExistente.codigo}).`
       );
     }
 
@@ -306,7 +339,8 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
       data: {
         codigo,
         alunoId: aluno.id,
-        turmaId: turma.id,
+        turmaId: turma ? turma.id : null,
+        serieSolicitada: serieFinal,
         anoLetivo: ano,
         status: statusFinal,
       },
@@ -390,7 +424,7 @@ export async function rematricularAluno(input: RematricularAlunoInput) {
 
     if (matriculaMesmoAno) {
       throw new Error(
-        `O aluno "${aluno.nome}" já possui matrícula registrada no ano letivo ${anoDestino} na turma "${matriculaMesmoAno.turma.nome}" (${matriculaMesmoAno.codigo}).`
+        `O aluno "${aluno.nome}" já possui matrícula registrada no ano letivo ${anoDestino} na turma "${matriculaMesmoAno.turma?.nome || 'atual'}" (${matriculaMesmoAno.codigo}).`
       );
     }
 
@@ -425,6 +459,7 @@ export async function rematricularAluno(input: RematricularAlunoInput) {
         codigo,
         alunoId: aluno.id,
         turmaId: novaTurma.id,
+        serieSolicitada: novaTurma.serie,
         anoLetivo: anoDestino,
         status: statusFinal,
       },
@@ -446,7 +481,9 @@ export async function rematricularAluno(input: RematricularAlunoInput) {
         certidaoNascimento: aluno.certidaoNascimento,
         responsavelNome: respPrincipal?.nome || null,
         responsavelCpf: respPrincipal?.cpf || null,
-        turmaAnterior: `${matriculaAnterior.turma.nome} (${matriculaAnterior.turma.serie} - ${matriculaAnterior.anoLetivo})`,
+        turmaAnterior: matriculaAnterior.turma
+          ? `${matriculaAnterior.turma.nome} (${matriculaAnterior.turma.serie} - ${matriculaAnterior.anoLetivo})`
+          : `${matriculaAnterior.serieSolicitada || 'Série anterior'} (${matriculaAnterior.anoLetivo})`,
       },
     };
   });
@@ -490,7 +527,7 @@ export async function listarDocumentosMatricula(matriculaId: string) {
     codigo: matricula.codigo,
     statusMatricula: matricula.status,
     alunoNome: matricula.aluno.nome,
-    turmaNome: matricula.turma.nome,
+    turmaNome: matricula.turma?.nome || 'Aguardando definição de turma',
     documentos,
     resumoDocumentos,
   };
@@ -568,9 +605,9 @@ export async function atualizarDocumentoMatricula(input: AtualizarDocumentoInput
         novoStatusMatricula = 'PENDENTE_DOCUMENTOS';
       } else {
         // Verifica vaga disponível se estiver saindo de PENDENTE_DOCUMENTOS para ATIVA
-        if (matricula.status === 'PENDENTE_DOCUMENTOS') {
+        if (matricula.status === 'PENDENTE_DOCUMENTOS' && matricula.turma) {
           const ativasNaTurma = await tx.matricula.count({
-            where: { turmaId: matricula.turmaId, status: 'ATIVA' },
+            where: { turmaId: matricula.turma.id, status: 'ATIVA' },
           });
           if (ativasNaTurma >= matricula.turma.capacidade) {
             throw new Error(
@@ -600,7 +637,7 @@ export async function atualizarDocumentoMatricula(input: AtualizarDocumentoInput
   });
 }
 
-export async function alterarStatusMatricula(id: string, novoStatus: string) {
+export async function alterarStatusMatricula(id: string, novoStatus: string, turmaId?: string) {
   if (!STATUS_MATRICULA.includes(novoStatus as StatusMatricula)) {
     throw new Error(`Status inválido. Escolha: ${STATUS_MATRICULA.join(', ')}`);
   }
@@ -615,20 +652,54 @@ export async function alterarStatusMatricula(id: string, novoStatus: string) {
       throw new Error('Matrícula não encontrada.');
     }
 
-    if (novoStatus === 'ATIVA' && matriculaAtual.status !== 'ATIVA') {
-      const ativasNaTurma = await tx.matricula.count({
-        where: { turmaId: matriculaAtual.turmaId, status: 'ATIVA' },
+    let turmaAlvo = matriculaAtual.turma;
+    if (turmaId && turmaId.trim() !== '') {
+      const novaTurma = await tx.turma.findUnique({
+        where: { id: turmaId.trim() },
       });
-      if (ativasNaTurma >= matriculaAtual.turma.capacidade) {
-        throw new Error(
-          `Regra RN-03: A turma "${matriculaAtual.turma.nome}" já atingiu a capacidade máxima (${ativasNaTurma}/${matriculaAtual.turma.capacidade} alunos).`
-        );
+      if (!novaTurma) {
+        throw new Error('A turma selecionada não foi encontrada.');
+      }
+      turmaAlvo = novaTurma;
+    }
+
+    if (
+      (novoStatus === 'ATIVA' || novoStatus === 'PENDENTE_DOCUMENTOS') &&
+      !turmaAlvo
+    ) {
+      throw new Error(
+        'Selecione uma turma para alocar o aluno antes de confirmar a solicitação de matrícula.'
+      );
+    }
+
+    if (novoStatus === 'ATIVA' && turmaAlvo) {
+      const jaContavaAtivaNestaTurma =
+        matriculaAtual.status === 'ATIVA' && matriculaAtual.turmaId === turmaAlvo.id;
+
+      if (!jaContavaAtivaNestaTurma) {
+        const ativasNaTurma = await tx.matricula.count({
+          where: { turmaId: turmaAlvo.id, status: 'ATIVA' },
+        });
+        if (ativasNaTurma >= turmaAlvo.capacidade) {
+          throw new Error(
+            `Regra RN-03: A turma "${turmaAlvo.nome}" já atingiu a capacidade máxima (${ativasNaTurma}/${turmaAlvo.capacidade} alunos).`
+          );
+        }
       }
     }
 
     return tx.matricula.update({
       where: { id },
-      data: { status: novoStatus },
+      data: {
+        status: novoStatus,
+        ...(turmaAlvo
+          ? {
+              turmaId: turmaAlvo.id,
+              serieSolicitada: turmaAlvo.serie,
+              anoLetivo: turmaAlvo.anoLetivo,
+            }
+          : {}),
+      },
       include: {
         turma: true,
         aluno: true,

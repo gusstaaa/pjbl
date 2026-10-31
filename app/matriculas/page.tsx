@@ -87,6 +87,8 @@ interface MatriculaItem {
   codigo: string;
   anoLetivo: number;
   status: string;
+  serieSolicitada?: string;
+  turmaId?: string | null;
   dataMatriculaFormatada: string;
   aluno: {
     id: string;
@@ -112,6 +114,17 @@ interface MatriculaItem {
 }
 
 const GENEROS_ALUNO = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
+const SERIES_ESCOLARES = [
+  'Maternal 1',
+  'Maternal 2',
+  'Infantil 1',
+  'Infantil 2',
+  '1º ano',
+  '2º ano',
+  '3º ano',
+  '4º ano',
+  '5º ano',
+];
 
 export default function MatriculasPage() {
   const { sessao, definirSessao } = useSessao();
@@ -139,7 +152,10 @@ export default function MatriculasPage() {
   const [novoFilhoCertidao, setNovoFilhoCertidao] = useState('');
   const [novoFilhoObsMedicas, setNovoFilhoObsMedicas] = useState('');
   const [filhoExistenteId, setFilhoExistenteId] = useState('');
-  const [turmaSolicitadaRespId, setTurmaSolicitadaRespId] = useState('');
+  const [serieSolicitadaResp, setSerieSolicitadaResp] = useState(SERIES_ESCOLARES[0]);
+
+  // Turmas escolhidas pela Secretaria/Administração para cada solicitação pendente
+  const [turmaPorSolicitacao, setTurmaPorSolicitacao] = useState<Record<string, string>>({});
 
   // Painel de Checklist de Documentos (Item 2.2 - RF-13, RF-14, RN-05)
   const [matriculaChecklist, setMatriculaChecklist] = useState<MatriculaItem | null>(null);
@@ -183,17 +199,33 @@ export default function MatriculasPage() {
       }
 
       if (resTurmas.ok) {
-        const dataTurmas = await resTurmas.json();
+        const dataTurmas: TurmaOption[] = await resTurmas.json();
         setTurmas(dataTurmas);
         const comVagas = dataTurmas.filter((t: TurmaOption) => !t.lotada);
         if (comVagas.length > 0 && !turmaId) {
           setTurmaId(comVagas[0].id);
         }
-        if (comVagas.length > 0 && !turmaSolicitadaRespId) {
-          setTurmaSolicitadaRespId(comVagas[0].id);
-        } else if (dataTurmas.length > 0 && !turmaSolicitadaRespId) {
-          setTurmaSolicitadaRespId(dataTurmas[0].id);
+
+        // Pré-seleciona turma correspondente à série solicitada para facilitar a aprovação pela Secretaria
+        const mapaSugestao: Record<string, string> = {};
+        for (const m of dataMat) {
+          if (m.status === 'SOLICITADA') {
+            if (m.turma?.id) {
+              mapaSugestao[m.id] = m.turma.id;
+            } else {
+              const serieAlvo = m.serieSolicitada || m.turma?.serie;
+              const turmaMesmaSerie =
+                comVagas.find((t) => t.serie === serieAlvo) ||
+                dataTurmas.find((t) => t.serie === serieAlvo) ||
+                comVagas[0] ||
+                dataTurmas[0];
+              if (turmaMesmaSerie) {
+                mapaSugestao[m.id] = turmaMesmaSerie.id;
+              }
+            }
+          }
         }
+        setTurmaPorSolicitacao((prev) => ({ ...mapaSugestao, ...prev }));
       }
     } catch (err: any) {
       setMensagemErro(err.message || 'Erro ao carregar dados.');
@@ -330,15 +362,31 @@ export default function MatriculasPage() {
     }
   };
 
-  const handleMudarStatus = async (id: string, novoStatus: string) => {
+  const handleMudarStatus = async (id: string, novoStatus: string, turmaIdEscolhida?: string) => {
     try {
+      setMensagemErro(null);
+      setMensagemSucesso(null);
+
+      if (
+        (novoStatus === 'ATIVA' || novoStatus === 'PENDENTE_DOCUMENTOS') &&
+        turmaIdEscolhida !== undefined &&
+        !turmaIdEscolhida
+      ) {
+        throw new Error(
+          'Selecione uma turma para alocar o aluno antes de confirmar a solicitação de matrícula.'
+        );
+      }
+
       const res = await fetch(`/api/matriculas/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus }),
+        body: JSON.stringify({
+          status: novoStatus,
+          ...(turmaIdEscolhida ? { turmaId: turmaIdEscolhida } : {}),
+        }),
       });
 
-      if ( !res.ok) {
+      if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erro ao alterar status da matrícula.');
       }
@@ -369,8 +417,8 @@ export default function MatriculasPage() {
       return;
     }
 
-    if (!turmaSolicitadaRespId) {
-      setMensagemErro('Selecione a turma desejada para a solicitação de matrícula.');
+    if (!serieSolicitadaResp) {
+      setMensagemErro('Selecione a série desejada para a solicitação de matrícula.');
       return;
     }
 
@@ -417,14 +465,13 @@ export default function MatriculasPage() {
         nomeAlunoAlvo = encontrado.nome;
       }
 
-      const turmaSel = turmas.find((t) => t.id === turmaSolicitadaRespId);
       const resMat = await fetch('/api/matriculas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           alunoId: idAlunoAlvo,
-          turmaId: turmaSolicitadaRespId,
-          anoLetivo: turmaSel?.anoLetivo || new Date().getFullYear(),
+          serieSolicitada: serieSolicitadaResp,
+          anoLetivo: new Date().getFullYear(),
           status: 'SOLICITADA',
         }),
       });
@@ -435,7 +482,7 @@ export default function MatriculasPage() {
       }
 
       setMensagemSucesso(
-        `Solicitação de matrícula (${dataMat.codigo}) enviada com sucesso para "${nomeAlunoAlvo}"! A Secretaria Escolar irá confirmar a efetivação.`
+        `Solicitação de matrícula (${dataMat.codigo}) enviada com sucesso para "${nomeAlunoAlvo}" na série "${serieSolicitadaResp}"! A Secretaria Escolar selecionará a turma e confirmará a efetivação.`
       );
       setNovoFilhoNome('');
       setNovoFilhoNascimento('');
@@ -794,21 +841,23 @@ export default function MatriculasPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Turma / Série Desejada *
+                  Série Desejada (Maternal 1 ao 5º ano) *
                 </label>
                 <select
                   required
-                  value={turmaSolicitadaRespId}
-                  onChange={(e) => setTurmaSolicitadaRespId(e.target.value)}
+                  value={serieSolicitadaResp}
+                  onChange={(e) => setSerieSolicitadaResp(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 >
-                  <option value="">Selecione a turma...</option>
-                  {turmas.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      Ano {t.anoLetivo} · {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vaga(s)
+                  {SERIES_ESCOLARES.map((serie) => (
+                    <option key={serie} value={serie}>
+                      {serie}
                     </option>
                   ))}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  A Secretaria ou Administração selecionará a turma correspondente para efetivar a matrícula.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
@@ -843,78 +892,147 @@ export default function MatriculasPage() {
                   Solicitações de Matrícula / Pré-Cadastro ({solicitacoesPendentes.length})
                 </h2>
                 <p className="text-xs text-purple-900">
-                  Confira abaixo os alunos e responsáveis cadastrados pelo autoatendimento e confirme para efetivar a matrícula.
+                  Confira abaixo a série desejada pelo responsável, selecione uma turma para o aluno e confirme para efetivar a matrícula.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {solicitacoesPendentes.map((sol) => (
-                <div
-                  key={sol.id}
-                  className="bg-white p-4 rounded-xl border border-purple-300 shadow-xs flex flex-col justify-between gap-3"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-mono text-[11px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">
-                          {sol.codigo}
+              {solicitacoesPendentes.map((sol) => {
+                const serieAlvo = sol.serieSolicitada || sol.turma.serie;
+                const turmaEscolhidaId = turmaPorSolicitacao[sol.id] || sol.turma.id || '';
+                const turmasDaSerie = turmas.filter((t) => t.serie === serieAlvo);
+                const outrasTurmas = turmas.filter((t) => t.serie !== serieAlvo);
+
+                return (
+                  <div
+                    key={sol.id}
+                    className="bg-white p-4 rounded-xl border border-purple-300 shadow-xs flex flex-col justify-between gap-3"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="font-mono text-[11px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">
+                            {sol.codigo}
+                          </span>
+                          <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                            Aluno(a): {sol.aluno.nome} ({sol.aluno.idade})
+                          </h3>
+                        </div>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300">
+                          Solicitação de Matrícula
                         </span>
-                        <h3 className="text-base font-extrabold text-slate-900 mt-1">
-                          Aluno(a): {sol.aluno.nome} ({sol.aluno.idade})
-                        </h3>
                       </div>
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300">
-                        Solicitação de Matrícula
-                      </span>
+
+                      <div className="text-xs text-slate-700 space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <p>
+                          <strong>Série Desejada pelo Responsável:</strong>{' '}
+                          <span className="font-extrabold text-purple-900 bg-purple-100 px-2 py-0.5 rounded">
+                            {serieAlvo}
+                          </span>{' '}
+                          (Ano {sol.anoLetivo})
+                        </p>
+                        {sol.responsavel && (
+                          <>
+                            <p>
+                              <strong>Responsável Cadastrado:</strong> {sol.responsavel.nome} (
+                              {sol.responsavel.parentesco})
+                            </p>
+                            <p>
+                              <strong>CPF / Contato:</strong>{' '}
+                              {sol.responsavel.cpf ? `CPF: ${sol.responsavel.cpf} · ` : ''}
+                              Tel: {sol.responsavel.telefone}
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Seleção da Turma pela Secretaria / Administração */}
+                      <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1.5">
+                        <label className="block text-xs font-extrabold text-emerald-950">
+                          Selecionar Turma para este Aluno ({serieAlvo}) *
+                        </label>
+                        {turmas.length === 0 ? (
+                          <div className="text-xs text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+                            Nenhuma turma cadastrada no sistema ainda.{' '}
+                            <Link href="/turmas" className="font-bold underline text-amber-950">
+                              Criar turma em Gestão de Turmas →
+                            </Link>
+                          </div>
+                        ) : (
+                          <>
+                            <select
+                              value={turmaEscolhidaId}
+                              onChange={(e) =>
+                                setTurmaPorSolicitacao((prev) => ({
+                                  ...prev,
+                                  [sol.id]: e.target.value,
+                                }))
+                              }
+                              className="w-full px-3 py-2 text-xs rounded-lg border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            >
+                              <option value="">Selecione uma turma para alocar o aluno...</option>
+                              {turmasDaSerie.length > 0 && (
+                                <optgroup label={`Turmas de ${serieAlvo} (Série Solicitada)`}>
+                                  {turmasDaSerie.map((t) => (
+                                    <option key={t.id} value={t.id} disabled={t.lotada}>
+                                      {t.nome} ({t.serie} · {t.turno} · Ano {t.anoLetivo}) — {t.vagasRestantes} vaga(s)
+                                      {t.lotada ? ' [LOTADA]' : ''}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {outrasTurmas.length > 0 && (
+                                <optgroup label="Outras Turmas Cadastradas">
+                                  {outrasTurmas.map((t) => (
+                                    <option key={t.id} value={t.id} disabled={t.lotada}>
+                                      {t.nome} ({t.serie} · {t.turno} · Ano {t.anoLetivo}) — {t.vagasRestantes} vaga(s)
+                                      {t.lotada ? ' [LOTADA]' : ''}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                            {turmasDaSerie.length === 0 && (
+                              <p className="text-[11px] text-amber-800">
+                                Não há turma cadastrada especificamente para <strong>{serieAlvo}</strong>. Você pode{' '}
+                                <Link href="/turmas" className="font-bold underline">
+                                  criar uma turma de {serieAlvo}
+                                </Link>{' '}
+                                ou escolher outra turma acima.
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="text-xs text-slate-700 space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                      <p>
-                        <strong>Turma Solicitada:</strong> {sol.turma.nome} ({sol.turma.serie} ·{' '}
-                        {sol.turma.turno} · Ano {sol.anoLetivo})
-                      </p>
-                      {sol.responsavel && (
-                        <>
-                          <p>
-                            <strong>Responsável Cadastrado:</strong> {sol.responsavel.nome} (
-                            {sol.responsavel.parentesco})
-                          </p>
-                          <p>
-                            <strong>CPF / Contato:</strong>{' '}
-                            {sol.responsavel.cpf ? `CPF: ${sol.responsavel.cpf} · ` : ''}
-                            Tel: {sol.responsavel.telefone}
-                          </p>
-                        </>
-                      )}
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => handleMudarStatus(sol.id, 'CANCELADA')}
+                        className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition cursor-pointer"
+                      >
+                        Recusar / Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMudarStatus(sol.id, 'PENDENTE_DOCUMENTOS', turmaEscolhidaId)}
+                        className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs font-bold transition cursor-pointer"
+                      >
+                        Aprovar c/ Doc. Pendente
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMudarStatus(sol.id, 'ATIVA', turmaEscolhidaId)}
+                        className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition shadow-xs cursor-pointer"
+                      >
+                        Confirmar e Efetivar Matrícula
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => handleMudarStatus(sol.id, 'CANCELADA')}
-                      className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition cursor-pointer"
-                    >
-                      Recusar / Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMudarStatus(sol.id, 'PENDENTE_DOCUMENTOS')}
-                      className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs font-bold transition cursor-pointer"
-                    >
-                      Aprovar c/ Doc. Pendente
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMudarStatus(sol.id, 'ATIVA')}
-                      className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition shadow-xs cursor-pointer"
-                    >
-                      Confirmar e Efetivar Matrícula
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

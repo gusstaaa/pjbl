@@ -201,7 +201,11 @@ export async function listarFormulariosERespostas(filtros?: {
       formularioTipo: r.formulario.tipo,
       alunoId: r.alunoId,
       alunoNome: r.aluno.nome,
-      turmaNome: mat ? `${mat.turma.nome} (${mat.turma.serie})` : 'Sem turma',
+      turmaNome: mat?.turma
+        ? `${mat.turma.nome} (${mat.turma.serie})`
+        : mat?.serieSolicitada
+        ? `Série solicitada: ${mat.serieSolicitada}`
+        : 'Sem turma',
       responsavelNome: r.responsavelNome,
       decisao: r.decisao,
       observacoes: r.observacoes,

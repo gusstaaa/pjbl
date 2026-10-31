@@ -65,6 +65,17 @@ interface TurmaDisponivel {
 const SENHA_PADRAO_DICA = '123456';
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
 const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
+const SERIES_ESCOLARES = [
+  'Maternal 1',
+  'Maternal 2',
+  'Infantil 1',
+  'Infantil 2',
+  '1º ano',
+  '2º ano',
+  '3º ano',
+  '4º ano',
+  '5º ano',
+];
 
 interface LoginFormProps {
   modoPaginaPrincipal?: boolean;
@@ -97,7 +108,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
   const [cadGeneroAluno, setCadGeneroAluno] = useState<string>('Masculino');
   const [cadCertidaoAluno, setCadCertidaoAluno] = useState<string>('');
   const [cadObsMedicasAluno, setCadObsMedicasAluno] = useState<string>('');
-  const [cadTurmaId, setCadTurmaId] = useState<string>('');
+  const [cadSerieDesejada, setCadSerieDesejada] = useState<string>(SERIES_ESCOLARES[0]);
 
   const [autenticando, setAutenticando] = useState<boolean>(false);
   const [erroLogin, setErroLogin] = useState<string>('');
@@ -138,10 +149,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
         if (resTurmas.ok) {
           const dadosTurmas: TurmaDisponivel[] = await resTurmas.json();
           setTurmas(dadosTurmas);
-          const primeiraComVaga = dadosTurmas.find((t) => !t.lotada) || dadosTurmas[0];
-          if (primeiraComVaga) {
-            setCadTurmaId(primeiraComVaga.id);
-          }
         }
       } catch (err) {
         console.error('Erro ao carregar usuários de referência:', err);
@@ -256,7 +263,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
             certidaoNascimento: cadCertidaoAluno,
             observacoesMedicas: cadObsMedicasAluno,
           },
-          turmaId: cadTurmaId,
+          serieDesejada: cadSerieDesejada,
         }),
       });
 
@@ -790,32 +797,31 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                   </div>
                 </div>
 
-                {/* Bloco 3: Solicitação de Matrícula (Turma Desejada) */}
+                {/* Bloco 3: Solicitação de Matrícula (Série Desejada) */}
                 <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
                   <h3 className="text-xs font-extrabold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
                     <BookOpen className="w-4 h-4 text-emerald-700" />
-                    3. Solicitação de Matrícula (Escolha a Turma)
+                    3. Solicitação de Matrícula (Escolha a Série)
                   </h3>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Série / Turma Desejada *
+                      Série Desejada (Maternal 1 ao 5º ano) *
                     </label>
                     <select
                       required
-                      value={cadTurmaId}
-                      onChange={(e) => setCadTurmaId(e.target.value)}
+                      value={cadSerieDesejada}
+                      onChange={(e) => setCadSerieDesejada(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
-                      <option value="">Selecione uma turma...</option>
-                      {turmas.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          Ano {t.anoLetivo} · {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vaga(s)
+                      {SERIES_ESCOLARES.map((serie) => (
+                        <option key={serie} value={serie}>
+                          {serie}
                         </option>
                       ))}
                     </select>
                     <p className="text-[11px] text-emerald-800 mt-1">
-                      Sua solicitação ficará visível para a Secretaria confirmar e efetivar a matrícula.
+                      Selecione a série do seu filho(a). A Secretaria ou Administração selecionará a turma correspondente para efetivar a matrícula.
                     </p>
                   </div>
                 </div>

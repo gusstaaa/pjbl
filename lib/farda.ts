@@ -179,7 +179,11 @@ export async function listarSolicitacoesFarda(filtros?: {
       id: item.id,
       alunoId: item.alunoId,
       alunoNome: item.aluno.nome,
-      turmaNome: mat ? `${mat.turma.nome} (${mat.turma.serie})` : 'Sem turma',
+      turmaNome: mat?.turma
+        ? `${mat.turma.nome} (${mat.turma.serie})`
+        : mat?.serieSolicitada
+        ? `Série solicitada: ${mat.serieSolicitada}`
+        : 'Sem turma',
       responsavelTelefone: resp?.telefone || null,
       tipoPeca: item.tipoPeca,
       tamanho: item.tamanho,

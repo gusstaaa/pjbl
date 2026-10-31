@@ -6,12 +6,14 @@ import {
   formatarCPF,
 } from '@/lib/responsavel';
 import { efetivarMatricula } from '@/lib/matricula';
+import { SERIES_PERMITIDAS, SeriePermitida } from '@/lib/turma';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const respInput = body.responsavel || {};
     const alunoInput = body.aluno || {};
+    const serieDesejada = (body.serieDesejada || body.serieSolicitada || '').trim();
     const turmaId = (body.turmaId || '').trim();
 
     // 1. Valida dados do Responsável
@@ -55,22 +57,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Valida a turma selecionada para solicitação de matrícula
-    if (!turmaId) {
-      return NextResponse.json(
-        { erro: 'Selecione a turma desejada para solicitar a matrícula.' },
-        { status: 400 }
-      );
+    // 3. Valida a série desejada (Maternal 1 ao 5º ano), mesmo se não existir turma cadastrada
+    let serieFinal = serieDesejada;
+    let anoLetivoFinal = new Date().getFullYear();
+
+    if (!serieFinal && turmaId) {
+      const turma = await prisma.turma.findUnique({ where: { id: turmaId } });
+      if (turma) {
+        serieFinal = turma.serie;
+        anoLetivoFinal = turma.anoLetivo;
+      }
     }
 
-    const turma = await prisma.turma.findUnique({
-      where: { id: turmaId },
-    });
-
-    if (!turma) {
+    if (!serieFinal || !SERIES_PERMITIDAS.includes(serieFinal as SeriePermitida)) {
       return NextResponse.json(
-        { erro: 'A turma selecionada não foi encontrada.' },
-        { status: 404 }
+        {
+          erro: `Selecione a série desejada para o seu filho(a) (${SERIES_PERMITIDAS.join(', ')}).`,
+        },
+        { status: 400 }
       );
     }
 
@@ -134,18 +138,18 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // 5. Cria a Solicitação de Matrícula (status: SOLICITADA)
+    // 5. Cria a Solicitação de Matrícula (status: SOLICITADA) apenas com a série desejada
     const matriculaSolicitada = await efetivarMatricula({
       alunoId: alunoCriado.id,
-      turmaId: turma.id,
-      anoLetivo: turma.anoLetivo,
+      serieSolicitada: serieFinal,
+      anoLetivo: anoLetivoFinal,
       status: 'SOLICITADA',
     });
 
     return NextResponse.json(
       {
         mensagem:
-          'Pré-cadastro e solicitação de matrícula enviados com sucesso! A secretaria escolar irá confirmar a matrícula em breve.',
+          'Pré-cadastro e solicitação de matrícula enviados com sucesso! A secretaria escolar irá selecionar a turma e confirmar a matrícula em breve.',
         responsavel: {
           id: responsavelCriado.id,
           nome: responsavelCriado.nome,
@@ -159,8 +163,9 @@ export async function POST(request: NextRequest) {
           id: matriculaSolicitada.id,
           codigo: matriculaSolicitada.codigo,
           status: matriculaSolicitada.status,
-          turmaNome: turma.nome,
-          turmaSerie: turma.serie,
+          serieSolicitada: serieFinal,
+          turmaNome: 'Aguardando definição de turma pela Secretaria',
+          turmaSerie: serieFinal,
         },
         sessao: {
           autenticado: true,

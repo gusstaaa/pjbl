@@ -9,9 +9,9 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status } = body;
+    const { status, turmaId } = body;
 
-    const atualizada = await alterarStatusMatricula(id, status);
+    const atualizada = await alterarStatusMatricula(id, status, turmaId);
     return NextResponse.json(atualizada);
   } catch (error: any) {
     return NextResponse.json(

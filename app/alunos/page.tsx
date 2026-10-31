@@ -108,6 +108,17 @@ interface Aluno {
 
 const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
+const SERIES_ESCOLARES = [
+  'Maternal 1',
+  'Maternal 2',
+  'Infantil 1',
+  'Infantil 2',
+  '1º ano',
+  '2º ano',
+  '3º ano',
+  '4º ano',
+  '5º ano',
+];
 
 export default function AlunosPage() {
   const { sessao, definirSessao } = useSessao();
@@ -190,10 +201,6 @@ export default function AlunosPage() {
       if (resTurmas.ok) {
         const dataTurmas = await resTurmas.json();
         setTurmas(dataTurmas);
-        const primeiraComVaga = dataTurmas.find((t: TurmaOption) => !t.lotada) || dataTurmas[0];
-        if (primeiraComVaga && !turmaSolicitadaNovoFilhoId) {
-          setTurmaSolicitadaNovoFilhoId(primeiraComVaga.id);
-        }
       }
     } catch (err: any) {
       setMensagemErro(err.message || 'Erro ao carregar dados.');
@@ -474,16 +481,15 @@ export default function AlunosPage() {
               alunosVinculados: [...vinculadosAtuais, { id: data.id, nome: data.nome }],
             });
           }
-          // Se o responsável escolheu uma turma ao cadastrar outro filho, cria a solicitação de matrícula
+          // Se o responsável escolheu uma série ao cadastrar outro filho, cria a solicitação de matrícula
           if (turmaSolicitadaNovoFilhoId) {
-            const turmaSel = turmas.find((t) => t.id === turmaSolicitadaNovoFilhoId);
             await fetch('/api/matriculas', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 alunoId: data.id,
-                turmaId: turmaSolicitadaNovoFilhoId,
-                anoLetivo: turmaSel?.anoLetivo || new Date().getFullYear(),
+                serieSolicitada: turmaSolicitadaNovoFilhoId,
+                anoLetivo: new Date().getFullYear(),
                 status: 'SOLICITADA',
               }),
             });
@@ -621,7 +627,7 @@ export default function AlunosPage() {
                       setDataNascimento('');
                       setCertidaoNascimento('');
                       setObservacoesMedicas('');
-                      setTurmaSolicitadaNovoFilhoId('');
+                      setTurmaSolicitadaNovoFilhoId(SERIES_ESCOLARES[0]);
                       if (sessao.responsavelId) {
                         setResponsavelId(sessao.responsavelId);
                       }
@@ -1338,22 +1344,21 @@ export default function AlunosPage() {
                     />
                   </div>
 
-                  {/* Turma Desejada quando o Responsável está cadastrando um novo filho */}
+                  {/* Série Desejada quando o Responsável está cadastrando um novo filho */}
                   {ehResponsavel && !editandoId && (
                     <div className="sm:col-span-2 lg:col-span-3 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
                       <label className="block text-xs font-bold text-blue-950 mb-1">
-                        Turma Desejada para Solicitação de Matrícula (Opcional — já envia para a Secretaria aprovar)
+                        Série Desejada para Solicitação de Matrícula (Maternal 1 ao 5º ano — a Secretaria escolherá a turma)
                       </label>
                       <select
                         value={turmaSolicitadaNovoFilhoId}
                         onChange={(e) => setTurmaSolicitadaNovoFilhoId(e.target.value)}
                         className="w-full px-3 py-2 text-sm rounded-lg border border-blue-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Apenas cadastrar meu filho (solicitar turma depois)</option>
-                        {turmas.map((t) => (
-                          <option key={t.id} value={t.id} disabled={t.lotada}>
-                            {t.nome} — {t.serie} ({t.turno}) · Ano {t.anoLetivo} [{t.vagasRestantes} vaga(s)]
-                            {t.lotada ? ' [LOTADA]' : ''}
+                        <option value="">Apenas cadastrar meu filho (solicitar matrícula depois)</option>
+                        {SERIES_ESCOLARES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
                           </option>
                         ))}
                       </select>
@@ -1502,7 +1507,7 @@ export default function AlunosPage() {
                         <div className="flex items-center gap-2 text-indigo-700 font-medium">
                           <BookOpen className="w-3.5 h-3.5 shrink-0" />
                           <span>
-                            Solicitada: {a.matriculaSolicitada.turmaNome} (aguardando confirmação da Secretaria)
+                            Série solicitada: {a.matriculaSolicitada.turmaSerie} (aguardando turma pela Secretaria)
                           </span>
                         </div>
                       ) : (

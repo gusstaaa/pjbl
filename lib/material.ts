@@ -116,7 +116,7 @@ export async function listarMateriaisEscolares(filtros?: {
     const matriculaAtiva = await prisma.matricula.findFirst({
       where: {
         alunoId: filtros.alunoId.trim(),
-        status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS'] },
+        status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS', 'SOLICITADA'] },
       },
       orderBy: [{ anoLetivo: 'desc' }, { createdAt: 'desc' }],
       include: {
@@ -126,15 +126,20 @@ export async function listarMateriaisEscolares(filtros?: {
     });
 
     if (matriculaAtiva) {
+      const serieDaMatricula = matriculaAtiva.turma?.serie || matriculaAtiva.serieSolicitada || '';
+      const nomeDaTurma = matriculaAtiva.turma?.nome || 'Aguardando definição de turma';
+
       andConditions.push({
-        serie: matriculaAtiva.turma.serie,
-        OR: [{ turmaId: null }, { turmaId: matriculaAtiva.turmaId }],
+        serie: serieDaMatricula,
+        OR: matriculaAtiva.turmaId
+          ? [{ turmaId: null }, { turmaId: matriculaAtiva.turmaId }]
+          : [{ turmaId: null }],
       });
       contextoConsulta = {
         tipo: 'ALUNO',
-        descricao: `Lista de materiais para ${matriculaAtiva.aluno.nome} (${matriculaAtiva.turma.nome} · ${matriculaAtiva.turma.serie})`,
-        serieAlvo: matriculaAtiva.turma.serie,
-        turmaNome: matriculaAtiva.turma.nome,
+        descricao: `Lista de materiais para ${matriculaAtiva.aluno.nome} (${nomeDaTurma} · ${serieDaMatricula})`,
+        serieAlvo: serieDaMatricula,
+        turmaNome: nomeDaTurma,
         alunoNome: matriculaAtiva.aluno.nome,
       };
     } else {
