@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -18,7 +18,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
-  Search,
   Users,
   GraduationCap,
   Briefcase,
@@ -27,40 +26,6 @@ import {
   Baby,
   BookOpen,
 } from 'lucide-react';
-
-interface ResponsavelCadastrado {
-  id: string;
-  nome: string;
-  cpf: string;
-  telefone: string;
-  parentesco: string;
-  alunos?: {
-    aluno: {
-      id: string;
-      nome: string;
-    };
-  }[];
-}
-
-interface ColaboradorCadastrado {
-  id: string;
-  nome: string;
-  cpf: string;
-  cpfFormatado?: string;
-  cargo: string;
-  setor: string;
-  especialidade?: string | null;
-}
-
-interface TurmaDisponivel {
-  id: string;
-  nome: string;
-  serie: string;
-  turno: string;
-  anoLetivo: number;
-  vagasRestantes: number;
-  lotada: boolean;
-}
 
 const SENHA_PADRAO_DICA = '123456';
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
@@ -114,51 +79,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
   const [erroLogin, setErroLogin] = useState<string>('');
   const [mensagemSucesso, setMensagemSucesso] = useState<string>('');
 
-  const [responsaveis, setResponsaveis] = useState<ResponsavelCadastrado[]>([]);
-  const [colaboradores, setColaboradores] = useState<ColaboradorCadastrado[]>([]);
-  const [turmas, setTurmas] = useState<TurmaDisponivel[]>([]);
-  const [buscaAuxiliar, setBuscaAuxiliar] = useState<string>('');
-  const [carregandoDados, setCarregandoDados] = useState<boolean>(true);
-
-  useEffect(() => {
-    async function carregarReferencia() {
-      setCarregandoDados(true);
-      try {
-        const [resResp, resColab, resTurmas] = await Promise.all([
-          fetch('/api/responsaveis'),
-          fetch('/api/colaboradores'),
-          fetch('/api/turmas'),
-        ]);
-
-        if (resResp.ok) {
-          const dadosResp = await resResp.json();
-          const lista = Array.isArray(dadosResp)
-            ? dadosResp
-            : dadosResp.responsaveis || [];
-          setResponsaveis(lista);
-        }
-
-        if (resColab.ok) {
-          const dadosColab = await resColab.json();
-          const listaColab = Array.isArray(dadosColab)
-            ? dadosColab
-            : dadosColab.colaboradores || [];
-          setColaboradores(listaColab);
-        }
-
-        if (resTurmas.ok) {
-          const dadosTurmas: TurmaDisponivel[] = await resTurmas.json();
-          setTurmas(dadosTurmas);
-        }
-      } catch (err) {
-        console.error('Erro ao carregar usuários de referência:', err);
-      } finally {
-        setCarregandoDados(false);
-      }
-    }
-    carregarReferencia();
-  }, []);
-
   function alternarCategoria(novaCat: CategoriaUsuario) {
     setCategoria(novaCat);
     setModoResponsavel('ENTRAR');
@@ -166,15 +86,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
     setMensagemSucesso('');
     setIdentificador('');
     setSenha(SENHA_PADRAO_DICA);
-  }
-
-  function preencherCredencialRapida(novoIdentificador: string, novaCategoria?: CategoriaUsuario) {
-    if (novaCategoria) setCategoria(novaCategoria);
-    setModoResponsavel('ENTRAR');
-    setIdentificador(novoIdentificador);
-    setSenha(SENHA_PADRAO_DICA);
-    setErroLogin('');
-    setMensagemSucesso('');
   }
 
   async function handleEntrar(e: React.FormEvent) {
@@ -298,56 +209,8 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
     }
   }
 
-  // Filtragem da lista auxiliar conforme a aba ativa
-  const responsaveisFiltrados = responsaveis.filter((r) => {
-    if (!buscaAuxiliar.trim()) return true;
-    const t = buscaAuxiliar.toLowerCase();
-    const filhosTexto =
-      r.alunos?.map((v) => v.aluno.nome.toLowerCase()).join(' ') || '';
-    return (
-      r.nome.toLowerCase().includes(t) ||
-      r.cpf.toLowerCase().includes(t) ||
-      filhosTexto.includes(t)
-    );
-  });
-
-  const professoresFiltrados = colaboradores.filter((c) => {
-    const s = (c.setor || '').toLowerCase();
-    const ehProf =
-      s.includes('pedagog') ||
-      s.includes('prof') ||
-      c.cargo === 'Professor(a)' ||
-      c.cargo === 'Auxiliar de Sala';
-    if (!ehProf) return false;
-    if (!buscaAuxiliar.trim()) return true;
-    const t = buscaAuxiliar.toLowerCase();
-    return (
-      c.nome.toLowerCase().includes(t) ||
-      c.cpf.toLowerCase().includes(t) ||
-      c.cargo.toLowerCase().includes(t)
-    );
-  });
-
-  const colaboradoresGestaoFiltrados = colaboradores.filter((c) => {
-    const s = (c.setor || '').toLowerCase();
-    const ehGestao =
-      s.includes('admin') ||
-      s.includes('secretar') ||
-      s.includes('financeir') ||
-      s.includes('direc');
-    if (!ehGestao) return false;
-    if (!buscaAuxiliar.trim()) return true;
-    const t = buscaAuxiliar.toLowerCase();
-    return (
-      c.nome.toLowerCase().includes(t) ||
-      c.cpf.toLowerCase().includes(t) ||
-      c.cargo.toLowerCase().includes(t) ||
-      c.setor.toLowerCase().includes(t)
-    );
-  });
-
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
       {/* Banner de Boas-Vindas */}
       <section className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white rounded-2xl p-6 sm:p-8 shadow-lg border border-blue-800">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -508,10 +371,9 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
           </div>
         </div>
 
-        {/* Corpo: Formulário na Esquerda + Usuários Cadastrados na Direita */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-          {/* Formulário (7 Colunas) */}
-          <div className="lg:col-span-7 space-y-4">
+        {/* Corpo: Formulário Centralizado (sem listagem pública de usuários) */}
+        <div className="p-6">
+          <div className="space-y-4">
             {/* Alternador Entrar vs Cadastrar-se na aba Responsável */}
             {categoria === 'RESPONSAVEL' && (
               <div className="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-purple-50/80 border border-purple-200">
@@ -930,157 +792,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                 </button>
               </form>
             )}
-          </div>
-
-          {/* Coluna Direita (5 Colunas): Guia de Apoio com Lista de Cadastrados */}
-          <div className="lg:col-span-5 bg-slate-50/80 rounded-xl border border-slate-200 p-4 space-y-3 flex flex-col h-full max-h-[580px]">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2 shrink-0">
-              <span className="text-xs font-bold text-slate-700">
-                {categoria === 'RESPONSAVEL' && 'Responsáveis Cadastrados:'}
-                {categoria === 'PROFESSOR' && 'Professores Cadastrados:'}
-                {categoria === 'COLABORADOR' && 'Equipe Administrativa:'}
-              </span>
-              <span className="text-[10px] text-slate-500 font-medium">
-                Clique para preencher CPF
-              </span>
-            </div>
-
-            {/* Campo de Busca Rápida */}
-            <div className="relative shrink-0">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por nome ou CPF..."
-                value={buscaAuxiliar}
-                onChange={(e) => setBuscaAuxiliar(e.target.value)}
-                className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-800"
-              />
-            </div>
-
-            {/* Lista com rolagem interna */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {carregandoDados ? (
-                <div className="p-4 text-center text-xs text-slate-400">
-                  Carregando lista de cadastrados...
-                </div>
-              ) : categoria === 'RESPONSAVEL' ? (
-                responsaveisFiltrados.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-400">
-                    Nenhum responsável legal cadastrado.
-                  </div>
-                ) : (
-                  responsaveisFiltrados.map((r) => {
-                    const selecionado = identificador === r.cpf;
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => preencherCredencialRapida(r.cpf, 'RESPONSAVEL')}
-                        className={`w-full text-left p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
-                          selecionado
-                            ? 'border-purple-600 bg-purple-50 text-purple-950'
-                            : 'border-slate-200 bg-white hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <p className="font-bold text-xs truncate text-slate-900">
-                            {r.nome}
-                          </p>
-                          <p className="text-[11px] font-mono text-slate-600">
-                            CPF: {r.cpf}
-                          </p>
-                          {r.alunos && r.alunos.length > 0 && (
-                            <p className="text-[10px] text-purple-800 truncate">
-                              Filho(a): {r.alunos.map((a) => a.aluno.nome).join(', ')}
-                            </p>
-                          )}
-                        </div>
-                        {selecionado && (
-                          <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                        )}
-                      </button>
-                    );
-                  })
-                )
-              ) : categoria === 'PROFESSOR' ? (
-                professoresFiltrados.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-400">
-                    Nenhum professor cadastrado no setor pedagógico.
-                  </div>
-                ) : (
-                  professoresFiltrados.map((p) => {
-                    const selecionado = identificador === p.cpf;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => preencherCredencialRapida(p.cpf, 'PROFESSOR')}
-                        className={`w-full text-left p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
-                          selecionado
-                            ? 'border-amber-600 bg-amber-50 text-amber-950'
-                            : 'border-slate-200 bg-white hover:border-amber-300'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <p className="font-bold text-xs truncate text-slate-900">
-                            {p.nome}
-                          </p>
-                          <p className="text-[11px] font-mono text-slate-600">
-                            CPF: {p.cpfFormatado || p.cpf}
-                          </p>
-                          <p className="text-[10px] text-amber-800 font-semibold truncate">
-                            {p.cargo} · {p.setor}
-                          </p>
-                        </div>
-                        {selecionado && (
-                          <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        )}
-                      </button>
-                    );
-                  })
-                )
-              ) : (
-                /* COLABORADOR (Secretaria / Administração) */
-                <div className="space-y-2">
-                  {colaboradoresGestaoFiltrados.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400">
-                      Nenhum colaborador com setor Secretaria ou Administração cadastrado.
-                    </div>
-                  ) : (
-                    colaboradoresGestaoFiltrados.map((c) => {
-                      const selecionado = identificador === c.cpf;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => preencherCredencialRapida(c.cpf, 'COLABORADOR')}
-                          className={`w-full text-left p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
-                            selecionado
-                              ? 'border-blue-600 bg-blue-50 text-blue-950'
-                              : 'border-slate-200 bg-white hover:border-blue-300'
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <p className="font-bold text-xs truncate text-slate-900">
-                              {c.nome}
-                            </p>
-                            <p className="text-[11px] font-mono text-slate-600">
-                              CPF: {c.cpfFormatado || c.cpf}
-                            </p>
-                            <p className="text-[10px] text-blue-800 font-semibold truncate">
-                              {c.cargo} · Setor: <strong>{c.setor}</strong>
-                            </p>
-                          </div>
-                          {selecionado && (
-                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
