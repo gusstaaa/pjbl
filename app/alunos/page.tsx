@@ -20,12 +20,19 @@ import {
   X,
   Pencil,
   Trash2,
+  Settings,
+  UserPlus,
 } from 'lucide-react';
 
 interface ResponsavelSelect {
   id: string;
   nome: string;
+  cpf: string;
   cpfFormatado: string;
+  telefone: string;
+  telefoneFormatado?: string;
+  email?: string | null;
+  endereco?: string | null;
   parentesco: string;
 }
 
@@ -76,6 +83,16 @@ interface Aluno {
   matriculaAtiva: {
     id: string;
     codigo: string;
+    status?: string;
+    turmaNome: string;
+    turmaSerie: string;
+    turmaTurno: string;
+    anoLetivo: number;
+  } | null;
+  matriculaSolicitada?: {
+    id: string;
+    codigo: string;
+    status: string;
     turmaNome: string;
     turmaSerie: string;
     turmaTurno: string;
@@ -90,10 +107,12 @@ interface Aluno {
 }
 
 const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
+const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
 
 export default function AlunosPage() {
-  const { sessao } = useSessao();
+  const { sessao, definirSessao } = useSessao();
   const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+  const ehResponsavel = sessao.perfil === 'RESPONSAVEL';
 
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [responsaveis, setResponsaveis] = useState<ResponsavelSelect[]>([]);
@@ -120,6 +139,26 @@ export default function AlunosPage() {
   const [genero, setGenero] = useState(GENEROS[0]);
   const [certidaoNascimento, setCertidaoNascimento] = useState('');
   const [observacoesMedicas, setObservacoesMedicas] = useState('');
+  const [turmaSolicitadaNovoFilhoId, setTurmaSolicitadaNovoFilhoId] = useState('');
+
+  // Painel do Responsável: Editar Meu Perfil
+  const [showFormPerfilResp, setShowFormPerfilResp] = useState(false);
+  const [perfilNome, setPerfilNome] = useState('');
+  const [perfilCpf, setPerfilCpf] = useState('');
+  const [perfilTelefone, setPerfilTelefone] = useState('');
+  const [perfilEmail, setPerfilEmail] = useState('');
+  const [perfilEndereco, setPerfilEndereco] = useState('');
+  const [perfilParentesco, setPerfilParentesco] = useState('Mãe');
+  const [perfilSenha, setPerfilSenha] = useState('');
+
+  // Painel do Responsável: Cadastrar / Editar 2º Responsável para um Filho
+  const [alunoSegundoRespAlvo, setAlunoSegundoRespAlvo] = useState<Aluno | null>(null);
+  const [segRespNome, setSegRespNome] = useState('');
+  const [segRespCpf, setSegRespCpf] = useState('');
+  const [segRespTelefone, setSegRespTelefone] = useState('');
+  const [segRespEmail, setSegRespEmail] = useState('');
+  const [segRespEndereco, setSegRespEndereco] = useState('');
+  const [segRespParentesco, setSegRespParentesco] = useState('Pai');
 
   const carregarDados = async (termoBusca?: string) => {
     try {
@@ -151,6 +190,10 @@ export default function AlunosPage() {
       if (resTurmas.ok) {
         const dataTurmas = await resTurmas.json();
         setTurmas(dataTurmas);
+        const primeiraComVaga = dataTurmas.find((t: TurmaOption) => !t.lotada) || dataTurmas[0];
+        if (primeiraComVaga && !turmaSolicitadaNovoFilhoId) {
+          setTurmaSolicitadaNovoFilhoId(primeiraComVaga.id);
+        }
       }
     } catch (err: any) {
       setMensagemErro(err.message || 'Erro ao carregar dados.');
@@ -162,6 +205,151 @@ export default function AlunosPage() {
   useEffect(() => {
     carregarDados();
   }, []);
+
+  const abrirMeuPerfil = () => {
+    const meuCadastro = responsaveis.find(
+      (r) =>
+        r.id === sessao.responsavelId ||
+        (sessao.responsavelCpf &&
+          r.cpf.replace(/\D/g, '') === sessao.responsavelCpf.replace(/\D/g, ''))
+    );
+
+    if (meuCadastro) {
+      setPerfilNome(meuCadastro.nome || '');
+      setPerfilCpf(meuCadastro.cpfFormatado || meuCadastro.cpf || '');
+      setPerfilTelefone(meuCadastro.telefoneFormatado || meuCadastro.telefone || '');
+      setPerfilEmail(meuCadastro.email || '');
+      setPerfilEndereco(meuCadastro.endereco || '');
+      setPerfilParentesco(meuCadastro.parentesco || 'Mãe');
+    } else {
+      setPerfilNome(sessao.nome || '');
+      setPerfilCpf(sessao.responsavelCpf || sessao.identificador || '');
+    }
+    setPerfilSenha('');
+    setShowFormPerfilResp(true);
+    setShowForm(false);
+    setAlunoSegundoRespAlvo(null);
+    setMensagemErro(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSalvarMeuPerfil = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+
+    const meuCadastro = responsaveis.find(
+      (r) =>
+        r.id === sessao.responsavelId ||
+        (sessao.responsavelCpf &&
+          r.cpf.replace(/\D/g, '') === sessao.responsavelCpf.replace(/\D/g, ''))
+    );
+    const idAlvo = sessao.responsavelId || meuCadastro?.id;
+
+    if (!idAlvo) {
+      setMensagemErro('Cadastro do responsável não localizado na sessão.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/responsaveis/${idAlvo}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: perfilNome,
+          cpf: perfilCpf,
+          telefone: perfilTelefone,
+          email: perfilEmail,
+          endereco: perfilEndereco,
+          parentesco: perfilParentesco,
+          ...(perfilSenha.trim() !== '' ? { senha: perfilSenha.trim() } : {}),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao atualizar seu perfil.');
+      }
+
+      definirSessao({
+        ...sessao,
+        nome: data.nome,
+        identificador: perfilCpf,
+        responsavelId: data.id,
+        responsavelCpf: perfilCpf,
+      });
+
+      setMensagemSucesso('Seus dados de perfil foram atualizados com sucesso!');
+      setShowFormPerfilResp(false);
+      await carregarDados(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao salvar perfil.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const abrirSegundoResponsavel = (aluno: Aluno) => {
+    setAlunoSegundoRespAlvo(aluno);
+    setShowFormPerfilResp(false);
+    setShowForm(false);
+    if (aluno.segundoResponsavel) {
+      setSegRespNome(aluno.segundoResponsavel.nome);
+      setSegRespCpf(aluno.segundoResponsavel.cpf);
+      setSegRespTelefone(aluno.segundoResponsavel.telefone);
+      setSegRespParentesco(aluno.segundoResponsavel.parentesco || 'Pai');
+    } else {
+      setSegRespNome('');
+      setSegRespCpf('');
+      setSegRespTelefone('');
+      setSegRespEmail('');
+      setSegRespEndereco('');
+      setSegRespParentesco('Pai');
+    }
+    setMensagemErro(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSalvarSegundoResponsavel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!alunoSegundoRespAlvo) return;
+
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+    setSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/alunos/${alunoSegundoRespAlvo.id}/segundo-responsavel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: segRespNome,
+          cpf: segRespCpf,
+          telefone: segRespTelefone,
+          email: segRespEmail,
+          endereco: segRespEndereco,
+          parentesco: segRespParentesco,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao salvar o segundo responsável.');
+      }
+
+      setMensagemSucesso(
+        data.mensagem ||
+          `Segundo responsável cadastrado e vinculado ao aluno "${alunoSegundoRespAlvo.nome}" com sucesso!`
+      );
+      setAlunoSegundoRespAlvo(null);
+      await carregarDados(busca);
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao cadastrar segundo responsável.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const abrirFichaAluno = (aluno: Aluno) => {
     setAlunoSelecionado(aluno);
@@ -190,13 +378,17 @@ export default function AlunosPage() {
     setEditandoId(a.id);
     setNome(a.nome);
     setDataNascimento(a.dataNascimento ? a.dataNascimento.slice(0, 10) : '');
-    setResponsavelId(a.responsavelPrincipal?.id || (responsaveis[0]?.id ?? ''));
+    setResponsavelId(
+      a.responsavelPrincipal?.id || sessao.responsavelId || (responsaveis[0]?.id ?? '')
+    );
     setSegundoResponsavelId(a.segundoResponsavel?.id || '');
     setGenero(a.genero || GENEROS[0]);
     setCertidaoNascimento(a.certidaoNascimento === 'Não informada' ? '' : a.certidaoNascimento);
     setObservacoesMedicas(a.observacoesMedicas || '');
     setMensagemErro(null);
     setMensagemSucesso(null);
+    setShowFormPerfilResp(false);
+    setAlunoSegundoRespAlvo(null);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -240,6 +432,9 @@ export default function AlunosPage() {
     try {
       const url = editandoId ? `/api/alunos/${editandoId}` : '/api/alunos';
       const method = editandoId ? 'PATCH' : 'POST';
+      const idRespPrincipal = ehResponsavel
+        ? sessao.responsavelId || responsavelId
+        : responsavelId;
 
       const res = await fetch(url, {
         method,
@@ -247,8 +442,10 @@ export default function AlunosPage() {
         body: JSON.stringify({
           nome,
           dataNascimento,
-          responsavelId,
-          segundoResponsavelId: segundoResponsavelId || null,
+          responsavelId: idRespPrincipal,
+          ...(ehResponsavel && editandoId
+            ? {}
+            : { segundoResponsavelId: segundoResponsavelId || null }),
           genero,
           certidaoNascimento,
           observacoesMedicas,
@@ -261,9 +458,44 @@ export default function AlunosPage() {
         throw new Error(data.error || 'Erro ao salvar dados do aluno.');
       }
 
+      if (ehResponsavel) {
+        const vinculadosAtuais = sessao.alunosVinculados || [];
+        if (editandoId) {
+          definirSessao({
+            ...sessao,
+            alunosVinculados: vinculadosAtuais.map((v) =>
+              v.id === editandoId ? { ...v, nome: data.nome } : v
+            ),
+          });
+        } else {
+          if (!vinculadosAtuais.some((v) => v.id === data.id)) {
+            definirSessao({
+              ...sessao,
+              alunosVinculados: [...vinculadosAtuais, { id: data.id, nome: data.nome }],
+            });
+          }
+          // Se o responsável escolheu uma turma ao cadastrar outro filho, cria a solicitação de matrícula
+          if (turmaSolicitadaNovoFilhoId) {
+            const turmaSel = turmas.find((t) => t.id === turmaSolicitadaNovoFilhoId);
+            await fetch('/api/matriculas', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                alunoId: data.id,
+                turmaId: turmaSolicitadaNovoFilhoId,
+                anoLetivo: turmaSel?.anoLetivo || new Date().getFullYear(),
+                status: 'SOLICITADA',
+              }),
+            });
+          }
+        }
+      }
+
       setMensagemSucesso(
         editandoId
           ? `Dados de "${data.nome}" atualizados com sucesso!`
+          : ehResponsavel && turmaSolicitadaNovoFilhoId
+          ? `Filho(a) "${data.nome}" cadastrado(a) e solicitação de matrícula enviada para a Secretaria!`
           : `Aluno(a) "${data.nome}" cadastrado(a) com sucesso!`
       );
       setEditandoId(null);
@@ -360,28 +592,76 @@ export default function AlunosPage() {
             </p>
           </div>
 
-          {podeEditar && (
-            <button
-              onClick={() => {
-                if (showForm) {
-                  setShowForm(false);
-                  setEditandoId(null);
-                } else {
-                  setEditandoId(null);
-                  setNome('');
-                  setDataNascimento('');
-                  setCertidaoNascimento('');
-                  setObservacoesMedicas('');
-                  setShowForm(true);
-                }
-                setMensagemErro(null);
-              }}
-              className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              {showForm ? 'Fechar Formulário' : 'Novo Aluno'}
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {ehResponsavel && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showFormPerfilResp) {
+                      setShowFormPerfilResp(false);
+                    } else {
+                      abrirMeuPerfil();
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3.5 py-2.5 rounded-xl font-medium text-xs transition shadow-xs"
+                >
+                  <Settings className="w-4 h-4 text-blue-600" />
+                  {showFormPerfilResp ? 'Fechar Meu Perfil' : 'Editar Meu Perfil'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showForm) {
+                      setShowForm(false);
+                      setEditandoId(null);
+                    } else {
+                      setEditandoId(null);
+                      setNome('');
+                      setDataNascimento('');
+                      setCertidaoNascimento('');
+                      setObservacoesMedicas('');
+                      setTurmaSolicitadaNovoFilhoId('');
+                      if (sessao.responsavelId) {
+                        setResponsavelId(sessao.responsavelId);
+                      }
+                      setShowFormPerfilResp(false);
+                      setAlunoSegundoRespAlvo(null);
+                      setShowForm(true);
+                    }
+                    setMensagemErro(null);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-xs transition shadow-xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  {showForm ? 'Fechar Formulário' : 'Cadastrar Outro Filho'}
+                </button>
+              </>
+            )}
+
+            {podeEditar && (
+              <button
+                onClick={() => {
+                  if (showForm) {
+                    setShowForm(false);
+                    setEditandoId(null);
+                  } else {
+                    setEditandoId(null);
+                    setNome('');
+                    setDataNascimento('');
+                    setCertidaoNascimento('');
+                    setObservacoesMedicas('');
+                    setShowForm(true);
+                  }
+                  setMensagemErro(null);
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                {showForm ? 'Fechar Formulário' : 'Novo Aluno'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Notificações */}
@@ -621,17 +901,300 @@ export default function AlunosPage() {
           </section>
         )}
 
+        {/* Painel: Editar Meu Perfil do Responsável Logado */}
+        {ehResponsavel && showFormPerfilResp && (
+          <section className="bg-white p-6 rounded-2xl border-2 border-blue-200 shadow-sm space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">
+                    Editar Meu Perfil (Meus Dados de Responsável)
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Atualize suas informações pessoais, telefone, endereço ou senha de acesso.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFormPerfilResp(false)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSalvarMeuPerfil} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Meu Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={perfilNome}
+                    onChange={(e) => setPerfilNome(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Grau de Parentesco *
+                  </label>
+                  <select
+                    value={perfilParentesco}
+                    onChange={(e) => setPerfilParentesco(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Mãe">Mãe</option>
+                    <option value="Pai">Pai</option>
+                    <option value="Avó/Avô">Avó/Avô</option>
+                    <option value="Tio(a)">Tio(a)</option>
+                    <option value="Tutor(a) Legal">Tutor(a) Legal</option>
+                    <option value="Responsável Legal">Responsável Legal</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    CPF *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={perfilCpf}
+                    onChange={(e) => setPerfilCpf(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Telefone / WhatsApp *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={perfilTelefone}
+                    onChange={(e) => setPerfilTelefone(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    E-mail
+                  </label>
+                  <input
+                    type="email"
+                    value={perfilEmail}
+                    onChange={(e) => setPerfilEmail(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Endereço Residencial *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={perfilEndereco}
+                    onChange={(e) => setPerfilEndereco(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nova Senha (deixe em branco p/ manter)
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Mínimo 4 caracteres"
+                    value={perfilSenha}
+                    onChange={(e) => setPerfilSenha(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowFormPerfilResp(false)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
+                >
+                  {submitting ? 'Salvando...' : 'Salvar Meu Perfil'}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* Painel: Cadastrar / Atualizar 2º Responsável para o Filho */}
+        {alunoSegundoRespAlvo && (
+          <section className="bg-white p-6 rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-indigo-600" />
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">
+                    {alunoSegundoRespAlvo.segundoResponsavel ? 'Editar 2º Responsável' : 'Cadastrar 2º Responsável'} para{' '}
+                    <span className="text-indigo-700">{alunoSegundoRespAlvo.nome}</span>
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Vincule um segundo responsável legal (ex.: pai, mãe, avó) para acompanhar o aluno na escola.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAlunoSegundoRespAlvo(null)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSalvarSegundoResponsavel} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nome Completo do 2º Responsável *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex.: Roberto Carlos Silveira"
+                    value={segRespNome}
+                    onChange={(e) => setSegRespNome(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Parentesco *
+                  </label>
+                  <select
+                    value={segRespParentesco}
+                    onChange={(e) => setSegRespParentesco(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="Pai">Pai</option>
+                    <option value="Mãe">Mãe</option>
+                    <option value="Avó/Avô">Avó/Avô</option>
+                    <option value="Tio(a)">Tio(a)</option>
+                    <option value="Tutor(a) Legal">Tutor(a) Legal</option>
+                    <option value="Outro Responsável">Outro Responsável</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    CPF (11 dígitos) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="000.000.000-00"
+                    value={segRespCpf}
+                    onChange={(e) => setSegRespCpf(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Telefone / WhatsApp *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="(11) 99999-9999"
+                    value={segRespTelefone}
+                    onChange={(e) => setSegRespTelefone(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    E-mail (Opcional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={segRespEmail}
+                    onChange={(e) => setSegRespEmail(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Endereço Residencial *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Rua, número, bairro, cidade"
+                    value={segRespEndereco}
+                    onChange={(e) => setSegRespEndereco(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAlunoSegundoRespAlvo(null)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
+                >
+                  {submitting ? 'Salvando...' : 'Salvar 2º Responsável'}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
         {/* Formulário de Cadastro / Edição */}
-        {podeEditar && showForm && (
+        {(podeEditar || ehResponsavel) && showForm && (
           <section className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm transition animate-in fade-in duration-200">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-emerald-600" />
               <h2 className="text-base font-bold text-slate-800">
-                {editandoId ? 'Editar Dados do Aluno' : 'Cadastrar Novo Aluno'}
+                {editandoId
+                  ? ehResponsavel
+                    ? 'Editar Informações do Meu Filho(a)'
+                    : 'Editar Dados do Aluno'
+                  : ehResponsavel
+                  ? 'Cadastrar Outro Filho(a) e Solicitar Matrícula'
+                  : 'Cadastrar Novo Aluno'}
               </h2>
             </div>
 
-            {responsaveis.length === 0 ? (
+            {!ehResponsavel && responsaveis.length === 0 ? (
               <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 space-y-2">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
@@ -680,51 +1243,54 @@ export default function AlunosPage() {
                     />
                   </div>
 
-                  {/* 1º Responsável Legal (RN-01) */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      1º Responsável Legal (Principal · RN-01) *
-                    </label>
-                    <select
-                      required
-                      value={responsavelId}
-                      onChange={(e) => {
-                        setResponsavelId(e.target.value);
-                        if (e.target.value === segundoResponsavelId) {
-                          setSegundoResponsavelId('');
-                        }
-                      }}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
-                    >
-                      <option value="">Selecione o 1º responsável legal...</option>
-                      {responsaveis.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.nome} ({r.parentesco}) — CPF: {r.cpfFormatado}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* 1º e 2º Responsável Legal (Exibido para Secretaria/Administração) */}
+                  {!ehResponsavel && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          1º Responsável Legal (Principal · RN-01) *
+                        </label>
+                        <select
+                          required
+                          value={responsavelId}
+                          onChange={(e) => {
+                            setResponsavelId(e.target.value);
+                            if (e.target.value === segundoResponsavelId) {
+                              setSegundoResponsavelId('');
+                            }
+                          }}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
+                        >
+                          <option value="">Selecione o 1º responsável legal...</option>
+                          {responsaveis.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.nome} ({r.parentesco}) — CPF: {r.cpfFormatado}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                  {/* 2º Responsável Legal (Opcional — até 2 responsáveis) */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      2º Responsável Legal (Opcional · máx. 2)
-                    </label>
-                    <select
-                      value={segundoResponsavelId}
-                      onChange={(e) => setSegundoResponsavelId(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
-                    >
-                      <option value="">Sem 2º responsável vinculado</option>
-                      {responsaveis
-                        .filter((r) => r.id !== responsavelId)
-                        .map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.nome} ({r.parentesco}) — CPF: {r.cpfFormatado}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          2º Responsável Legal (Opcional · máx. 2)
+                        </label>
+                        <select
+                          value={segundoResponsavelId}
+                          onChange={(e) => setSegundoResponsavelId(e.target.value)}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
+                        >
+                          <option value="">Sem 2º responsável vinculado</option>
+                          {responsaveis
+                            .filter((r) => r.id !== responsavelId)
+                            .map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.nome} ({r.parentesco}) — CPF: {r.cpfFormatado}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
 
                   {/* Gênero */}
                   <div>
@@ -771,6 +1337,28 @@ export default function AlunosPage() {
                       className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
+
+                  {/* Turma Desejada quando o Responsável está cadastrando um novo filho */}
+                  {ehResponsavel && !editandoId && (
+                    <div className="sm:col-span-2 lg:col-span-3 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
+                      <label className="block text-xs font-bold text-blue-950 mb-1">
+                        Turma Desejada para Solicitação de Matrícula (Opcional — já envia para a Secretaria aprovar)
+                      </label>
+                      <select
+                        value={turmaSolicitadaNovoFilhoId}
+                        onChange={(e) => setTurmaSolicitadaNovoFilhoId(e.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-blue-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Apenas cadastrar meu filho (solicitar turma depois)</option>
+                        {turmas.map((t) => (
+                          <option key={t.id} value={t.id} disabled={t.lotada}>
+                            {t.nome} — {t.serie} ({t.turno}) · Ano {t.anoLetivo} [{t.vagasRestantes} vaga(s)]
+                            {t.lotada ? ' [LOTADA]' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
@@ -793,6 +1381,8 @@ export default function AlunosPage() {
                       ? 'Salvando...'
                       : editandoId
                       ? 'Salvar Alterações'
+                      : ehResponsavel && turmaSolicitadaNovoFilhoId
+                      ? 'Cadastrar Filho e Solicitar Matrícula'
                       : 'Cadastrar Aluno'}
                   </button>
                 </div>
@@ -867,10 +1457,16 @@ export default function AlunosPage() {
                         className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
                           a.estaMatriculado
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : a.matriculaSolicitada
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}
                       >
-                        {a.estaMatriculado ? 'Matriculado' : 'Sem Turma'}
+                        {a.estaMatriculado
+                          ? 'Matriculado'
+                          : a.matriculaSolicitada
+                          ? 'Matrícula Solicitada'
+                          : 'Sem Turma'}
                       </span>
                     </div>
 
@@ -902,6 +1498,13 @@ export default function AlunosPage() {
                             Turma: {a.matriculaAtiva.turmaNome} ({a.matriculaAtiva.turmaTurno} · {a.matriculaAtiva.anoLetivo})
                           </span>
                         </div>
+                      ) : a.matriculaSolicitada ? (
+                        <div className="flex items-center gap-2 text-indigo-700 font-medium">
+                          <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                          <span>
+                            Solicitada: {a.matriculaSolicitada.turmaNome} (aguardando confirmação da Secretaria)
+                          </span>
+                        </div>
                       ) : (
                         <p className="text-[11px] text-amber-600 font-medium">
                           Disponível para matrícula (Item 1.4).
@@ -926,15 +1529,37 @@ export default function AlunosPage() {
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
                     <span>Cadastrado em {new Date(a.createdAt).toLocaleDateString('pt-BR')}</span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
                         onClick={() => abrirFichaAluno(a)}
                         className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline cursor-pointer"
                       >
                         <History className="w-3.5 h-3.5" />
-                        {podeEditar ? 'Histórico / Rematricular' : 'Ver Histórico Escolar'}
+                        {podeEditar ? 'Histórico / Rematricular' : 'Ver Histórico'}
                       </button>
+                      {ehResponsavel && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => iniciarEdicao(a)}
+                            className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:underline cursor-pointer"
+                            title="Editar dados do seu filho"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar Filho
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => abrirSegundoResponsavel(a)}
+                            className="inline-flex items-center gap-1 text-indigo-600 font-semibold hover:underline cursor-pointer"
+                            title="Cadastrar ou editar 2º responsável"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            {a.segundoResponsavel ? 'Editar 2º Resp.' : '+ 2º Responsável'}
+                          </button>
+                        </>
+                      )}
                       {podeEditar && (
                         <>
                           <button

@@ -14,6 +14,7 @@ export type ParentescoPermitido = (typeof PARENTESCOS_PERMITIDOS)[number];
 export interface CriarResponsavelInput {
   nome: string;
   cpf: string;
+  senha?: string;
   telefone: string;
   email?: string;
   endereco?: string;
@@ -159,10 +160,16 @@ export async function criarResponsavel(input: CriarResponsavelInput) {
     throw new Error(`Já existe um responsável cadastrado com o CPF ${formatarCPF(cpfLimpo)}.`);
   }
 
+  const senhaLimpa = input.senha && input.senha.trim().length > 0 ? input.senha.trim() : '123456';
+  if (senhaLimpa.length < 4) {
+    throw new Error('A senha deve ter pelo menos 4 caracteres.');
+  }
+
   return prisma.responsavel.create({
     data: {
       nome: nomeFormatado,
       cpf: cpfLimpo,
+      senha: senhaLimpa,
       telefone: telefoneLimpo,
       email: input.email ? input.email.trim().toLowerCase() : null,
       endereco: input.endereco ? input.endereco.trim() : null,
@@ -206,11 +213,21 @@ export async function atualizarResponsavel(id: string, input: Partial<CriarRespo
     }
   }
 
+  const novaSenha =
+    input.senha !== undefined && input.senha.trim() !== ''
+      ? input.senha.trim()
+      : existente.senha || '123456';
+
+  if (novaSenha.length < 4) {
+    throw new Error('A senha de acesso deve ter pelo menos 4 caracteres.');
+  }
+
   return prisma.responsavel.update({
     where: { id },
     data: {
       nome: dadosCompletos.nome.trim(),
       cpf: cpfLimpo,
+      senha: novaSenha,
       telefone: telefoneLimpo,
       email: dadosCompletos.email ? dadosCompletos.email.trim().toLowerCase() : null,
       endereco: dadosCompletos.endereco ? dadosCompletos.endereco.trim() : null,

@@ -126,22 +126,22 @@ export function HomeDashboardClient({
             {ehResponsavel && (
               <>
                 <Link
-                  href="/comunicados"
+                  href="/matriculas"
                   className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-sm"
                 >
                   <span className="flex items-center gap-2">
-                    <Megaphone className="w-4 h-4" />
-                    Mural Oficial de Comunicados ({comunicadoCount})
+                    <PlusCircle className="w-4 h-4" />
+                    Solicitar Nova Matrícula (Outro Filho)
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
-                  href="/formularios"
+                  href="/alunos"
                   className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition"
                 >
                   <span className="flex items-center gap-2">
-                    <FileSignature className="w-4 h-4 text-emerald-300" />
-                    Assinar Autorizações Digitais
+                    <UserCheck className="w-4 h-4 text-emerald-300" />
+                    Meu Perfil, Meus Filhos & 2º Responsável
                   </span>
                   <ArrowRight className="w-4 h-4 text-emerald-300" />
                 </Link>

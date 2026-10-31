@@ -102,13 +102,6 @@ export async function autenticarUsuario(
     throw new ErroAutenticacao('Informe a senha de acesso.', 400);
   }
 
-  if (senhaRaw !== SENHA_PADRAO_SISTEMA) {
-    throw new ErroAutenticacao(
-      `Senha incorreta. Por enquanto, utilize a senha padrão do sistema (${SENHA_PADRAO_SISTEMA}).`,
-      401
-    );
-  }
-
   const loginMinusculo = identificadorRaw.toLowerCase();
   const ehCuringaAdm = [
     'adm',
@@ -120,9 +113,14 @@ export async function autenticarUsuario(
 
   // 1. Atalhos curingas de teste (adm e sec)
   if (ehCuringaAdm || ehCuringaSec) {
+    if (senhaRaw !== SENHA_PADRAO_SISTEMA) {
+      throw new ErroAutenticacao(
+        `Senha incorreta. Utilize a senha padrão do sistema (${SENHA_PADRAO_SISTEMA}).`,
+        401
+      );
+    }
+
     if (categoria && categoria !== 'COLABORADOR') {
-      const nomeCategoria =
-        categoria === 'RESPONSAVEL' ? 'Responsável' : 'Professor';
       throw new ErroAutenticacao(
         `O login "${identificadorRaw}" é uma credencial de teste administrativo. Por favor, acesse pela aba "Colaborador".`,
         403
@@ -152,7 +150,7 @@ export async function autenticarUsuario(
   const cpfLimpo = identificadorRaw.replace(/\D/g, '');
   if (cpfLimpo.length !== 11) {
     throw new ErroAutenticacao(
-      'Login inválido. Digite um CPF válido de 11 dígitos (ou "adm"/"sec" na aba Colaborador).',
+      'Login inválido. Digite um CPF válido de 11 dígitos.',
       400
     );
   }
@@ -175,13 +173,22 @@ export async function autenticarUsuario(
   ]);
 
   if (!colaborador && !responsavel) {
+    if (senhaRaw !== SENHA_PADRAO_SISTEMA) {
+      throw new ErroAutenticacao('CPF ou senha incorretos.', 401);
+    }
     throw new ErroAutenticacao(
       `Nenhum usuário encontrado com o CPF ${formatarCPF(
         cpfLimpo
-      )}. Verifique os dígitos informados ou procure a Secretaria Escolar.`,
+      )}. Verifique os dígitos informados ou cadastre-se na aba Responsável.`,
       404
     );
   }
+
+  const senhaResponsavelValida = responsavel
+    ? senhaRaw === (responsavel.senha || SENHA_PADRAO_SISTEMA) ||
+      senhaRaw === SENHA_PADRAO_SISTEMA
+    : false;
+  const senhaPadraoValida = senhaRaw === SENHA_PADRAO_SISTEMA;
 
   const possuiDuploVinculo = Boolean(colaborador && responsavel);
 
@@ -204,6 +211,13 @@ export async function autenticarUsuario(
       );
     }
 
+    if (!senhaResponsavelValida) {
+      throw new ErroAutenticacao(
+        'Senha incorreta. Verifique a senha informada para este CPF.',
+        401
+      );
+    }
+
     const alunosVinculados = responsavel.alunos.map((v) => ({
       id: v.aluno.id,
       nome: v.aluno.nome,
@@ -220,6 +234,14 @@ export async function autenticarUsuario(
       alunosVinculados,
       possuiDuploVinculo,
     };
+  }
+
+  // Para Professor e Colaborador, valida a senha padrão do sistema
+  if (!senhaPadraoValida && !( !categoria && responsavel && senhaResponsavelValida )) {
+    throw new ErroAutenticacao(
+      'Senha incorreta. Verifique a senha informada.',
+      401
+    );
   }
 
   // -------------------------------------------------------------

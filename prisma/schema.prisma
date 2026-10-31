@@ -30,6 +30,7 @@ model Responsavel {
   id          String             @id @default(uuid())
   nome        String
   cpf         String             @unique
+  senha       String?            @default("123456")
   telefone    String
   email       String?
   endereco    String?

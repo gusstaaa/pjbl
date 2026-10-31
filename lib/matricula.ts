@@ -4,6 +4,7 @@ import { calcularIdade } from '@/lib/aluno';
 export const STATUS_MATRICULA = [
   'ATIVA',
   'PENDENTE_DOCUMENTOS',
+  'SOLICITADA',
   'TRANCADA',
   'CANCELADA',
 ] as const;
@@ -214,7 +215,9 @@ export async function listarMatriculas(filtros?: {
         ? {
             id: resp.id,
             nome: resp.nome,
+            cpf: resp.cpf,
             telefone: resp.telefone,
+            email: resp.email || null,
             parentesco: resp.parentesco,
           }
         : null,
@@ -279,12 +282,12 @@ export async function efetivarMatricula(input: EfetivarMatriculaInput) {
       );
     }
 
-    // 4. Confere se o aluno já possui matrícula ativa neste ano letivo
+    // 4. Confere se o aluno já possui matrícula ativa ou solicitada neste ano letivo
     const matriculaExistente = await tx.matricula.findFirst({
       where: {
         alunoId: aluno.id,
         anoLetivo: ano,
-        status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS'] },
+        status: { in: ['ATIVA', 'PENDENTE_DOCUMENTOS', 'SOLICITADA'] },
       },
       include: { turma: true },
     });
@@ -602,12 +605,34 @@ export async function alterarStatusMatricula(id: string, novoStatus: string) {
     throw new Error(`Status inválido. Escolha: ${STATUS_MATRICULA.join(', ')}`);
   }
 
-  return prisma.matricula.update({
-    where: { id },
-    data: { status: novoStatus },
-    include: {
-      turma: true,
-      aluno: true,
-    },
+  return prisma.$transaction(async (tx) => {
+    const matriculaAtual = await tx.matricula.findUnique({
+      where: { id },
+      include: { turma: true, aluno: true },
+    });
+
+    if (!matriculaAtual) {
+      throw new Error('Matrícula não encontrada.');
+    }
+
+    if (novoStatus === 'ATIVA' && matriculaAtual.status !== 'ATIVA') {
+      const ativasNaTurma = await tx.matricula.count({
+        where: { turmaId: matriculaAtual.turmaId, status: 'ATIVA' },
+      });
+      if (ativasNaTurma >= matriculaAtual.turma.capacidade) {
+        throw new Error(
+          `Regra RN-03: A turma "${matriculaAtual.turma.nome}" já atingiu a capacidade máxima (${ativasNaTurma}/${matriculaAtual.turma.capacidade} alunos).`
+        );
+      }
+    }
+
+    return tx.matricula.update({
+      where: { id },
+      data: { status: novoStatus },
+      include: {
+        turma: true,
+        aluno: true,
+      },
+    });
   });
 }

@@ -14,6 +14,7 @@ export async function PATCH(
     const responsavel = await atualizarResponsavel(id, {
       nome: body.nome,
       cpf: body.cpf,
+      senha: body.senha,
       telefone: body.telefone,
       email: body.email,
       endereco: body.endereco,

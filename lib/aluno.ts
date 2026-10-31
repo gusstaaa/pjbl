@@ -117,7 +117,11 @@ export async function listarAlunos(busca?: string) {
     }));
     const responsavelPrincipal = responsaveisFormatados[0] || null;
     const segundoResponsavel = responsaveisFormatados[1] || null;
-    const matriculaAtiva = aluno.matriculas.find((m) => m.status === 'ATIVA') || null;
+    const matriculaAtiva =
+      aluno.matriculas.find((m) => m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') ||
+      null;
+    const matriculaSolicitada =
+      aluno.matriculas.find((m) => m.status === 'SOLICITADA') || null;
     const ultimaMatricula = aluno.matriculas[0] || null;
 
     const historicoMatriculas = aluno.matriculas.map((m) => ({
@@ -149,10 +153,22 @@ export async function listarAlunos(busca?: string) {
         ? {
             id: matriculaAtiva.id,
             codigo: matriculaAtiva.codigo,
+            status: matriculaAtiva.status,
             turmaNome: matriculaAtiva.turma.nome,
             turmaSerie: matriculaAtiva.turma.serie,
             turmaTurno: matriculaAtiva.turma.turno,
             anoLetivo: matriculaAtiva.anoLetivo,
+          }
+        : null,
+      matriculaSolicitada: matriculaSolicitada
+        ? {
+            id: matriculaSolicitada.id,
+            codigo: matriculaSolicitada.codigo,
+            status: matriculaSolicitada.status,
+            turmaNome: matriculaSolicitada.turma.nome,
+            turmaSerie: matriculaSolicitada.turma.serie,
+            turmaTurno: matriculaSolicitada.turma.turno,
+            anoLetivo: matriculaSolicitada.anoLetivo,
           }
         : null,
       historicoMatriculas,

@@ -100,17 +100,23 @@ interface MatriculaItem {
     turno: string;
   };
   responsavel: {
+    id?: string;
     nome: string;
+    cpf?: string;
     telefone: string;
+    email?: string | null;
     parentesco: string;
   } | null;
   documentos: DocumentoMatriculaItem[];
   resumoDocumentos: ResumoDocumentos;
 }
 
+const GENEROS_ALUNO = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
+
 export default function MatriculasPage() {
-  const { sessao } = useSessao();
+  const { sessao, definirSessao } = useSessao();
   const podeEditar = sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+  const ehResponsavel = sessao.perfil === 'RESPONSAVEL';
 
   const [matriculas, setMatriculas] = useState<MatriculaItem[]>([]);
   const [alunos, setAlunos] = useState<AlunoOption[]>([]);
@@ -123,6 +129,17 @@ export default function MatriculasPage() {
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
+
+  // Formulário do Responsável: Solicitar Nova Matrícula (Outro Filho ou Filho Existente)
+  const [showFormSolicitacaoResp, setShowFormSolicitacaoResp] = useState(false);
+  const [modoFilhoResp, setModoFilhoResp] = useState<'NOVO_FILHO' | 'FILHO_EXISTENTE'>('NOVO_FILHO');
+  const [novoFilhoNome, setNovoFilhoNome] = useState('');
+  const [novoFilhoNascimento, setNovoFilhoNascimento] = useState('');
+  const [novoFilhoGenero, setNovoFilhoGenero] = useState(GENEROS_ALUNO[0]);
+  const [novoFilhoCertidao, setNovoFilhoCertidao] = useState('');
+  const [novoFilhoObsMedicas, setNovoFilhoObsMedicas] = useState('');
+  const [filhoExistenteId, setFilhoExistenteId] = useState('');
+  const [turmaSolicitadaRespId, setTurmaSolicitadaRespId] = useState('');
 
   // Painel de Checklist de Documentos (Item 2.2 - RF-13, RF-14, RN-05)
   const [matriculaChecklist, setMatriculaChecklist] = useState<MatriculaItem | null>(null);
@@ -171,6 +188,11 @@ export default function MatriculasPage() {
         const comVagas = dataTurmas.filter((t: TurmaOption) => !t.lotada);
         if (comVagas.length > 0 && !turmaId) {
           setTurmaId(comVagas[0].id);
+        }
+        if (comVagas.length > 0 && !turmaSolicitadaRespId) {
+          setTurmaSolicitadaRespId(comVagas[0].id);
+        } else if (dataTurmas.length > 0 && !turmaSolicitadaRespId) {
+          setTurmaSolicitadaRespId(dataTurmas[0].id);
         }
       }
     } catch (err: any) {
@@ -316,15 +338,115 @@ export default function MatriculasPage() {
         body: JSON.stringify({ status: novoStatus }),
       });
 
-      if (!res.ok) {
+      if ( !res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erro ao alterar status da matrícula.');
       }
 
-      setMensagemSucesso(`Status da matrícula alterado para "${novoStatus}". Vaga atualizada na turma.`);
+      const rotuloStatus =
+        novoStatus === 'ATIVA'
+          ? 'Ativa (Efetivada)'
+          : novoStatus === 'PENDENTE_DOCUMENTOS'
+          ? 'Pendente de Documentação'
+          : novoStatus === 'SOLICITADA'
+          ? 'Solicitação de Matrícula'
+          : novoStatus;
+
+      setMensagemSucesso(`Status da matrícula atualizado para "${rotuloStatus}" com sucesso!`);
       await carregarDados();
     } catch (err: any) {
       setMensagemErro(err.message);
+    }
+  };
+
+  const handleSolicitarNovaMatriculaResponsavel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensagemErro(null);
+    setMensagemSucesso(null);
+
+    if (!sessao.responsavelId) {
+      setMensagemErro('Sessão de responsável inválida. Faça login novamente.');
+      return;
+    }
+
+    if (!turmaSolicitadaRespId) {
+      setMensagemErro('Selecione a turma desejada para a solicitação de matrícula.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      let idAlunoAlvo = filhoExistenteId;
+      let nomeAlunoAlvo = '';
+
+      if (modoFilhoResp === 'NOVO_FILHO') {
+        const resNovoAluno = await fetch('/api/alunos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: novoFilhoNome,
+            dataNascimento: novoFilhoNascimento,
+            responsavelId: sessao.responsavelId,
+            genero: novoFilhoGenero,
+            certidaoNascimento: novoFilhoCertidao,
+            observacoesMedicas: novoFilhoObsMedicas,
+          }),
+        });
+
+        const dataNovoAluno = await resNovoAluno.json();
+        if (!resNovoAluno.ok) {
+          throw new Error(dataNovoAluno.error || 'Erro ao cadastrar os dados do filho(a).');
+        }
+
+        idAlunoAlvo = dataNovoAluno.id;
+        nomeAlunoAlvo = dataNovoAluno.nome;
+
+        // Atualiza a sessão local para que o novo filho já fique visível imediatamente
+        const vinculadosAtuais = sessao.alunosVinculados || [];
+        if (!vinculadosAtuais.some((v) => v.id === idAlunoAlvo)) {
+          definirSessao({
+            ...sessao,
+            alunosVinculados: [...vinculadosAtuais, { id: idAlunoAlvo, nome: nomeAlunoAlvo }],
+          });
+        }
+      } else {
+        const encontrado = alunos.find((a) => a.id === filhoExistenteId);
+        if (!encontrado) {
+          throw new Error('Selecione o filho(a) para solicitar a matrícula.');
+        }
+        nomeAlunoAlvo = encontrado.nome;
+      }
+
+      const turmaSel = turmas.find((t) => t.id === turmaSolicitadaRespId);
+      const resMat = await fetch('/api/matriculas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alunoId: idAlunoAlvo,
+          turmaId: turmaSolicitadaRespId,
+          anoLetivo: turmaSel?.anoLetivo || new Date().getFullYear(),
+          status: 'SOLICITADA',
+        }),
+      });
+
+      const dataMat = await resMat.json();
+      if (!resMat.ok) {
+        throw new Error(dataMat.error || 'Erro ao enviar solicitação de matrícula.');
+      }
+
+      setMensagemSucesso(
+        `Solicitação de matrícula (${dataMat.codigo}) enviada com sucesso para "${nomeAlunoAlvo}"! A Secretaria Escolar irá confirmar a efetivação.`
+      );
+      setNovoFilhoNome('');
+      setNovoFilhoNascimento('');
+      setNovoFilhoCertidao('');
+      setNovoFilhoObsMedicas('');
+      setShowFormSolicitacaoResp(false);
+      await carregarDados();
+    } catch (err: any) {
+      setMensagemErro(err.message || 'Erro ao solicitar nova matrícula.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -355,20 +477,34 @@ export default function MatriculasPage() {
   };
 
   const idsAlunosFiliados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+  const alunosDoResponsavel = alunos.filter(
+    (a) =>
+      idsAlunosFiliados.has(a.id) ||
+      (sessao.responsavelCpf &&
+        a.responsavelPrincipal?.cpf?.replace(/\D/g, '') ===
+          sessao.responsavelCpf.replace(/\D/g, ''))
+  );
+  const idsFilhosCompletos = new Set([
+    ...Array.from(idsAlunosFiliados),
+    ...alunosDoResponsavel.map((a) => a.id),
+  ]);
+
   const matriculasPorPerfil =
     sessao.perfil === 'RESPONSAVEL'
-      ? matriculas.filter((m) => idsAlunosFiliados.has(m.aluno.id))
+      ? matriculas.filter((m) => idsFilhosCompletos.has(m.aluno.id))
       : matriculas;
 
   const matriculasFiltradas = filtroStatus === 'TODOS'
     ? matriculasPorPerfil
     : matriculasPorPerfil.filter((m) => m.status === filtroStatus);
 
+  const solicitacoesPendentes = matriculasPorPerfil.filter((m) => m.status === 'SOLICITADA');
   const ativasCount = matriculasPorPerfil.filter((m) => m.status === 'ATIVA').length;
   const pendentesCount = matriculasPorPerfil.filter((m) => m.status === 'PENDENTE_DOCUMENTOS').length;
+  const solicitadasCount = solicitacoesPendentes.length;
   const alunosSemMatricula =
     sessao.perfil === 'RESPONSAVEL'
-      ? alunos.filter((a) => idsAlunosFiliados.has(a.id) && !a.estaMatriculado).length
+      ? alunos.filter((a) => idsFilhosCompletos.has(a.id) && !a.estaMatriculado).length
       : alunos.filter((a) => !a.estaMatriculado).length;
 
   const alunoSelecionadoObj = alunos.find((a) => a.id === alunoId) || null;
@@ -389,9 +525,15 @@ export default function MatriculasPage() {
               </span>
               <span className="text-xs text-slate-500">RF-05 · RF-06 · RF-13 · RF-14 · RN-03 · RN-05</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Matrículas, Rematrículas e Documentação</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mt-1">
+              {ehResponsavel
+                ? 'Matrículas dos Meus Filhos e Solicitação de Vaga'
+                : 'Matrículas, Solicitações, Rematrículas e Documentação'}
+            </h1>
             <p className="text-sm text-slate-500">
-              Gerencie matrículas, rematricule alunos veteranos e controle o checklist de documentos obrigatórios.
+              {ehResponsavel
+                ? 'Acompanhe a situação da matrícula dos seus filhos ou solicite uma nova matrícula para outro filho.'
+                : 'Confirme solicitações de pré-matrícula, efetive matrículas, rematricule veteranos e controle documentos.'}
             </p>
           </div>
 
@@ -425,6 +567,35 @@ export default function MatriculasPage() {
                 <Plus className="w-4 h-4" />
                 {showForm && modoFormulario === 'MATRICULA' ? 'Fechar Formulário' : 'Nova Matrícula'}
               </button>
+            </div>
+          )}
+
+          {ehResponsavel && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFormSolicitacaoResp(!showFormSolicitacaoResp);
+                  setModoFilhoResp('NOVO_FILHO');
+                  if (alunosDoResponsavel.length > 0 && !filhoExistenteId) {
+                    setFilhoExistenteId(alunosDoResponsavel[0].id);
+                  }
+                  setMensagemErro(null);
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                {showFormSolicitacaoResp
+                  ? 'Fechar Solicitação'
+                  : 'Solicitar Nova Matrícula (Outro Filho)'}
+              </button>
+              <Link
+                href="/alunos"
+                className="inline-flex items-center justify-center gap-2 bg-purple-700 hover:bg-purple-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition shadow-xs"
+              >
+                <User className="w-4 h-4" />
+                Meu Perfil & Meus Filhos
+              </Link>
             </div>
           )}
         </div>
@@ -461,10 +632,14 @@ export default function MatriculasPage() {
         )}
 
         {/* Métricas */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Matrículas Ativas</span>
             <p className="text-2xl font-extrabold text-emerald-600 mt-1">{ativasCount}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-xs">
+            <span className="text-xs font-bold text-purple-800 uppercase tracking-wider">Solicitações Pré-Matrícula</span>
+            <p className="text-2xl font-extrabold text-purple-700 mt-1">{solicitadasCount}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendentes de Documentos (RN-05)</span>
@@ -475,6 +650,274 @@ export default function MatriculasPage() {
             <p className="text-2xl font-extrabold text-violet-600 mt-1">{alunosSemMatricula}</p>
           </div>
         </section>
+
+        {/* Formulário do Responsável Logado: Solicitar Nova Matrícula (Outro Filho ou Filho Já Cadastrado) */}
+        {ehResponsavel && showFormSolicitacaoResp && (
+          <section className="bg-white p-6 rounded-2xl border-2 border-emerald-400 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-emerald-600" />
+                  Solicitar Nova Matrícula para Filho(a)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Cadastre outro filho(a) ou selecione um filho já registrado para enviar o pedido de matrícula à Secretaria.
+                </p>
+              </div>
+
+              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setModoFilhoResp('NOVO_FILHO')}
+                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
+                    modoFilhoResp === 'NOVO_FILHO'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Cadastrar Outro Filho(a)
+                </button>
+                {alunosDoResponsavel.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModoFilhoResp('FILHO_EXISTENTE');
+                      if (!filhoExistenteId && alunosDoResponsavel[0]) {
+                        setFilhoExistenteId(alunosDoResponsavel[0].id);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
+                      modoFilhoResp === 'FILHO_EXISTENTE'
+                        ? 'bg-purple-700 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Filho(a) Já Cadastrado
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <form onSubmit={handleSolicitarNovaMatriculaResponsavel} className="space-y-4">
+              {modoFilhoResp === 'NOVO_FILHO' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nome Completo do Filho(a) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={novoFilhoNome}
+                      onChange={(e) => setNovoFilhoNome(e.target.value)}
+                      placeholder="Informe o nome completo da criança"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Data de Nascimento *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={novoFilhoNascimento}
+                      onChange={(e) => setNovoFilhoNascimento(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Gênero
+                    </label>
+                    <select
+                      value={novoFilhoGenero}
+                      onChange={(e) => setNovoFilhoGenero(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    >
+                      {GENEROS_ALUNO.map((g) => (
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nº Certidão de Nascimento (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={novoFilhoCertidao}
+                      onChange={(e) => setNovoFilhoCertidao(e.target.value)}
+                      placeholder="Matrícula da certidão"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Observações Médicas / Alergias (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={novoFilhoObsMedicas}
+                      onChange={(e) => setNovoFilhoObsMedicas(e.target.value)}
+                      placeholder="Ex: Alergia alimentar, etc."
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Selecione o Filho(a) Cadastrado *
+                  </label>
+                  <select
+                    required
+                    value={filhoExistenteId}
+                    onChange={(e) => setFilhoExistenteId(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {alunosDoResponsavel.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nome} ({a.idadeCalculada})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Turma / Série Desejada *
+                </label>
+                <select
+                  required
+                  value={turmaSolicitadaRespId}
+                  onChange={(e) => setTurmaSolicitadaRespId(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                >
+                  <option value="">Selecione a turma...</option>
+                  {turmas.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      Ano {t.anoLetivo} · {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vaga(s)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowFormSolicitacaoResp(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {submitting ? 'Enviando Solicitação...' : 'Enviar Solicitação de Matrícula'}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* Painel da Secretaria / Administração: Solicitações de Pré-Matrícula Aguardando Confirmação */}
+        {podeEditar && solicitacoesPendentes.length > 0 && (
+          <section className="bg-purple-50/70 p-6 rounded-2xl border-2 border-purple-400 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-purple-200">
+              <div>
+                <span className="inline-block text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-700 text-white">
+                  Ação Necessária da Secretaria / Administração
+                </span>
+                <h2 className="text-lg font-extrabold text-purple-950 mt-1">
+                  Solicitações de Matrícula / Pré-Cadastro ({solicitacoesPendentes.length})
+                </h2>
+                <p className="text-xs text-purple-900">
+                  Confira abaixo os alunos e responsáveis cadastrados pelo autoatendimento e confirme para efetivar a matrícula.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {solicitacoesPendentes.map((sol) => (
+                <div
+                  key={sol.id}
+                  className="bg-white p-4 rounded-xl border border-purple-300 shadow-xs flex flex-col justify-between gap-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-mono text-[11px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">
+                          {sol.codigo}
+                        </span>
+                        <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                          Aluno(a): {sol.aluno.nome} ({sol.aluno.idade})
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300">
+                        Solicitação de Matrícula
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-slate-700 space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                      <p>
+                        <strong>Turma Solicitada:</strong> {sol.turma.nome} ({sol.turma.serie} ·{' '}
+                        {sol.turma.turno} · Ano {sol.anoLetivo})
+                      </p>
+                      {sol.responsavel && (
+                        <>
+                          <p>
+                            <strong>Responsável Cadastrado:</strong> {sol.responsavel.nome} (
+                            {sol.responsavel.parentesco})
+                          </p>
+                          <p>
+                            <strong>CPF / Contato:</strong>{' '}
+                            {sol.responsavel.cpf ? `CPF: ${sol.responsavel.cpf} · ` : ''}
+                            Tel: {sol.responsavel.telefone}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => handleMudarStatus(sol.id, 'CANCELADA')}
+                      className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition cursor-pointer"
+                    >
+                      Recusar / Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMudarStatus(sol.id, 'PENDENTE_DOCUMENTOS')}
+                      className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs font-bold transition cursor-pointer"
+                    >
+                      Aprovar c/ Doc. Pendente
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMudarStatus(sol.id, 'ATIVA')}
+                      className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition shadow-xs cursor-pointer"
+                    >
+                      Confirmar e Efetivar Matrícula
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Painel de Checklist de Documentos da Matrícula (Item 2.2 - RF-13, RF-14, RN-05) */}
         {matriculaChecklist && (
@@ -867,6 +1310,7 @@ export default function MatriculasPage() {
                   className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white focus:outline-hidden focus:ring-1 focus:ring-violet-500"
                 >
                   <option value="TODOS">Todos os Status</option>
+                  <option value="SOLICITADA">Solicitações (Pré-Matrícula)</option>
                   <option value="ATIVA">Ativas</option>
                   <option value="PENDENTE_DOCUMENTOS">Pendentes</option>
                   <option value="TRANCADA">Trancadas</option>
@@ -904,6 +1348,8 @@ export default function MatriculasPage() {
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                 {busca
                   ? `Nenhum resultado para a busca "${busca}".`
+                  : ehResponsavel
+                  ? 'Clique em "Solicitar Nova Matrícula" acima para solicitar a matrícula de um filho.'
                   : 'Comece clicando em "Nova Matrícula" para alocar o primeiro aluno em uma turma.'}
               </p>
             </div>
@@ -913,6 +1359,8 @@ export default function MatriculasPage() {
                 const badgeCor =
                   m.status === 'ATIVA'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : m.status === 'SOLICITADA'
+                    ? 'bg-purple-50 text-purple-800 border-purple-300'
                     : m.status === 'PENDENTE_DOCUMENTOS'
                     ? 'bg-amber-50 text-amber-700 border-amber-200'
                     : m.status === 'TRANCADA'
@@ -936,7 +1384,13 @@ export default function MatriculasPage() {
                           <p className="text-xs text-slate-400">{m.aluno.idade}</p>
                         </div>
                         <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${badgeCor}`}>
-                          {m.status === 'ATIVA' ? 'Ativa' : m.status === 'PENDENTE_DOCUMENTOS' ? 'Pendente Doc.' : m.status}
+                          {m.status === 'ATIVA'
+                            ? 'Ativa'
+                            : m.status === 'SOLICITADA'
+                            ? 'Solicitação de Matrícula'
+                            : m.status === 'PENDENTE_DOCUMENTOS'
+                            ? 'Pendente Doc.'
+                            : m.status}
                         </span>
                       </div>
 
@@ -958,6 +1412,14 @@ export default function MatriculasPage() {
                           </div>
                         )}
                       </div>
+
+                      {m.status === 'SOLICITADA' && (
+                        <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 font-medium">
+                          {podeEditar
+                            ? 'Aguardando confirmação da Secretaria para efetivar esta matrícula.'
+                            : 'Solicitação enviada! Aguardando confirmação da Secretaria Escolar.'}
+                        </div>
+                      )}
 
                       {/* Resumo do Checklist de Documentos (RF-13, RF-14, RN-05) */}
                       {m.resumoDocumentos && (
@@ -992,25 +1454,40 @@ export default function MatriculasPage() {
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                       {podeEditar ? (
                         <>
-                          <button
-                            type="button"
-                            onClick={() => iniciarRematriculaRapida(m.aluno.id)}
-                            className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            Rematricular
-                          </button>
+                          {m.status === 'SOLICITADA' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleMudarStatus(m.id, 'ATIVA')}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              Confirmar Matrícula
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => iniciarRematriculaRapida(m.aluno.id)}
+                              className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              Rematricular
+                            </button>
+                          )}
 
                           <div className="flex items-center gap-2">
-                            {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS') && (
+                            {(m.status === 'ATIVA' || m.status === 'PENDENTE_DOCUMENTOS' || m.status === 'SOLICITADA') && (
                               <>
-                                <button
-                                  onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
-                                  className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
-                                >
-                                  Trancar
-                                </button>
-                                <span>·</span>
+                                {m.status !== 'SOLICITADA' && (
+                                  <>
+                                    <button
+                                      onClick={() => handleMudarStatus(m.id, 'TRANCADA')}
+                                      className="text-[11px] text-slate-500 hover:text-slate-800 font-medium transition"
+                                    >
+                                      Trancar
+                                    </button>
+                                    <span>·</span>
+                                  </>
+                                )}
                                 <button
                                   onClick={() => handleMudarStatus(m.id, 'CANCELADA')}
                                   className="text-[11px] text-amber-700 hover:text-amber-900 font-medium transition"

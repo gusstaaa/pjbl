@@ -384,6 +384,17 @@ else
   fail "Login curinga fora de Colaborador não retornou HTTP 403 (retornou $LOGIN_ADM_RESP_CODE)."
 fi
 
+# 34. Validação de dados obrigatórios no Pré-Cadastro de Responsável e Aluno (HTTP 400)
+PRE_CADASTRO_INVALID_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/auth/pre-cadastro" \
+  -H "Content-Type: application/json" \
+  -d '{"responsavelNome":"Teste","responsavelCpf":"123"}')
+
+if [ "$PRE_CADASTRO_INVALID_CODE" = "400" ]; then
+  pass "Pré-cadastro com CPF ou dados incompletos bloqueado em /api/auth/pre-cadastro (HTTP 400)."
+else
+  fail "Pré-cadastro inválido não retornou HTTP 400 (retornou $PRE_CADASTRO_INVALID_CODE)."
+fi
+
 # ------------------------------------------------------------------------------
 # Resumo Final
 # ------------------------------------------------------------------------------

@@ -23,6 +23,9 @@ import {
   GraduationCap,
   Briefcase,
   KeyRound,
+  UserPlus,
+  Baby,
+  BookOpen,
 } from 'lucide-react';
 
 interface ResponsavelCadastrado {
@@ -49,7 +52,19 @@ interface ColaboradorCadastrado {
   especialidade?: string | null;
 }
 
+interface TurmaDisponivel {
+  id: string;
+  nome: string;
+  serie: string;
+  turno: string;
+  anoLetivo: number;
+  vagasRestantes: number;
+  lotada: boolean;
+}
+
 const SENHA_PADRAO_DICA = '123456';
+const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
+const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 
 interface LoginFormProps {
   modoPaginaPrincipal?: boolean;
@@ -61,9 +76,28 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   // Categoria de acesso: Responsável | Professor | Colaborador
   const [categoria, setCategoria] = useState<CategoriaUsuario>('RESPONSAVEL');
+  const [modoResponsavel, setModoResponsavel] = useState<'ENTRAR' | 'CADASTRAR'>('ENTRAR');
+
+  // Campos de Login
   const [identificador, setIdentificador] = useState<string>('');
   const [senha, setSenha] = useState<string>(SENHA_PADRAO_DICA);
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
+
+  // Campos de Pré-Cadastro (Responsável + Filho + Solicitação de Matrícula)
+  const [cadNomeResp, setCadNomeResp] = useState<string>('');
+  const [cadCpfResp, setCadCpfResp] = useState<string>('');
+  const [cadSenhaResp, setCadSenhaResp] = useState<string>('123456');
+  const [cadTelefoneResp, setCadTelefoneResp] = useState<string>('');
+  const [cadEmailResp, setCadEmailResp] = useState<string>('');
+  const [cadEnderecoResp, setCadEnderecoResp] = useState<string>('');
+  const [cadParentescoResp, setCadParentescoResp] = useState<string>('Mãe');
+
+  const [cadNomeAluno, setCadNomeAluno] = useState<string>('');
+  const [cadDataNascAluno, setCadDataNascAluno] = useState<string>('');
+  const [cadGeneroAluno, setCadGeneroAluno] = useState<string>('Masculino');
+  const [cadCertidaoAluno, setCadCertidaoAluno] = useState<string>('');
+  const [cadObsMedicasAluno, setCadObsMedicasAluno] = useState<string>('');
+  const [cadTurmaId, setCadTurmaId] = useState<string>('');
 
   const [autenticando, setAutenticando] = useState<boolean>(false);
   const [erroLogin, setErroLogin] = useState<string>('');
@@ -71,6 +105,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   const [responsaveis, setResponsaveis] = useState<ResponsavelCadastrado[]>([]);
   const [colaboradores, setColaboradores] = useState<ColaboradorCadastrado[]>([]);
+  const [turmas, setTurmas] = useState<TurmaDisponivel[]>([]);
   const [buscaAuxiliar, setBuscaAuxiliar] = useState<string>('');
   const [carregandoDados, setCarregandoDados] = useState<boolean>(true);
 
@@ -78,9 +113,10 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
     async function carregarReferencia() {
       setCarregandoDados(true);
       try {
-        const [resResp, resColab] = await Promise.all([
+        const [resResp, resColab, resTurmas] = await Promise.all([
           fetch('/api/responsaveis'),
           fetch('/api/colaboradores'),
+          fetch('/api/turmas'),
         ]);
 
         if (resResp.ok) {
@@ -98,6 +134,15 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
             : dadosColab.colaboradores || [];
           setColaboradores(listaColab);
         }
+
+        if (resTurmas.ok) {
+          const dadosTurmas: TurmaDisponivel[] = await resTurmas.json();
+          setTurmas(dadosTurmas);
+          const primeiraComVaga = dadosTurmas.find((t) => !t.lotada) || dadosTurmas[0];
+          if (primeiraComVaga) {
+            setCadTurmaId(primeiraComVaga.id);
+          }
+        }
       } catch (err) {
         console.error('Erro ao carregar usuários de referência:', err);
       } finally {
@@ -109,6 +154,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   function alternarCategoria(novaCat: CategoriaUsuario) {
     setCategoria(novaCat);
+    setModoResponsavel('ENTRAR');
     setErroLogin('');
     setMensagemSucesso('');
     setIdentificador('');
@@ -117,6 +163,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   function preencherCredencialRapida(novoIdentificador: string, novaCategoria?: CategoriaUsuario) {
     if (novaCategoria) setCategoria(novaCategoria);
+    setModoResponsavel('ENTRAR');
     setIdentificador(novoIdentificador);
     setSenha(SENHA_PADRAO_DICA);
     setErroLogin('');
@@ -172,12 +219,73 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
         if (!modoPaginaPrincipal) {
           router.push('/');
         } else {
-          // Atualiza o estado da página principal
           window.location.reload();
         }
       }, 350);
     } catch {
       setErroLogin('Erro de conexão ao validar credenciais no servidor.');
+    } finally {
+      setAutenticando(false);
+    }
+  }
+
+  async function handlePreCadastro(e: React.FormEvent) {
+    e.preventDefault();
+    setErroLogin('');
+    setMensagemSucesso('');
+    setAutenticando(true);
+
+    try {
+      const res = await fetch('/api/auth/pre-cadastro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responsavel: {
+            nome: cadNomeResp,
+            cpf: cadCpfResp,
+            senha: cadSenhaResp,
+            telefone: cadTelefoneResp,
+            email: cadEmailResp,
+            endereco: cadEnderecoResp,
+            parentesco: cadParentescoResp,
+          },
+          aluno: {
+            nome: cadNomeAluno,
+            dataNascimento: cadDataNascAluno,
+            genero: cadGeneroAluno,
+            certidaoNascimento: cadCertidaoAluno,
+            observacoesMedicas: cadObsMedicasAluno,
+          },
+          turmaId: cadTurmaId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErroLogin(data.erro || 'Não foi possível concluir o pré-cadastro.');
+        setAutenticando(false);
+        return;
+      }
+
+      if (data.sessao) {
+        definirSessao(data.sessao);
+      }
+
+      setMensagemSucesso(
+        data.mensagem ||
+          'Pré-cadastro realizado e solicitação de matrícula enviada para a Secretaria!'
+      );
+
+      setTimeout(() => {
+        if (!modoPaginaPrincipal) {
+          router.push('/');
+        } else {
+          window.location.reload();
+        }
+      }, 600);
+    } catch {
+      setErroLogin('Erro de conexão ao enviar o pré-cadastro.');
     } finally {
       setAutenticando(false);
     }
@@ -198,7 +306,11 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   const professoresFiltrados = colaboradores.filter((c) => {
     const s = (c.setor || '').toLowerCase();
-    const ehProf = s.includes('pedagog') || s.includes('prof') || c.cargo === 'Professor(a)' || c.cargo === 'Auxiliar de Sala';
+    const ehProf =
+      s.includes('pedagog') ||
+      s.includes('prof') ||
+      c.cargo === 'Professor(a)' ||
+      c.cargo === 'Auxiliar de Sala';
     if (!ehProf) return false;
     if (!buscaAuxiliar.trim()) return true;
     const t = buscaAuxiliar.toLowerCase();
@@ -211,7 +323,11 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   const colaboradoresGestaoFiltrados = colaboradores.filter((c) => {
     const s = (c.setor || '').toLowerCase();
-    const ehGestao = s.includes('admin') || s.includes('secretar') || s.includes('financeir') || s.includes('direc');
+    const ehGestao =
+      s.includes('admin') ||
+      s.includes('secretar') ||
+      s.includes('financeir') ||
+      s.includes('direc');
     if (!ehGestao) return false;
     if (!buscaAuxiliar.trim()) return true;
     const t = buscaAuxiliar.toLowerCase();
@@ -385,22 +501,73 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
           </div>
         </div>
 
-        {/* Corpo: Formulário na Esquerda + Usuários Cadastrados / Testes na Direita */}
+        {/* Corpo: Formulário na Esquerda + Usuários Cadastrados na Direita */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
           {/* Formulário (7 Colunas) */}
           <div className="lg:col-span-7 space-y-4">
+            {/* Alternador Entrar vs Cadastrar-se na aba Responsável */}
+            {categoria === 'RESPONSAVEL' && (
+              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-purple-50/80 border border-purple-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModoResponsavel('ENTRAR');
+                    setErroLogin('');
+                    setMensagemSucesso('');
+                  }}
+                  className={`py-2 px-3 rounded-lg text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    modoResponsavel === 'ENTRAR'
+                      ? 'bg-purple-700 text-white shadow-xs'
+                      : 'text-purple-900 hover:bg-purple-100'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Já tenho cadastro (Entrar)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModoResponsavel('CADASTRAR');
+                    setErroLogin('');
+                    setMensagemSucesso('');
+                  }}
+                  className={`py-2 px-3 rounded-lg text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    modoResponsavel === 'CADASTRAR'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-purple-900 hover:bg-purple-100'
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Cadastrar-se (Pré-Cadastro)</span>
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div>
                 <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-blue-900" />
-                  <span>
-                    {categoria === 'RESPONSAVEL' && 'Entrar como Responsável Legal'}
-                    {categoria === 'PROFESSOR' && 'Entrar como Professor / Docente'}
-                    {categoria === 'COLABORADOR' && 'Entrar como Colaborador (Secretaria / Adm)'}
-                  </span>
+                  {categoria === 'RESPONSAVEL' && modoResponsavel === 'CADASTRAR' ? (
+                    <>
+                      <UserPlus className="w-4 h-4 text-emerald-700" />
+                      <span>Pré-Cadastro de Responsável e Solicitação de Matrícula</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 text-blue-900" />
+                      <span>
+                        {categoria === 'RESPONSAVEL' && 'Entrar como Responsável Legal'}
+                        {categoria === 'PROFESSOR' && 'Entrar como Professor / Docente'}
+                        {categoria === 'COLABORADOR' && 'Entrar como Colaborador (Secretaria / Adm)'}
+                      </span>
+                    </>
+                  )}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {categoria === 'RESPONSAVEL' &&
+                    modoResponsavel === 'CADASTRAR' &&
+                    'Cadastre seus dados, registre seu filho(a) e solicite a matrícula para confirmação da Secretaria.'}
+                  {categoria === 'RESPONSAVEL' &&
+                    modoResponsavel === 'ENTRAR' &&
                     'Informe o seu CPF cadastrado na matrícula dos seus filhos.'}
                   {categoria === 'PROFESSOR' &&
                     'Informe o seu CPF cadastrado no corpo docente pedagógico.'}
@@ -409,9 +576,11 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                 </p>
               </div>
 
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                Senha padrão: {SENHA_PADRAO_DICA}
-              </span>
+              {modoResponsavel === 'ENTRAR' && (
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                  Senha padrão: {SENHA_PADRAO_DICA}
+                </span>
+              )}
             </div>
 
             {erroLogin && (
@@ -428,93 +597,337 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
               </div>
             )}
 
-            <form onSubmit={handleEntrar} className="space-y-4">
-              {/* Campo de Identificador (CPF) */}
-              <div>
-                <label
-                  htmlFor="campo-identificador"
-                  className="block text-xs font-bold text-slate-700 mb-1"
+            {/* MODO PRÉ-CADASTRO (RESPONSÁVEL + ALUNO + SOLICITAÇÃO DE MATRÍCULA) */}
+            {categoria === 'RESPONSAVEL' && modoResponsavel === 'CADASTRAR' ? (
+              <form onSubmit={handlePreCadastro} className="space-y-4">
+                {/* Bloco 1: Dados do Responsável */}
+                <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200 space-y-3">
+                  <h3 className="text-xs font-extrabold text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-purple-700" />
+                    1. Seus Dados (Responsável Legal)
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Seu Nome Completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={cadNomeResp}
+                        onChange={(e) => setCadNomeResp(e.target.value)}
+                        placeholder="Ex: Maria Aparecida Silva"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Seu CPF (11 dígitos) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={cadCpfResp}
+                        onChange={(e) => setCadCpfResp(e.target.value)}
+                        placeholder="000.000.000-00"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Crie sua Senha de Acesso *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        minLength={4}
+                        value={cadSenhaResp}
+                        onChange={(e) => setCadSenhaResp(e.target.value)}
+                        placeholder="Mínimo 4 caracteres"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Telefone / WhatsApp (com DDD) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={cadTelefoneResp}
+                        onChange={(e) => setCadTelefoneResp(e.target.value)}
+                        placeholder="(11) 99999-9999"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Parentesco *
+                      </label>
+                      <select
+                        value={cadParentescoResp}
+                        onChange={(e) => setCadParentescoResp(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      >
+                        {PARENTESCOS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        E-mail (Opcional)
+                      </label>
+                      <input
+                        type="email"
+                        value={cadEmailResp}
+                        onChange={(e) => setCadEmailResp(e.target.value)}
+                        placeholder="seuemail@exemplo.com"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Endereço Residencial (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cadEnderecoResp}
+                        onChange={(e) => setCadEnderecoResp(e.target.value)}
+                        placeholder="Rua, número, bairro"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bloco 2: Dados do Filho(a) */}
+                <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-200 space-y-3">
+                  <h3 className="text-xs font-extrabold text-blue-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <Baby className="w-4 h-4 text-blue-700" />
+                    2. Dados do Seu Filho(a) (Aluno)
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Nome Completo do Filho(a) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={cadNomeAluno}
+                        onChange={(e) => setCadNomeAluno(e.target.value)}
+                        placeholder="Ex: Lucas Silva"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Data de Nascimento *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={cadDataNascAluno}
+                        onChange={(e) => setCadDataNascAluno(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Gênero
+                      </label>
+                      <select
+                        value={cadGeneroAluno}
+                        onChange={(e) => setCadGeneroAluno(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      >
+                        {GENEROS.map((g) => (
+                          <option key={g} value={g}>
+                            {g}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Nº Certidão de Nascimento (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cadCertidaoAluno}
+                        onChange={(e) => setCadCertidaoAluno(e.target.value)}
+                        placeholder="Matrícula da certidão"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Observações Médicas / Alergias (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cadObsMedicasAluno}
+                        onChange={(e) => setCadObsMedicasAluno(e.target.value)}
+                        placeholder="Ex: Alergia a lactose, etc."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bloco 3: Solicitação de Matrícula (Turma Desejada) */}
+                <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
+                  <h3 className="text-xs font-extrabold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-emerald-700" />
+                    3. Solicitação de Matrícula (Escolha a Turma)
+                  </h3>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Série / Turma Desejada *
+                    </label>
+                    <select
+                      required
+                      value={cadTurmaId}
+                      onChange={(e) => setCadTurmaId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    >
+                      <option value="">Selecione uma turma...</option>
+                      {turmas.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          Ano {t.anoLetivo} · {t.nome} ({t.serie} - {t.turno}) — {t.vagasRestantes} vaga(s)
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-emerald-800 mt-1">
+                      Sua solicitação ficará visível para a Secretaria confirmar e efetivar a matrícula.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={autenticando}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  {categoria === 'RESPONSAVEL' && 'CPF do Responsável (11 dígitos) *'}
-                  {categoria === 'PROFESSOR' && 'CPF do Professor (11 dígitos) *'}
-                  {categoria === 'COLABORADOR' && 'CPF do Colaborador (11 dígitos) *'}
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="campo-identificador"
-                    type="text"
-                    required
-                    value={identificador}
-                    onChange={(e) => setIdentificador(e.target.value)}
-                    placeholder="Digite seu CPF (apenas números ou formatado)"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-medium"
-                  />
-                </div>
-              </div>
-
-              {/* Campo de Senha */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
+                  {autenticando ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Enviando Pré-Cadastro e Solicitação...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Concluir Cadastro e Solicitar Matrícula</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* MODO LOGIN PADRÃO */
+              <form onSubmit={handleEntrar} className="space-y-4">
+                {/* Campo de Identificador (CPF) */}
+                <div>
                   <label
-                    htmlFor="campo-senha"
-                    className="block text-xs font-bold text-slate-700"
+                    htmlFor="campo-identificador"
+                    className="block text-xs font-bold text-slate-700 mb-1"
                   >
-                    Senha de Acesso *
+                    {categoria === 'RESPONSAVEL' && 'CPF do Responsável (11 dígitos) *'}
+                    {categoria === 'PROFESSOR' && 'CPF do Professor (11 dígitos) *'}
+                    {categoria === 'COLABORADOR' && 'CPF do Colaborador (11 dígitos) *'}
                   </label>
-                  <span className="text-[11px] text-slate-500">
-                    Padrão: <strong className="font-mono text-slate-800">{SENHA_PADRAO_DICA}</strong>
-                  </span>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="campo-identificador"
+                      type="text"
+                      required
+                      value={identificador}
+                      onChange={(e) => setIdentificador(e.target.value)}
+                      placeholder="Digite seu CPF (apenas números ou formatado)"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-medium"
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="campo-senha"
-                    type={mostrarSenha ? 'text' : 'password'}
-                    required
-                    value={senha}
-                    onChange={(e) => setSenha(e.target.value)}
-                    placeholder="Digite sua senha de acesso"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-medium"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMostrarSenha(!mostrarSenha)}
-                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Exibir senha'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    {mostrarSenha ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
 
-              {/* Botão Entrar */}
-              <button
-                type="submit"
-                disabled={autenticando || !identificador.trim()}
-                className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 text-white transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {autenticando ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Validando no Servidor...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Entrar no Sistema</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
+                {/* Campo de Senha */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label
+                      htmlFor="campo-senha"
+                      className="block text-xs font-bold text-slate-700"
+                    >
+                      Senha de Acesso *
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      Padrão: <strong className="font-mono text-slate-800">{SENHA_PADRAO_DICA}</strong>
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="campo-senha"
+                      type={mostrarSenha ? 'text' : 'password'}
+                      required
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      placeholder="Digite sua senha de acesso"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMostrarSenha(!mostrarSenha)}
+                      aria-label={mostrarSenha ? 'Ocultar senha' : 'Exibir senha'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {mostrarSenha ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Botão Entrar */}
+                <button
+                  type="submit"
+                  disabled={autenticando || !identificador.trim()}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 text-white transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {autenticando ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Validando no Servidor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Entrar no Sistema</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Coluna Direita (5 Colunas): Guia de Apoio com Lista de Cadastrados */}
-          <div className="lg:col-span-5 bg-slate-50/80 rounded-xl border border-slate-200 p-4 space-y-3 flex flex-col h-full max-h-[520px]">
+          <div className="lg:col-span-5 bg-slate-50/80 rounded-xl border border-slate-200 p-4 space-y-3 flex flex-col h-full max-h-[580px]">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2 shrink-0">
               <span className="text-xs font-bold text-slate-700">
                 {categoria === 'RESPONSAVEL' && 'Responsáveis Cadastrados:'}
@@ -621,50 +1034,50 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                   })
                 )
               ) : (
-                  /* COLABORADOR (Secretaria / Administração) */
-                  <div className="space-y-2">
-                    {colaboradoresGestaoFiltrados.length === 0 ? (
-                      <div className="p-3 text-center text-xs text-slate-400">
-                        Nenhum colaborador com setor Secretaria ou Administração cadastrado.
-                      </div>
-                    ) : (
-                      colaboradoresGestaoFiltrados.map((c) => {
-                        const selecionado = identificador === c.cpf;
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => preencherCredencialRapida(c.cpf, 'COLABORADOR')}
-                            className={`w-full text-left p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
-                              selecionado
-                                ? 'border-blue-600 bg-blue-50 text-blue-950'
-                                : 'border-slate-200 bg-white hover:border-blue-300'
-                            }`}
-                          >
-                            <div className="min-w-0">
-                              <p className="font-bold text-xs truncate text-slate-900">
-                                {c.nome}
-                              </p>
-                              <p className="text-[11px] font-mono text-slate-600">
-                                CPF: {c.cpfFormatado || c.cpf}
-                              </p>
-                              <p className="text-[10px] text-blue-800 font-semibold truncate">
-                                {c.cargo} · Setor: <strong>{c.setor}</strong>
-                              </p>
-                            </div>
-                            {selecionado && (
-                              <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
+                /* COLABORADOR (Secretaria / Administração) */
+                <div className="space-y-2">
+                  {colaboradoresGestaoFiltrados.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-slate-400">
+                      Nenhum colaborador com setor Secretaria ou Administração cadastrado.
+                    </div>
+                  ) : (
+                    colaboradoresGestaoFiltrados.map((c) => {
+                      const selecionado = identificador === c.cpf;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => preencherCredencialRapida(c.cpf, 'COLABORADOR')}
+                          className={`w-full text-left p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
+                            selecionado
+                              ? 'border-blue-600 bg-blue-50 text-blue-950'
+                              : 'border-slate-200 bg-white hover:border-blue-300'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs truncate text-slate-900">
+                              {c.nome}
+                            </p>
+                            <p className="text-[11px] font-mono text-slate-600">
+                              CPF: {c.cpfFormatado || c.cpf}
+                            </p>
+                            <p className="text-[10px] text-blue-800 font-semibold truncate">
+                              {c.cargo} · Setor: <strong>{c.setor}</strong>
+                            </p>
+                          </div>
+                          {selecionado && (
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
   );
 }
