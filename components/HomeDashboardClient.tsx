@@ -71,151 +71,16 @@ export function HomeDashboardClient({
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
-      {/* Hero Executivo — Adaptado ao Perfil Logado */}
-      <section className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white rounded-2xl p-6 sm:p-8 shadow-lg border border-blue-800 relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-xs font-bold text-emerald-300 uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>
-                {metaPerfil.rotulo} · {sessao.nome}
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {ehResponsavel
-                ? 'Portal da Família e Acompanhamento Escolar'
-                : ehProfessor
-                ? 'Portal do Professor e Agenda Pedagógica'
-                : 'Central da Secretaria, Pedagógico e Financeiro'}
-            </h2>
-            <p className="text-blue-100 text-sm sm:text-base leading-relaxed">
-              {ehResponsavel
-                ? 'Consulte comunicados oficiais da escola, calendário de eventos, listas de materiais, relação de livros, situação de matrícula, mensalidades, solicite fardas e assine autorizações digitais dos seus filhos.'
-                : ehProfessor
-                ? 'Consulte suas turmas, alunos matriculados, listas de materiais, relação de livros, mural de comunicados e agende eventos no calendário escolar.'
-                : 'Gerencie matrículas, turmas do Maternal 1 ao 5º ano, documentação, carnês de mensalidades, materiais, livros, fardas e calendário escolar em um só lugar.'}
-            </p>
-          </div>
-
-          {/* Atalhos Rápidos Personalizados por Perfil */}
-          <div className="flex flex-wrap sm:flex-nowrap lg:flex-col gap-2.5 shrink-0">
-            {ehGestao && (
-              <>
-                <Link
-                  href="/matriculas"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4" />
-                    Nova Matrícula / Rematrícula
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/alunos"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <UserCheck className="w-4 h-4 text-emerald-300" />
-                    Cadastrar Novo Aluno
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-emerald-300" />
-                </Link>
-              </>
-            )}
-
-            {ehResponsavel && (
-              <>
-                <Link
-                  href="/matriculas"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4" />
-                    Solicitar Nova Matrícula (Outro Filho)
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/alunos"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <UserCheck className="w-4 h-4 text-emerald-300" />
-                    Meu Perfil, Meus Filhos & 2º Responsável
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-emerald-300" />
-                </Link>
-              </>
-            )}
-
-            {ehProfessor && (
-              <>
-                <Link
-                  href="/calendario"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Agendar Evento no Calendário
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/turmas"
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-300" />
-                    Consultar Turmas ({turmaCount})
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-emerald-300" />
-                </Link>
-              </>
-            )}
-
-            <Link
-              href="/login"
-              className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition"
-            >
-              <span className="flex items-center gap-2">
-                <LogIn className="w-4 h-4 text-emerald-300" />
-                Trocar Usuário / Perfil
-              </span>
-              <ArrowRight className="w-4 h-4 text-emerald-300" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-5 border-t border-white/15 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="flex items-center gap-2.5">
-            <Server className="w-5 h-5 text-emerald-300" />
-            <div>
-              <p className="text-[11px] text-blue-200">Servidor & API</p>
-              <p className="text-xs sm:text-sm font-bold text-white">Next.js 15 Online</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Database className="w-5 h-5 text-emerald-300" />
-            <div>
-              <p className="text-[11px] text-blue-200">Banco de Dados</p>
-              <p className="text-xs sm:text-sm font-bold text-white">{dbStatus}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Megaphone className="w-5 h-5 text-emerald-300" />
-            <div>
-              <p className="text-[11px] text-blue-200">Mural Escolar</p>
-              <p className="text-xs sm:text-sm font-bold text-white">{comunicadoCount} Comunicados</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <School className="w-5 h-5 text-emerald-300" />
-            <div>
-              <p className="text-[11px] text-blue-200">Séries Atendidas</p>
-              <p className="text-xs sm:text-sm font-bold text-white">Maternal 1 ao 5º Ano</p>
-            </div>
-          </div>
+      {/* Cabeçalho Minimalista de Boas-Vindas */}
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            {metaPerfil.rotulo}
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-0.5">
+            Olá, {sessao.nome}!
+          </h2>
         </div>
       </section>
 

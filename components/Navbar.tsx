@@ -180,8 +180,6 @@ export function Navbar() {
   const { sessao, encerrarSessao } = useSessao();
   const [menuAberto, setMenuAberto] = useState(false);
   const [buscaMenu, setBuscaMenu] = useState('');
-  const [menuCadastroTopoAberto, setMenuCadastroTopoAberto] = useState(false);
-  const [submenuCadastroAberto, setSubmenuCadastroAberto] = useState(true);
 
   const itemAtual =
     NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
@@ -190,10 +188,9 @@ export function Navbar() {
     sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
   const exibirMenuLateral = Boolean(sessao.autenticado) && pathname !== '/login';
 
-  // Fecha o menu lateral e dropdown automaticamente ao navegar de página
+  // Fecha o menu lateral automaticamente ao navegar de página
   useEffect(() => {
     setMenuAberto(false);
-    setMenuCadastroTopoAberto(false);
     setBuscaMenu('');
   }, [pathname]);
 
@@ -202,7 +199,6 @@ export function Navbar() {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setMenuAberto(false);
-        setMenuCadastroTopoAberto(false);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
@@ -211,10 +207,6 @@ export function Navbar() {
 
   const itensPermitidos = NAV_ITEMS.filter((item) =>
     item.perfisPermitidos.includes(sessao.perfil)
-  );
-
-  const itensCadastroPermitidos = itensPermitidos.filter(
-    (item) => item.category === 'Cadastro'
   );
 
   const itensFiltrados = itensPermitidos.filter((item) => {
@@ -232,8 +224,8 @@ export function Navbar() {
       {/* Barra Superior — Identidade Azul Royal & Esmeralda Educacional */}
       <header className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-white border-b-2 border-emerald-500/70 sticky top-0 z-30 shadow-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Esquerda: Botão do Menu Lateral (☰ apenas quando logado fora da tela de login) + Identidade da Escola + Menu Cadastro */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Esquerda: Botão do Menu Lateral (☰ apenas quando logado fora da tela de login) + Identidade da Escola */}
+          <div className="flex items-center gap-3">
             {exibirMenuLateral && (
               <button
                 type="button"
@@ -265,93 +257,6 @@ export function Navbar() {
                 </p>
               </div>
             </Link>
-
-            {/* Menu Dropdown "Cadastro" na Barra Superior */}
-            {exibirMenuLateral && itensCadastroPermitidos.length > 0 && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenuCadastroTopoAberto((prev) => !prev)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition border cursor-pointer ${
-                    itemAtual.category === 'Cadastro' || menuCadastroTopoAberto
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
-                      : 'bg-blue-950/70 hover:bg-blue-950 text-white border-blue-700 hover:border-emerald-400'
-                  }`}
-                  title="Abrir menu de Cadastro (Alunos, Equipe e Professores, Responsáveis)"
-                >
-                  <UserPlus className="w-4 h-4 shrink-0" />
-                  <span>Cadastro</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform ${
-                      menuCadastroTopoAberto ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {menuCadastroTopoAberto && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setMenuCadastroTopoAberto(false)}
-                      aria-hidden="true"
-                    />
-                    <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-white text-slate-800 shadow-2xl border border-slate-200 p-2 z-50 space-y-1">
-                      <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-900">
-                          Menu de Cadastro
-                        </span>
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          {itensCadastroPermitidos.length}{' '}
-                          {itensCadastroPermitidos.length === 1 ? 'opção' : 'opções'}
-                        </span>
-                      </div>
-                      {itensCadastroPermitidos.map((item) => {
-                        const Icon = item.icon;
-                        const ativo = pathname === item.href;
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setMenuCadastroTopoAberto(false)}
-                            className={`flex items-start gap-3 p-2.5 rounded-xl transition ${
-                              ativo
-                                ? 'bg-blue-900 text-white'
-                                : 'hover:bg-blue-50 text-slate-700'
-                            }`}
-                          >
-                            <div
-                              className={`p-2 rounded-lg shrink-0 ${
-                                ativo
-                                  ? 'bg-emerald-500 text-slate-950'
-                                  : 'bg-slate-100 text-blue-900'
-                              }`}
-                            >
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className={`text-xs font-bold ${
-                                  ativo ? 'text-white' : 'text-slate-900'
-                                }`}
-                              >
-                                {item.label}
-                              </p>
-                              <p
-                                className={`text-[11px] leading-snug line-clamp-1 ${
-                                  ativo ? 'text-blue-100' : 'text-slate-500'
-                                }`}
-                              >
-                                {item.description}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Centro: Indicador Contextual (Exibido apenas para usuário autenticado) */}
@@ -508,110 +413,74 @@ export function Navbar() {
                 );
                 if (itensDaCategoria.length === 0) return null;
 
-                const ehMenuCadastro = categoria === 'Cadastro';
-                const exibirItens =
-                  !ehMenuCadastro || submenuCadastroAberto || Boolean(buscaMenu.trim());
-
                 return (
-                  <div
-                    key={categoria}
-                    className={
-                      ehMenuCadastro
-                        ? 'rounded-2xl border border-blue-200 bg-blue-50/40 p-2.5 space-y-2'
-                        : 'space-y-1.5'
-                    }
-                  >
-                    {ehMenuCadastro ? (
-                      <button
-                        type="button"
-                        onClick={() => setSubmenuCadastroAberto((prev) => !prev)}
-                        className="w-full px-2.5 py-2 rounded-xl bg-blue-900 text-white flex items-center justify-between cursor-pointer hover:bg-blue-950 transition shadow-xs"
-                      >
-                        <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider">
-                          <UserPlus className="w-4 h-4 text-emerald-400" />
-                          <span>Cadastro</span>
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950">
-                            {itensDaCategoria.length}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-emerald-300 transition-transform ${
-                              exibirItens ? 'rotate-180' : ''
+                  <div key={categoria} className="space-y-1.5">
+                    <h3 className="px-2.5 text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 flex items-center justify-between">
+                      <span>{categoria}</span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        {itensDaCategoria.length}
+                      </span>
+                    </h3>
+
+                    <div className="space-y-1">
+                      {itensDaCategoria.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname === item.href;
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMenuAberto(false)}
+                            className={`flex items-start gap-3 p-2.5 rounded-xl transition group border ${
+                              isActive
+                                ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
+                                : 'bg-white hover:bg-blue-50/70 text-slate-700 border-transparent hover:border-blue-200'
                             }`}
-                          />
-                        </span>
-                      </button>
-                    ) : (
-                      <h3 className="px-2.5 text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 flex items-center justify-between">
-                        <span>{categoria}</span>
-                        <span className="text-[10px] font-semibold text-slate-400">
-                          {itensDaCategoria.length}
-                        </span>
-                      </h3>
-                    )}
-
-                    {exibirItens && (
-                      <div className="space-y-1">
-                        {itensDaCategoria.map((item) => {
-                          const Icon = item.icon;
-                          const isActive = pathname === item.href;
-
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setMenuAberto(false)}
-                              className={`flex items-start gap-3 p-2.5 rounded-xl transition group border ${
+                          >
+                            <div
+                              className={`p-2 rounded-lg shrink-0 mt-0.5 transition ${
                                 isActive
-                                  ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
-                                  : 'bg-white hover:bg-blue-50/70 text-slate-700 border-transparent hover:border-blue-200'
+                                  ? 'bg-emerald-500 text-slate-950'
+                                  : 'bg-slate-100 text-blue-900 group-hover:bg-blue-100'
                               }`}
                             >
-                              <div
-                                className={`p-2 rounded-lg shrink-0 mt-0.5 transition ${
-                                  isActive
-                                    ? 'bg-emerald-500 text-slate-950'
-                                    : 'bg-slate-100 text-blue-900 group-hover:bg-blue-100'
-                                }`}
-                              >
-                                <Icon className="w-4 h-4" />
-                              </div>
+                              <Icon className="w-4 h-4" />
+                            </div>
 
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span
-                                    className={`text-xs font-bold truncate ${
-                                      isActive
-                                        ? 'text-white'
-                                        : 'text-slate-800 group-hover:text-blue-900'
-                                    }`}
-                                  >
-                                    {item.label}
-                                  </span>
-                                  {isActive ? (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950">
-                                      Atual
-                                    </span>
-                                  ) : item.tag ? (
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                      {item.tag}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p
-                                  className={`text-[11px] leading-snug mt-0.5 line-clamp-1 ${
-                                    isActive ? 'text-blue-100' : 'text-slate-500'
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span
+                                  className={`text-xs font-bold truncate ${
+                                    isActive
+                                      ? 'text-white'
+                                      : 'text-slate-800 group-hover:text-blue-900'
                                   }`}
                                 >
-                                  {item.description}
-                                </p>
+                                  {item.label}
+                                </span>
+                                {isActive ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950">
+                                    Atual
+                                  </span>
+                                ) : item.tag ? (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    {item.tag}
+                                  </span>
+                                ) : null}
                               </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
+                              <p
+                                className={`text-[11px] leading-snug mt-0.5 line-clamp-1 ${
+                                  isActive ? 'text-blue-100' : 'text-slate-500'
+                                }`}
+                              >
+                                {item.description}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
