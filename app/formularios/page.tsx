@@ -178,7 +178,7 @@ export default function FormulariosPage() {
         setErro(data.erro || 'Erro ao disponibilizar modelo de formulário.');
       } else {
         setSucesso(
-          `Modelo "${data.titulo}" disponibilizado com sucesso para preenchimento dos responsáveis (RF-08)!`
+          `Modelo "${data.titulo}" disponibilizado com sucesso para preenchimento dos responsáveis!`
         );
         setTitulo('');
         setDescricao('');
@@ -284,24 +284,17 @@ export default function FormulariosPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">
-                Fase 2 · Item 2.9
-              </span>
-              <span className="text-xs text-slate-500">RF-08 · RF-09 · RF-17 · RN-07</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <FileSignature className="w-6 h-6 text-rose-600" />
               Formulários, Contratos e Autorizações Digitais
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Criação de modelos pela secretaria (RF-08) e preenchimento/assinatura digital pelos responsáveis (RF-09).
+              Criação de modelos pela secretaria e preenchimento/assinatura digital pelos responsáveis.
             </p>
           </div>
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RN-07 / RF-08"
             descricaoAcao="criar novos modelos de formulários (responsáveis podem assinar abaixo)"
           />
         </div>
@@ -314,7 +307,7 @@ export default function FormulariosPage() {
               <FileText className="w-4 h-4 text-slate-400" />
             </div>
             <p className="text-2xl font-extrabold text-slate-800 mt-1">{resumo.totalModelos}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Disponibilizados (RF-08)</p>
+            <p className="text-xs text-slate-400 mt-0.5">Disponibilizados</p>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-xs">
@@ -323,7 +316,7 @@ export default function FormulariosPage() {
               <FileSignature className="w-4 h-4 text-rose-600" />
             </div>
             <p className="text-2xl font-extrabold text-rose-700 mt-1">{resumo.totalRespostas}</p>
-            <p className="text-xs text-rose-600 mt-0.5">Enviadas pelas famílias (RF-09)</p>
+            <p className="text-xs text-rose-600 mt-0.5">Enviadas pelas famílias</p>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-xs">
@@ -345,7 +338,7 @@ export default function FormulariosPage() {
             <p className="text-2xl font-extrabold text-indigo-700 mt-1">
               {resumo.totalContratosAssinados}
             </p>
-            <p className="text-xs text-indigo-600 mt-0.5">Aceites de contrato (RF-17)</p>
+            <p className="text-xs text-indigo-600 mt-0.5">Aceites de contrato</p>
           </div>
         </section>
 
@@ -362,17 +355,17 @@ export default function FormulariosPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Coluna Esquerda: Criar Modelo (RF-08) + Responder Autorização (RF-09) */}
+          {/* Coluna Esquerda: Criar Modelo + Responder Autorização */}
           {(podeCriarModelo || podeResponder) && (
           <div className="space-y-6">
-            {/* 1. Criar Modelo (RF-08 — Oculto para Responsável) */}
+            {/* 1. Criar Modelo (Oculto para Responsável) */}
             {podeCriarModelo && (
             <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <PlusCircle className="w-5 h-5 text-rose-600" />
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm">
-                    1. Novo Modelo de Autorização (RF-08)
+                    1. Novo Modelo de Autorização
                   </h3>
                   <p className="text-xs text-slate-500">Secretaria disponibiliza para os pais</p>
                 </div>
@@ -405,7 +398,7 @@ export default function FormulariosPage() {
                     <option value="AUTORIZACAO">Autorização Geral / Uso de Imagem</option>
                     <option value="PASSEIO_EVENTO">Autorização de Passeio / Excursão</option>
                     <option value="SAUDE_ALIMENTACAO">Ficha de Saúde / Restrição Alimentar</option>
-                    <option value="CONTRATO_MATRICULA">Contrato de Prestação de Serviços (RF-17)</option>
+                    <option value="CONTRATO_MATRICULA">Contrato de Prestação de Serviços</option>
                   </select>
                 </div>
 
@@ -441,20 +434,20 @@ export default function FormulariosPage() {
                   disabled={criandoModelo}
                   className="w-full py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold text-xs transition"
                 >
-                  {criandoModelo ? 'Disponibilizando...' : 'Disponibilizar Modelo (RF-08)'}
+                  {criandoModelo ? 'Disponibilizando...' : 'Disponibilizar Modelo'}
                 </button>
               </form>
             </section>
             )}
 
-            {/* 2. Preencher e Assinar Autorização (RF-09) */}
+            {/* 2. Preencher e Assinar Autorização */}
             {podeResponder && (
             <section className="bg-white p-5 rounded-xl border border-rose-200 shadow-xs space-y-3">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <Send className="w-5 h-5 text-rose-600" />
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm">
-                    2. Preencher / Assinar Formulário (RF-09)
+                    2. Preencher / Assinar Formulário
                   </h3>
                   <p className="text-xs text-slate-500">Responsável envia confirmação digital</p>
                 </div>
@@ -547,7 +540,7 @@ export default function FormulariosPage() {
                   disabled={enviandoResposta}
                   className="w-full py-2 px-4 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-xs"
                 >
-                  {enviandoResposta ? 'Enviando...' : 'Assinar e Enviar Confirmação (RF-09)'}
+                  {enviandoResposta ? 'Enviando...' : 'Assinar e Enviar Confirmação'}
                 </button>
               </form>
             </section>
@@ -564,7 +557,7 @@ export default function FormulariosPage() {
             {/* Lista de Modelos Disponíveis */}
             <div className="space-y-2.5">
               <h3 className="font-bold text-slate-800 text-sm">
-                Modelos Disponibilizados aos Responsáveis (RF-08)
+                Modelos Disponibilizados aos Responsáveis
               </h3>
               {formularios.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">
@@ -611,7 +604,7 @@ export default function FormulariosPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm">
-                    Confirmações e Assinaturas Recebidas pela Secretaria (RF-09)
+                    Confirmações e Assinaturas Recebidas pela Secretaria
                   </h3>
                   <p className="text-xs text-slate-500">
                     Registro auditável de autorizações e contratos aceitos pelas famílias

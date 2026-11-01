@@ -230,16 +230,10 @@ export default function LivrosPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Cabeçalho e Seletor de Perfil (RN-07) */}
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800">
-                Fase 2 · Item 2.7
-              </span>
-              <span className="text-xs text-slate-500">RF-12 · RN-04 · RN-07</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Library className="w-6 h-6 text-teal-600" />
               Relação de Livros Adotados e Fornecidos pela Escola
             </h2>
@@ -250,7 +244,6 @@ export default function LivrosPage() {
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RN-07 / RF-12"
             descricaoAcao="cadastrar ou editar o catálogo de livros escolares"
           />
         </div>
@@ -316,7 +309,7 @@ export default function LivrosPage() {
               <PlusCircle className="w-5 h-5 text-teal-600" />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Cadastrar Livro na Relação</h3>
-                <p className="text-xs text-slate-500">Adotado ou fornecido pela escola (RF-12)</p>
+                <p className="text-xs text-slate-500">Adotado ou fornecido pela escola</p>
               </div>
             </div>
 
@@ -324,7 +317,7 @@ export default function LivrosPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Série (RN-04) *
+                    Série *
                   </label>
                   <select
                     value={serie}
@@ -485,7 +478,7 @@ export default function LivrosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
-                  Consulta da Relação de Livros Adotados e Fornecidos (RF-12)
+                  Consulta da Relação de Livros Adotados e Fornecidos
                 </h3>
                 <p className="text-xs text-slate-500">
                   Filtre por turma, série ou modalidade de fornecimento

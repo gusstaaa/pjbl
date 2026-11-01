@@ -46,28 +46,28 @@ export const PERFIS_META: Record<
     cargoPadrao: 'Operador(a) da Secretaria',
     corBadge: 'bg-blue-100 text-blue-900 border-blue-300',
     resumoPermissoes:
-      'Cadastros, matrículas, rematrículas, documentos, turmas, materiais, livros, fardas, formulários e comunicados (RN-07).',
+      'Cadastros, matrículas, rematrículas, documentos, turmas, materiais, livros, fardas, formulários e comunicados.',
   },
   ADMINISTRACAO: {
     rotulo: 'Administração / Direção',
     cargoPadrao: 'Direção & Financeiro',
     corBadge: 'bg-emerald-100 text-emerald-900 border-emerald-300',
     resumoPermissoes:
-      'Acesso total executivo, cadastros (RN-07), lançamento e baixa de mensalidades (RN-08), comunicados e calendário.',
+      'Acesso total executivo, cadastros, lançamento e baixa de mensalidades, comunicados e calendário.',
   },
   PROFESSOR: {
     rotulo: 'Professor(a) / Docente',
     cargoPadrao: 'Corpo Docente',
     corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
     resumoPermissoes:
-      'Consulta de turmas, alunos, materiais, livros e comunicados, e agendamento de eventos no calendário escolar (RF-19).',
+      'Consulta de turmas, alunos, materiais, livros e comunicados, e agendamento de eventos no calendário escolar.',
   },
   RESPONSAVEL: {
     rotulo: 'Responsável Legal',
     cargoPadrao: 'Mãe / Pai / Tutor',
     corBadge: 'bg-purple-100 text-purple-900 border-purple-300',
     resumoPermissoes:
-      'Consulta da situação dos filhos vinculados, mural de comunicados, materiais, livros, calendário, pedido de fardas (RF-10) e assinatura de autorizações (RF-09).',
+      'Consulta da situação dos filhos vinculados, mural de comunicados, materiais, livros, calendário, pedido de fardas e assinatura de autorizações.',
   },
 };
 

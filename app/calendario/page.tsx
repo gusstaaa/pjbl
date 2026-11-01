@@ -220,13 +220,7 @@ export default function CalendarioPage() {
               <Calendar className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Item 2.10 · RF-19
-                </span>
-                <span className="text-xs text-slate-500">Maternal 1 ao 5º Ano</span>
-              </div>
-              <h1 className="text-2xl font-extrabold text-slate-800 mt-1">
+              <h1 className="text-2xl font-extrabold text-slate-800">
                 Calendário de Eventos Escolares
               </h1>
               <p className="text-sm text-slate-500 mt-0.5">
@@ -263,7 +257,7 @@ export default function CalendarioPage() {
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna Esquerda: Cadastro de Evento (RF-19 — Oculto para Responsável) */}
+          {/* Coluna Esquerda: Cadastro de Evento (Oculto para Responsável) */}
           {podeAgendar && (
           <div className="lg:col-span-1">
             <form
@@ -275,9 +269,6 @@ export default function CalendarioPage() {
                   <Plus className="w-5 h-5 text-amber-600" />
                   <h2 className="font-bold text-slate-800">Agendar Novo Evento</h2>
                 </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                  RF-19
-                </span>
               </div>
 
               {erro && (
@@ -296,7 +287,6 @@ export default function CalendarioPage() {
 
               <BannerOperadorLogado
                 perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR']}
-                regraCodigo="RF-19"
                 descricaoAcao="agendar eventos no calendário escolar"
               />
 

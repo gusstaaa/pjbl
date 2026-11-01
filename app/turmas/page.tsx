@@ -275,13 +275,7 @@ export default function TurmasPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                Item 1.1 do Roadmap
-              </span>
-              <span className="text-xs text-slate-500">RF-18 · RN-04</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Gestão de Séries e Turmas</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Gestão de Séries e Turmas</h1>
             <p className="text-sm text-slate-500">
               Cadastre e acompanhe as turmas da Educação Infantil e Fundamental I (Maternal 1 ao 5º ano).
             </p>
@@ -584,7 +578,7 @@ export default function TurmasPage() {
                 {/* Série */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Série Escolar (RN-04) *
+                    Série Escolar *
                   </label>
                   <select
                     value={serie}

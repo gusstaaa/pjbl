@@ -279,16 +279,10 @@ export default function MateriaisPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Cabeçalho e Seletor de Perfil (RN-07) */}
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
-                Fase 2 · Item 2.6
-              </span>
-              <span className="text-xs text-slate-500">RF-11 · RN-04 · RN-07</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Package className="w-6 h-6 text-indigo-600" />
               Listas de Materiais Escolares por Turma e Série
             </h2>
@@ -299,7 +293,6 @@ export default function MateriaisPage() {
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RN-07 / RF-11"
             descricaoAcao="adicionar ou editar itens na lista de materiais"
           />
         </div>
@@ -367,14 +360,14 @@ export default function MateriaisPage() {
               <PlusCircle className="w-5 h-5 text-indigo-600" />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Adicionar Material na Lista</h3>
-                <p className="text-xs text-slate-500">Por série ou turma específica (RF-11)</p>
+                <p className="text-xs text-slate-500">Por série ou turma específica</p>
               </div>
             </div>
 
             <form onSubmit={handleCadastrarMaterial} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Série Escolar (RN-04) *
+                  Série Escolar *
                 </label>
                 <select
                   value={serie}
@@ -526,7 +519,7 @@ export default function MateriaisPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
-                  Consulta da Lista de Materiais (RF-11)
+                  Consulta da Lista de Materiais
                 </h3>
                 <p className="text-xs text-indigo-700 font-medium mt-0.5">{contexto.descricao}</p>
               </div>
@@ -550,7 +543,7 @@ export default function MateriaisPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                  1. Consultar por Filho Matriculado (RF-11)
+                  1. Consultar por Filho Matriculado
                 </label>
                 <select
                   value={filtroAlunoId}

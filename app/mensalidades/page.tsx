@@ -318,16 +318,10 @@ export default function MensalidadesPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Cabeçalho e Seletor de Perfil Operador (RN-08) */}
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                Fase 2 · Item 2.3
-              </span>
-              <span className="text-xs text-slate-500">RF-15 · RF-16 · RN-06 · RN-08</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <DollarSign className="w-6 h-6 text-emerald-600" />
               {ehResponsavel
                 ? 'Mensalidades dos Meus Filhos'
@@ -335,14 +329,13 @@ export default function MensalidadesPage() {
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
               {ehResponsavel
-                ? 'Acompanhe exclusivamente as parcelas, vencimentos e comprovantes de baixa dos alunos vinculados ao seu cadastro (RN-06).'
+                ? 'Acompanhe exclusivamente as parcelas, vencimentos e comprovantes de baixa dos alunos vinculados ao seu cadastro.'
                 : 'Visão geral financeira da escola: lançamento de carnês anuais, baixa de pagamentos e controle de inadimplência.'}
             </p>
           </div>
 
           <BannerOperadorLogado
             perfisAutorizados={['ADMINISTRACAO']}
-            regraCodigo="RN-08"
             descricaoAcao="gerar carnês ou registrar baixa de pagamento de mensalidades"
           />
         </div>
@@ -412,7 +405,7 @@ export default function MensalidadesPage() {
               <PlusCircle className="w-5 h-5 text-emerald-600" />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Gerar Carnê de Mensalidades</h3>
-                <p className="text-xs text-slate-500">Lançamento anual ou parcial (RF-15)</p>
+                <p className="text-xs text-slate-500">Lançamento anual ou parcial</p>
               </div>
             </div>
 
@@ -526,8 +519,8 @@ export default function MensalidadesPage() {
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
                   {ehResponsavel
-                    ? 'Parcelas dos Meus Alunos Filiados (RN-06)'
-                    : 'Relação Geral de Mensalidades e Baixa Financeira (RF-16)'}
+                    ? 'Parcelas dos Meus Alunos Filiados'
+                    : 'Relação Geral de Mensalidades e Baixa Financeira'}
                 </h3>
                 <p className="text-xs text-slate-500">
                   {ehResponsavel

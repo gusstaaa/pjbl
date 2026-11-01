@@ -319,16 +319,10 @@ export default function ColaboradoresPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Cabeçalho e Seletor de Perfil Operador (RN-07) */}
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                Fase 2 · Item 2.4
-              </span>
-              <span className="text-xs text-slate-500">RF-04 · RN-07</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Briefcase className="w-6 h-6 text-blue-600" />
               Cadastro de Funcionários e Professores
             </h2>
@@ -339,7 +333,6 @@ export default function ColaboradoresPage() {
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RN-07"
             descricaoAcao="cadastrar colaboradores ou alocar professores em turmas"
           />
         </div>
@@ -410,7 +403,7 @@ export default function ColaboradoresPage() {
                   <h3 className="font-bold text-slate-800 text-sm">
                     {editandoId ? 'Editar Funcionário / Professor' : 'Novo Funcionário / Professor'}
                   </h3>
-                  <p className="text-xs text-slate-500">Cadastro e alocação funcional (RF-04)</p>
+                  <p className="text-xs text-slate-500">Cadastro e alocação funcional</p>
                 </div>
               </div>
               {editandoId && (

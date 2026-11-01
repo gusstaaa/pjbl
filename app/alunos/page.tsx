@@ -580,13 +580,7 @@ export default function AlunosPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                Itens 1.3 e 2.1 do Roadmap
-              </span>
-              <span className="text-xs text-slate-500">RF-01 · RF-03 · RF-06 · RN-01 · RN-02</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800">
               {sessao.perfil === 'RESPONSAVEL'
                 ? 'Meus Filhos e Histórico Escolar'
                 : 'Alunos, Histórico Escolar e Rematrícula'}
@@ -724,7 +718,7 @@ export default function AlunosPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    Ficha & Histórico Escolar (RF-06)
+                    Ficha & Histórico Escolar
                   </span>
                   {alunoSelecionado.ehVeterano && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-800">
@@ -831,7 +825,7 @@ export default function AlunosPage() {
                 <div>
                   <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 text-emerald-600" />
-                    Rematrícula Simplificada para Novo Período Letivo (RF-06)
+                    Rematrícula Simplificada para Novo Período Letivo
                   </h3>
                   <p className="text-xs text-slate-600 mt-1">
                     Reaproveita automaticamente todos os dados pessoais, certidão e vínculo com o responsável legal.
@@ -840,7 +834,7 @@ export default function AlunosPage() {
 
                 {!alunoSelecionado.ehVeterano ? (
                   <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                    Para usar a rematrícula simplificada (RF-06), o aluno precisa ter pelo menos uma matrícula anterior
+                    Para usar a rematrícula simplificada, o aluno precisa ter pelo menos uma matrícula anterior
                     no histórico.{' '}
                     <Link href="/matriculas" className="font-bold underline">
                       Ir para 1ª Matrícula →
@@ -858,7 +852,7 @@ export default function AlunosPage() {
 
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Nova Turma de Destino (RN-03) *
+                        Nova Turma de Destino *
                       </label>
                       <select
                         required
@@ -1207,7 +1201,7 @@ export default function AlunosPage() {
                   <p className="text-sm font-semibold">Nenhum responsável cadastrado!</p>
                 </div>
                 <p className="text-xs leading-relaxed">
-                  Pela regra <strong>RN-01</strong>, todo aluno deve possuir obrigatoriamente um responsável legal vinculado.
+                  Todo aluno deve possuir obrigatoriamente um responsável legal vinculado.
                   Por favor, cadastre um responsável antes de matricular um aluno.
                 </p>
                 <Link
@@ -1254,7 +1248,7 @@ export default function AlunosPage() {
                     <>
                       <div>
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          1º Responsável Legal (Principal · RN-01) *
+                          1º Responsável Legal (Principal) *
                         </label>
                         <select
                           required
@@ -1512,7 +1506,7 @@ export default function AlunosPage() {
                         </div>
                       ) : (
                         <p className="text-[11px] text-amber-600 font-medium">
-                          Disponível para matrícula (Item 1.4).
+                          Disponível para matrícula.
                         </p>
                       )}
                       {a.historicoMatriculas && a.historicoMatriculas.length > 0 && (

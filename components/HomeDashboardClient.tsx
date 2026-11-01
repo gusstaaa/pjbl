@@ -406,8 +406,8 @@ export function HomeDashboardClient({
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehResponsavel
-                    ? 'Consulte a turma atual, código de matrícula e quais documentos já foram entregues ou estão pendentes (RF-13).'
-                    : 'Efetivação de matrícula inicial, rematrícula simplificada de veteranos (RF-06) e checklist de documentos obrigatórios (RF-13/RN-05).'}
+                    ? 'Consulte a turma atual, código de matrícula e quais documentos já foram entregues ou estão pendentes.'
+                    : 'Efetivação de matrícula inicial, rematrícula simplificada de veteranos e checklist de documentos obrigatórios.'}
                 </p>
               </div>
             </Link>
@@ -428,9 +428,6 @@ export function HomeDashboardClient({
                       ? 'Dados Cadastrais e Histórico dos Filhos'
                       : 'Listagem de Alunos e Turmas'}
                   </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    RF-01 · RF-07
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehResponsavel
@@ -456,9 +453,6 @@ export function HomeDashboardClient({
                       ? 'Assinatura de Autorizações e Contratos Digitais'
                       : 'Formulários, Contratos e Autorizações'}
                   </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    {ehResponsavel ? 'RF-09' : 'RF-08 · RF-09'}
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehResponsavel
@@ -500,9 +494,6 @@ export function HomeDashboardClient({
                   <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
                     {ehProfessor ? 'Consulta de Turmas e Séries' : 'Gestão de Séries e Turmas'}
                   </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    RF-18
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehProfessor
@@ -527,9 +518,6 @@ export function HomeDashboardClient({
                     ? 'Consultar Lista de Materiais do Filho'
                     : 'Listas de Materiais Escolares'}
                 </h4>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
-                  RF-11
-                </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 {ehResponsavel
@@ -553,9 +541,6 @@ export function HomeDashboardClient({
                     ? 'Catálogo de Livros Adotados e Fornecidos'
                     : 'Relação de Livros Adotados e Fornecidos'}
                 </h4>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
-                  RF-12
-                </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 Catálogo de livros didáticos e paradidáticos adotados pelas séries ou fornecidos diretamente pela escola.
@@ -596,9 +581,6 @@ export function HomeDashboardClient({
                       ? 'Consulta de Mensalidades e Situação de Pagamento'
                       : 'Controle de Mensalidades e Pagamentos'}
                   </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
-                    RF-15 · RF-16
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehResponsavel
@@ -622,9 +604,6 @@ export function HomeDashboardClient({
                   <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
                     Solicitação de Fardas Escolares
                   </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    RF-10
-                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {ehResponsavel
@@ -647,9 +626,6 @@ export function HomeDashboardClient({
                 <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
                   Mural Oficial de Comunicados
                 </h4>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                  RF-20
-                </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 {ehGestao
@@ -671,9 +647,6 @@ export function HomeDashboardClient({
                 <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
                   Calendário de Eventos Escolares
                 </h4>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
-                  RF-19
-                </span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 {ehResponsavel

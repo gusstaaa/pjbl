@@ -163,13 +163,7 @@ export default function ResponsaveisPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-                Item 1.2 do Roadmap
-              </span>
-              <span className="text-xs text-slate-500">RF-02 · RN-01</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">Cadastro de Responsáveis Legais</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Cadastro de Responsáveis Legais</h1>
             <p className="text-sm text-slate-500">
               Gerencie pais, mães e tutores legais para associação obrigatória aos alunos da escola.
             </p>
@@ -295,7 +289,7 @@ export default function ResponsaveisPage() {
                 {/* CPF */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    CPF (RN-01) *
+                    CPF *
                   </label>
                   <input
                     type="text"
@@ -482,7 +476,7 @@ export default function ResponsaveisPage() {
                         </p>
                       ) : (
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          Pronto para vínculo no cadastro de alunos (Item 1.3).
+                          Pronto para vínculo no cadastro de alunos.
                         </p>
                       )}
                     </div>

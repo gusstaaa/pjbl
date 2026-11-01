@@ -290,7 +290,7 @@ export default function MatriculasPage() {
 
       setMensagemSucesso(
         `Documento "${doc.tipo}" marcado como ${novoStatus === 'ENTREGUE' ? 'Entregue' : 'Pendente'}. Situação da matrícula: ${
-          data.statusMatricula === 'PENDENTE_DOCUMENTOS' ? 'Pendente de Documentação (RN-05)' : data.statusMatricula
+          data.statusMatricula === 'PENDENTE_DOCUMENTOS' ? 'Pendente de Documentação' : data.statusMatricula
         }.`
       );
       await carregarDados(busca);
@@ -566,13 +566,7 @@ export default function MatriculasPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
-                Itens 1.4, 2.1 e 2.2 do Roadmap
-              </span>
-              <span className="text-xs text-slate-500">RF-05 · RF-06 · RF-13 · RF-14 · RN-03 · RN-05</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800">
               {ehResponsavel
                 ? 'Matrículas dos Meus Filhos e Solicitação de Vaga'
                 : 'Matrículas, Solicitações, Rematrículas e Documentação'}
@@ -600,7 +594,7 @@ export default function MatriculasPage() {
                 className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-xs"
               >
                 <RefreshCw className="w-4 h-4" />
-                Rematricular Veterano (RF-06)
+                Rematricular Veterano
               </button>
 
               <button
@@ -689,7 +683,7 @@ export default function MatriculasPage() {
             <p className="text-2xl font-extrabold text-purple-700 mt-1">{solicitadasCount}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendentes de Documentos (RN-05)</span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendentes de Documentos</span>
             <p className="text-2xl font-extrabold text-amber-600 mt-1">{pendentesCount}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -1044,7 +1038,7 @@ export default function MatriculasPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
-                    Checklist de Documentos (RF-13 · RF-14 · RN-05)
+                    Checklist de Documentos
                   </span>
                   <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
                     {matriculaChecklist.codigo}
@@ -1064,7 +1058,7 @@ export default function MatriculasPage() {
                   {matriculaChecklist.turma.serie} · {matriculaChecklist.anoLetivo})
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Pela regra <strong>RN-05</strong>, qualquer documento obrigatório pendente mantém a matrícula com
+                  Qualquer documento obrigatório pendente mantém a matrícula com
                   alerta de <strong>Pendente de Documentação</strong> até que todos os itens obrigatórios sejam entregues.
                 </p>
               </div>
@@ -1081,7 +1075,7 @@ export default function MatriculasPage() {
               <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2.5 text-xs">
                 <FileWarning className="w-5 h-5 text-amber-600 shrink-0" />
                 <div>
-                  <strong>Alerta de Pendência Documental (RF-14):</strong> Existem{' '}
+                  <strong>Alerta de Pendência Documental:</strong> Existem{' '}
                   <strong>{matriculaChecklist.resumoDocumentos.obrigatoriosPendentes}</strong> documento(s)
                   obrigatório(s) pendente(s) de entrega.
                 </div>
@@ -1169,8 +1163,8 @@ export default function MatriculasPage() {
                 )}
                 <h2 className="text-base font-bold text-slate-800">
                   {modoFormulario === 'REMATRICULA'
-                    ? 'Rematrícula Simplificada de Aluno Veterano (RF-06)'
-                    : 'Efetivar Matrícula Inicial de Aluno (RF-05)'}
+                    ? 'Rematrícula Simplificada de Aluno Veterano'
+                    : 'Efetivar Matrícula Inicial de Aluno'}
                 </h2>
               </div>
 
@@ -1202,7 +1196,7 @@ export default function MatriculasPage() {
                       : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
-                  Rematrícula Veterano (RF-06)
+                  Rematrícula Veterano
                 </button>
               </div>
             </div>
@@ -1221,7 +1215,7 @@ export default function MatriculasPage() {
               <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 space-y-2">
                 <p className="text-sm font-semibold">Nenhum aluno veterano com histórico encontrado!</p>
                 <p className="text-xs">
-                  Para realizar uma rematrícula (RF-06), o aluno precisa ter pelo menos uma matrícula anterior.
+                  Para realizar uma rematrícula, o aluno precisa ter pelo menos uma matrícula anterior.
                 </p>
               </div>
             ) : turmas.length === 0 ? (
@@ -1241,8 +1235,8 @@ export default function MatriculasPage() {
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
                       {modoFormulario === 'REMATRICULA'
-                        ? 'Aluno Veterano com Histórico (RF-06) *'
-                        : 'Aluno a Matricular (RF-05) *'}
+                        ? 'Aluno Veterano com Histórico *'
+                        : 'Aluno a Matricular *'}
                     </label>
                     <select
                       required
@@ -1268,10 +1262,10 @@ export default function MatriculasPage() {
                     </select>
                   </div>
 
-                  {/* Seleção da Turma com Trava RN-03 */}
+                  {/* Seleção da Turma */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Turma de Destino (RN-03 Trava de Vagas) *
+                      Turma de Destino *
                     </label>
                     <select
                       required
@@ -1301,7 +1295,7 @@ export default function MatriculasPage() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-bold text-emerald-900 flex items-center gap-1.5">
                           <History className="w-4 h-4 text-emerald-600" />
-                          Dados Anteriores Reaproveitados Automaticamente (RF-06):
+                          Dados Anteriores Reaproveitados Automaticamente:
                         </span>
                         {alunoSelecionadoObj.sugestaoProximaSerie && (
                           <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
@@ -1368,7 +1362,7 @@ export default function MatriculasPage() {
                   {/* Status Inicial */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Situação da Matrícula (RN-05) *
+                      Situação da Matrícula *
                     </label>
                     <select
                       value={status}
@@ -1401,7 +1395,7 @@ export default function MatriculasPage() {
                     {submitting
                       ? 'Processando...'
                       : modoFormulario === 'REMATRICULA'
-                      ? 'Confirmar Rematrícula (RF-06)'
+                      ? 'Confirmar Rematrícula'
                       : 'Efetivar Matrícula'}
                   </button>
                 </div>

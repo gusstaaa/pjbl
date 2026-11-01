@@ -276,13 +276,7 @@ export default function FardasPage() {
         {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-800">
-                Fase 2 · Item 2.8
-              </span>
-              <span className="text-xs text-slate-500">RF-10 · RN-07</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Shirt className="w-6 h-6 text-cyan-600" />
               Solicitação de Fardas e Uniformes Escolares
             </h2>
@@ -293,7 +287,6 @@ export default function FardasPage() {
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RN-07 / RF-10"
             descricaoAcao="dar baixa de entrega nas fardas (responsáveis podem solicitar abaixo)"
           />
         </div>
@@ -359,7 +352,7 @@ export default function FardasPage() {
               <PlusCircle className="w-5 h-5 text-cyan-600" />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Nova Solicitação de Farda</h3>
-                <p className="text-xs text-slate-500">Escolha o aluno, tamanho e quantidade (RF-10)</p>
+                <p className="text-xs text-slate-500">Escolha o aluno, tamanho e quantidade</p>
               </div>
             </div>
 
@@ -469,7 +462,7 @@ export default function FardasPage() {
           >
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-800 text-sm">
-                Painel de Demanda de Fardas da Secretaria (RF-10)
+                Painel de Demanda de Fardas da Secretaria
               </h3>
               <p className="text-xs text-slate-500">
                 Acompanhe os tamanhos solicitados e atualize o status de separação e entrega

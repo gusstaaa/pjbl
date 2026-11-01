@@ -209,16 +209,10 @@ export default function ComunicadosPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Cabeçalho e Seletor de Perfil */}
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                Fase 2 · Item 2.5
-              </span>
-              <span className="text-xs text-slate-500">RF-20</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Megaphone className="w-6 h-6 text-amber-600" />
               Painel de Comunicados para Turmas e Escola
             </h2>
@@ -229,7 +223,6 @@ export default function ComunicadosPage() {
 
           <BannerOperadorLogado
             perfisAutorizados={['SECRETARIA', 'ADMINISTRACAO']}
-            regraCodigo="RF-20"
             descricaoAcao="publicar comunicados oficiais no mural"
           />
         </div>
@@ -293,7 +286,7 @@ export default function ComunicadosPage() {
               <Send className="w-5 h-5 text-amber-600" />
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Novo Comunicado Escolar</h3>
-                <p className="text-xs text-slate-500">Geral ou exclusivo para uma turma (RF-20)</p>
+                <p className="text-xs text-slate-500">Geral ou exclusivo para uma turma</p>
               </div>
             </div>
 
@@ -364,7 +357,7 @@ export default function ComunicadosPage() {
                     ))}
                   </select>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Apenas os responsáveis dos alunos desta turma verão este aviso (RF-20).
+                    Apenas os responsáveis dos alunos desta turma verão este aviso.
                   </p>
                 </div>
               )}
@@ -406,7 +399,7 @@ export default function ComunicadosPage() {
           </section>
           )}
 
-          {/* Mural de Comunicados e Filtro por Turma (RF-20) */}
+          {/* Mural de Comunicados e Filtro por Turma */}
           <section
             className={`${
               podePublicar ? 'lg:col-span-2' : 'lg:col-span-3'
@@ -416,7 +409,7 @@ export default function ComunicadosPage() {
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">Mural Oficial de Comunicados</h3>
                 <p className="text-xs text-slate-500">
-                  Filtre pela visão dos responsáveis de uma turma para validar o isolamento RF-20
+                  Consulte os avisos publicados para a escola ou para uma turma específica
                 </p>
               </div>
 
