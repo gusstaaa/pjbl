@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   School,
@@ -45,6 +46,65 @@ export function HomeDashboardClient({
   eventoCount,
 }: HomeDashboardProps) {
   const { sessao, carregado } = useSessao();
+  const [minhasMatriculasCount, setMinhasMatriculasCount] = useState<number | null>(null);
+  const [meusFilhosCount, setMeusFilhosCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!carregado || !sessao.autenticado || sessao.perfil !== 'RESPONSAVEL') {
+      setMinhasMatriculasCount(null);
+      setMeusFilhosCount(null);
+      return;
+    }
+
+    let cancelado = false;
+    async function carregarResumoResponsavel() {
+      try {
+        const [resAlunos, resMatriculas] = await Promise.all([
+          fetch('/api/alunos'),
+          fetch('/api/matriculas'),
+        ]);
+        if (!resAlunos.ok || !resMatriculas.ok) return;
+        const listaAlunos = await resAlunos.json();
+        const listaMatriculas = await resMatriculas.json();
+        if (cancelado) return;
+
+        const idsVinculados = new Set((sessao.alunosVinculados || []).map((a) => a.id));
+        const cpfRespLimpo = (sessao.responsavelCpf || '').replace(/\D/g, '');
+
+        const filhosDoResp = Array.isArray(listaAlunos)
+          ? listaAlunos.filter(
+              (a: any) =>
+                idsVinculados.has(a.id) ||
+                (sessao.responsavelId && a.responsavelId === sessao.responsavelId) ||
+                (sessao.responsavelId && a.segundoResponsavelId === sessao.responsavelId) ||
+                (cpfRespLimpo &&
+                  a.responsavelPrincipal?.cpf?.replace(/\D/g, '') === cpfRespLimpo)
+            )
+          : [];
+
+        const idsFilhos = new Set([
+          ...Array.from(idsVinculados),
+          ...filhosDoResp.map((a: any) => a.id),
+        ]);
+
+        const matriculasDosFilhos = Array.isArray(listaMatriculas)
+          ? listaMatriculas.filter(
+              (m: any) => m.aluno && idsFilhos.has(m.aluno.id) && m.status !== 'CANCELADA'
+            )
+          : [];
+
+        setMeusFilhosCount(idsFilhos.size);
+        setMinhasMatriculasCount(matriculasDosFilhos.length);
+      } catch {
+        // fallback para sessao.alunosVinculados
+      }
+    }
+
+    carregarResumoResponsavel();
+    return () => {
+      cancelado = true;
+    };
+  }, [carregado, sessao.autenticado, sessao.perfil, sessao.responsavelId, sessao.responsavelCpf, sessao.alunosVinculados]);
 
   if (!carregado) {
     return (
@@ -163,14 +223,16 @@ export function HomeDashboardClient({
           className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Alunos</span>
+            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+              {ehResponsavel ? 'Meus Filhos' : 'Alunos'}
+            </span>
             <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
               <UserCheck className="w-4 h-4" />
             </div>
           </div>
           <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">
-            {ehResponsavel && sessao.alunosVinculados?.length
-              ? sessao.alunosVinculados.length
+            {ehResponsavel
+              ? meusFilhosCount ?? (sessao.alunosVinculados?.length ?? 0)
               : alunoCount}
           </p>
           <p className="text-xs text-slate-500 mt-1 flex items-center justify-between">
@@ -185,14 +247,20 @@ export function HomeDashboardClient({
             className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Matrículas</span>
+              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                {ehResponsavel ? 'Minhas Matrículas' : 'Matrículas'}
+              </span>
               <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
                 <CheckCircle className="w-4 h-4" />
               </div>
             </div>
-            <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">{matriculaCount}</p>
+            <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">
+              {ehResponsavel
+                ? minhasMatriculasCount ?? (sessao.alunosVinculados?.length ?? 0)
+                : matriculaCount}
+            </p>
             <p className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-              <span>{ehResponsavel ? 'Situação e documentos' : 'Vínculos letivos'}</span>
+              <span>{ehResponsavel ? 'Filho(s) matriculado(s)' : 'Vínculos letivos'}</span>
               <ArrowRight className="w-3.5 h-3.5 text-emerald-700 opacity-0 group-hover:opacity-100 transition" />
             </p>
           </Link>
