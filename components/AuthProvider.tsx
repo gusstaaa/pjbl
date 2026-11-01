@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { ShieldCheck, UserCheck, LogIn, LogOut, Lock } from 'lucide-react';
 
 export type PerfilUsuario =
@@ -95,6 +96,8 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [sessao, setSessao] = useState<SessaoUsuario>(SESSAO_DESLOGADA);
   const [carregado, setCarregado] = useState(false);
 
@@ -166,6 +169,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const estaAutenticado = Boolean(sessao?.autenticado);
+  const ehRotaPublicaLogin = pathname === '/' || pathname === '/login';
+
+  useEffect(() => {
+    if (carregado && !estaAutenticado && !ehRotaPublicaLogin) {
+      router.replace('/login');
+    }
+  }, [carregado, estaAutenticado, ehRotaPublicaLogin, router]);
 
   return (
     <AuthContext.Provider
@@ -177,7 +187,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         encerrarSessao,
       }}
     >
-      {children}
+      {carregado && !estaAutenticado && !ehRotaPublicaLogin ? (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-md w-full text-center space-y-3">
+            <div className="w-8 h-8 border-4 border-blue-900 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+            <h2 className="text-sm font-extrabold text-slate-800">
+              Acesso Restrito — Redirecionando para o Login
+            </h2>
+            <p className="text-xs text-slate-500">
+              Faça login para acessar as telas do sistema escolar.
+            </p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
