@@ -19,6 +19,7 @@ import {
   Calendar,
   ArrowRight,
   PlusCircle,
+  UserPlus,
   LogIn,
 } from 'lucide-react';
 import { useSessao, PERFIS_META } from '@/components/AuthProvider';
@@ -350,6 +351,91 @@ export function HomeDashboardClient({
         )}
       </section>
 
+      {/* Menu Cadastro: Alunos, Equipe e Professores, Responsáveis */}
+      {ehGestao && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                <UserPlus className="w-3.5 h-3.5" />
+                Menu Principal de Registros
+              </span>
+              <h3 className="text-lg font-extrabold text-slate-900">
+                Cadastro (Alunos, Equipe e Professores, Responsáveis)
+              </h3>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              href="/alunos"
+              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
+            >
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+                    Alunos
+                  </h4>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
+                    Cadastro
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Ficha completa do estudante, observações médicas, histórico escolar e vínculo aos responsáveis.
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/colaboradores"
+              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
+            >
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <Briefcase className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+                    Equipe e Professores
+                  </h4>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
+                    Cadastro
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Cadastro do corpo docente, coordenação e funcionários com alocação de professor titular por turma.
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/responsaveis"
+              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
+            >
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <Users className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+                    Responsáveis
+                  </h4>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
+                    Cadastro
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Cadastro de mães, pais e tutores legais com validação de CPF, telefone/WhatsApp e filhos vinculados.
+                </p>
+              </div>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Setor 1: Secretaria & Matrículas (Oculta itens restritos ao perfil) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between border-b border-slate-200 pb-2">
@@ -394,55 +480,29 @@ export function HomeDashboardClient({
             </Link>
           )}
 
-          <Link
-            href="/alunos"
-            className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-          >
-            <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-              <UserCheck className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                  {ehResponsavel
-                    ? 'Dados Cadastrais e Histórico dos Filhos'
-                    : ehProfessor
-                    ? 'Listagem de Alunos e Turmas'
-                    : 'Cadastro de Alunos e Vínculos'}
-                </h4>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                  RF-01 · RF-07
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {ehResponsavel
-                  ? 'Visualize os dados cadastrais, observações de saúde e o histórico anual de matrículas dos seus filhos.'
-                  : ehProfessor
-                  ? 'Consulte a relação de estudantes matriculados, observações médicas e histórico escolar.'
-                  : 'Ficha completa do estudante, observações médicas, histórico de matrículas e vínculo obrigatório aos responsáveis.'}
-              </p>
-            </div>
-          </Link>
-
-          {ehGestao && (
+          {!ehGestao && (
             <Link
-              href="/responsaveis"
+              href="/alunos"
               className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
             >
               <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <Users className="w-6 h-6" />
+                <UserCheck className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    Responsáveis Legais
+                    {ehResponsavel
+                      ? 'Dados Cadastrais e Histórico dos Filhos'
+                      : 'Listagem de Alunos e Turmas'}
                   </h4>
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    RF-02 · RN-01
+                    RF-01 · RF-07
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Cadastro de mães, pais e tutores legais com validação de CPF, telefone/WhatsApp e múltiplos filhos (irmãos).
+                  {ehResponsavel
+                    ? 'Visualize os dados cadastrais, observações de saúde e o histórico anual de matrículas dos seus filhos.'
+                    : 'Consulte a relação de estudantes matriculados, observações médicas e histórico escolar.'}
                 </p>
               </div>
             </Link>
@@ -515,30 +575,6 @@ export function HomeDashboardClient({
                   {ehProfessor
                     ? 'Visualize as turmas do Maternal 1 ao 5º ano, turnos e ocupação de vagas por sala.'
                     : 'Organização de turmas do Maternal 1 ao 5º ano, turnos (Manhã, Tarde, Integral) e controle automático de vagas.'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          {ehGestao && (
-            <Link
-              href="/colaboradores"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    Funcionários e Professores
-                  </h4>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    RF-04 · RN-07
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Cadastro do corpo docente, coordenação e equipe administrativa com alocação de professor titular por turma.
                 </p>
               </div>
             </Link>
