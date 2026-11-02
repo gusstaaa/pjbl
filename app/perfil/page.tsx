@@ -189,6 +189,7 @@ export default function PerfilPage() {
             telefone,
             email,
             especialidade,
+            ...(senha.trim() !== '' ? { senha: senha.trim() } : {}),
             perfilOperador: 'ADMINISTRACAO',
           }),
         });
@@ -204,16 +205,21 @@ export default function PerfilPage() {
           identificador: data.cpfFormatado || cpf,
         });
 
+        setSenha('');
         setMensagemSucesso('Seus dados de perfil foram atualizados com sucesso!');
       } else {
         if (nome.trim().length < 2) {
           throw new Error('Informe um nome válido para o seu perfil.');
         }
+        if (senha.trim() !== '' && senha.trim().length < 4) {
+          throw new Error('A senha deve ter pelo menos 4 caracteres.');
+        }
         definirSessao({
           ...sessao,
           nome: nome.trim(),
         });
-        setMensagemSucesso('Nome de exibição do perfil atualizado com sucesso!');
+        setSenha('');
+        setMensagemSucesso('Seus dados de perfil foram atualizados com sucesso!');
       }
     } catch (err: any) {
       setMensagemErro(err.message || 'Erro ao salvar alterações do perfil.');
@@ -389,19 +395,6 @@ export default function PerfilPage() {
                         className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                       />
                     </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Nova Senha (deixe em branco para manter a senha atual)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="Mínimo 4 caracteres"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
-                      />
-                    </div>
                   </>
                 ) : registroId ? (
                   <>
@@ -505,6 +498,19 @@ export default function PerfilPage() {
                     </div>
                   </>
                 )}
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nova Senha (deixe em branco para manter a senha atual)
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Mínimo 4 caracteres"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">

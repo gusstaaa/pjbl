@@ -121,6 +121,7 @@ model Colaborador {
   id              String           @id @default(uuid())
   nome            String
   cpf             String           @unique
+  senha           String?          @default("123456")
   cargo           String
   setor           String           @default("Pedagógico")
   email           String?

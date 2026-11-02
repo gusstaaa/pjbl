@@ -188,6 +188,10 @@ export async function autenticarUsuario(
     ? senhaRaw === (responsavel.senha || SENHA_PADRAO_SISTEMA) ||
       senhaRaw === SENHA_PADRAO_SISTEMA
     : false;
+  const senhaColaboradorValida = colaborador
+    ? senhaRaw === ((colaborador as any).senha || SENHA_PADRAO_SISTEMA) ||
+      senhaRaw === SENHA_PADRAO_SISTEMA
+    : false;
   const senhaPadraoValida = senhaRaw === SENHA_PADRAO_SISTEMA;
 
   const possuiDuploVinculo = Boolean(colaborador && responsavel);
@@ -236,8 +240,12 @@ export async function autenticarUsuario(
     };
   }
 
-  // Para Professor e Colaborador, valida a senha padrão do sistema
-  if (!senhaPadraoValida && !( !categoria && responsavel && senhaResponsavelValida )) {
+  // Para Professor e Colaborador, valida a senha do colaborador (ou padrão)
+  if (
+    !senhaColaboradorValida &&
+    !senhaPadraoValida &&
+    !(!categoria && responsavel && senhaResponsavelValida)
+  ) {
     throw new ErroAutenticacao(
       'Senha incorreta. Verifique a senha informada.',
       401

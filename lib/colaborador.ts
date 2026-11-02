@@ -55,6 +55,7 @@ export type PerfilCadastroRN07 = (typeof PERFIS_CADASTRO_RN07)[number];
 export interface CriarColaboradorInput {
   nome: string;
   cpf: string;
+  senha?: string;
   cargo: string;
   setor?: string;
   email?: string;
@@ -68,6 +69,7 @@ export interface CriarColaboradorInput {
 export interface AtualizarColaboradorInput {
   nome?: string;
   cpf?: string;
+  senha?: string;
   telefone?: string;
   email?: string;
   cargo?: string;
@@ -308,6 +310,7 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
   const dadosAtualizacao: {
     nome?: string;
     cpf?: string;
+    senha?: string;
     telefone?: string | null;
     email?: string | null;
     cargo?: string;
@@ -315,6 +318,14 @@ export async function atualizarColaborador(id: string, input: AtualizarColaborad
     especialidade?: string | null;
     ativo?: boolean;
   } = {};
+
+  if (input.senha !== undefined && input.senha.trim() !== '') {
+    const senhaLimpa = input.senha.trim();
+    if (senhaLimpa.length < 4) {
+      throw new Error('A senha deve ter pelo menos 4 caracteres.');
+    }
+    dadosAtualizacao.senha = senhaLimpa;
+  }
 
   if (input.nome !== undefined) {
     const nomeLimpo = input.nome.trim();
