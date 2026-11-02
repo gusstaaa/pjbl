@@ -357,7 +357,7 @@ export function HomeDashboardClient({
                 <UserCheck className="w-5 h-5" />
               </div>
               <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
-                {ehResponsavel ? 'Meus Filhos & Perfil' : 'Alunos'}
+                {ehResponsavel ? 'Meus Filhos' : 'Alunos'}
               </span>
             </div>
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />

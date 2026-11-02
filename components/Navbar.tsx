@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -22,11 +22,12 @@ import {
   Search,
   ChevronRight,
   ChevronDown,
-  PlusCircle,
-  UserPlus,
   LayoutDashboard,
   Sparkles,
   LogIn,
+  LogOut,
+  Settings,
+  User,
 } from 'lucide-react';
 import {
   useSessao,
@@ -179,30 +180,53 @@ export function Navbar() {
   const pathname = usePathname();
   const { sessao, encerrarSessao } = useSessao();
   const [menuAberto, setMenuAberto] = useState(false);
+  const [menuUsuarioAberto, setMenuUsuarioAberto] = useState(false);
   const [buscaMenu, setBuscaMenu] = useState('');
+  const menuUsuarioRef = useRef<HTMLDivElement>(null);
 
   const itemAtual =
-    NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
+    pathname === '/perfil'
+      ? {
+          href: '/perfil',
+          label: 'Opções de Perfil',
+          description: 'Dados pessoais e configurações da conta conectada',
+          category: 'Minha Conta',
+          icon: Settings,
+          perfisPermitidos: ['SECRETARIA', 'ADMINISTRACAO', 'PROFESSOR', 'RESPONSAVEL'] as PerfilUsuario[],
+        }
+      : NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
   const metaPerfil = PERFIS_META[sessao.perfil] || PERFIS_META.SECRETARIA;
-  const podeGerirMatriculas =
-    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
   const exibirMenuLateral = Boolean(sessao.autenticado) && pathname !== '/login';
 
-  // Fecha o menu lateral automaticamente ao navegar de página
+  // Fecha os menus automaticamente ao navegar de página
   useEffect(() => {
     setMenuAberto(false);
+    setMenuUsuarioAberto(false);
     setBuscaMenu('');
   }, [pathname]);
 
-  // Fecha o menu lateral ao pressionar a tecla ESC
+  // Fecha o menu lateral e o menu do usuário ao pressionar ESC ou clicar fora
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setMenuAberto(false);
+        setMenuUsuarioAberto(false);
+      }
+    }
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        menuUsuarioRef.current &&
+        !menuUsuarioRef.current.contains(e.target as Node)
+      ) {
+        setMenuUsuarioAberto(false);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const itensPermitidos = NAV_ITEMS.filter((item) =>
@@ -273,38 +297,71 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Direita: Perfil Logado ou Botão de Login */}
+          {/* Direita: Usuário Logado (Dropdown com Opções de Perfil e Sair) ou Botão de Login */}
           <div className="flex items-center gap-2">
             {sessao.autenticado ? (
-              <>
-                <Link
-                  href="/login"
-                  title="Clique para trocar de usuário ou perfil de acesso"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-950 border border-blue-700 hover:border-emerald-400 text-xs transition"
+              <div className="relative" ref={menuUsuarioRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuUsuarioAberto((prev) => !prev)}
+                  title="Clique para abrir opções de perfil ou sair"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-950 border border-blue-700 hover:border-emerald-400 text-xs transition cursor-pointer"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
                   <div className="text-left leading-tight">
-                    <span className="block font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">
+                    <span className="block font-bold text-white truncate max-w-[110px] sm:max-w-[160px]">
                       {sessao.nome}
                     </span>
                     <span className="block text-[10px] text-emerald-300 font-medium">
                       {metaPerfil.rotulo}
                     </span>
                   </div>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    encerrarSessao();
-                    window.location.href = '/login';
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-rose-600 text-white text-xs font-bold transition border border-white/15 cursor-pointer"
-                  title="Encerrar sessão ativa"
-                >
-                  Sair
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-emerald-300 transition-transform ${
+                      menuUsuarioAberto ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
-              </>
+
+                {menuUsuarioAberto && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white text-slate-800 shadow-xl border border-slate-200 overflow-hidden z-50">
+                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                      <p className="text-xs font-extrabold text-slate-900 truncate">
+                        {sessao.nome}
+                      </p>
+                      <p className="text-[11px] text-emerald-700 font-semibold truncate">
+                        {metaPerfil.rotulo}
+                      </p>
+                    </div>
+
+                    <div className="p-1.5 space-y-1">
+                      <Link
+                        href="/perfil"
+                        onClick={() => setMenuUsuarioAberto(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-900 transition"
+                      >
+                        <Settings className="w-4 h-4 text-blue-700" />
+                        <span>Opções de Perfil</span>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuUsuarioAberto(false);
+                          encerrarSessao();
+                          window.location.href = '/login';
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer text-left"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-600" />
+                        <span>Sair</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 href="/login"
@@ -312,16 +369,6 @@ export function Navbar() {
               >
                 <LogIn className="w-4 h-4" />
                 <span>Fazer Login</span>
-              </Link>
-            )}
-
-            {podeGerirMatriculas && sessao.autenticado && (
-              <Link
-                href="/matriculas"
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-sm"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Matrículas</span>
               </Link>
             )}
           </div>

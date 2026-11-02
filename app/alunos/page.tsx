@@ -594,49 +594,33 @@ export default function AlunosPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {ehResponsavel && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showFormPerfilResp) {
-                      setShowFormPerfilResp(false);
-                    } else {
-                      abrirMeuPerfil();
+              <button
+                type="button"
+                onClick={() => {
+                  if (showForm) {
+                    setShowForm(false);
+                    setEditandoId(null);
+                  } else {
+                    setEditandoId(null);
+                    setNome('');
+                    setDataNascimento('');
+                    setCertidaoNascimento('');
+                    setObservacoesMedicas('');
+                    setTurmaSolicitadaNovoFilhoId(SERIES_ESCOLARES[0]);
+                    if (sessao.responsavelId) {
+                      setResponsavelId(sessao.responsavelId);
                     }
-                  }}
-                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3.5 py-2.5 rounded-xl font-medium text-xs transition shadow-xs"
-                >
-                  <Settings className="w-4 h-4 text-blue-600" />
-                  {showFormPerfilResp ? 'Fechar Meu Perfil' : 'Editar Meu Perfil'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showForm) {
-                      setShowForm(false);
-                      setEditandoId(null);
-                    } else {
-                      setEditandoId(null);
-                      setNome('');
-                      setDataNascimento('');
-                      setCertidaoNascimento('');
-                      setObservacoesMedicas('');
-                      setTurmaSolicitadaNovoFilhoId(SERIES_ESCOLARES[0]);
-                      if (sessao.responsavelId) {
-                        setResponsavelId(sessao.responsavelId);
-                      }
-                      setShowFormPerfilResp(false);
-                      setAlunoSegundoRespAlvo(null);
-                      setShowForm(true);
-                    }
-                    setMensagemErro(null);
-                  }}
-                  className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-xs transition shadow-xs"
-                >
-                  <Plus className="w-4 h-4" />
-                  {showForm ? 'Fechar Formulário' : 'Cadastrar Outro Filho'}
-                </button>
-              </>
+                    setShowFormPerfilResp(false);
+                    setAlunoSegundoRespAlvo(null);
+                    setShowForm(true);
+                  }
+                  setMensagemErro(null);
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-xs transition shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                {showForm ? 'Fechar Formulário' : 'Cadastrar Outro Filho'}
+              </button>
             )}
 
             {podeEditar && (
@@ -898,148 +882,6 @@ export default function AlunosPage() {
               </div>
               )}
             </div>
-          </section>
-        )}
-
-        {/* Painel: Editar Meu Perfil do Responsável Logado */}
-        {ehResponsavel && showFormPerfilResp && (
-          <section className="bg-white p-6 rounded-2xl border-2 border-blue-200 shadow-sm space-y-4 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h2 className="text-base font-bold text-slate-800">
-                    Editar Meu Perfil (Meus Dados de Responsável)
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Atualize suas informações pessoais, telefone, endereço ou senha de acesso.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFormPerfilResp(false)}
-                className="text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition"
-              >
-                Fechar
-              </button>
-            </div>
-
-            <form onSubmit={handleSalvarMeuPerfil} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Meu Nome Completo *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={perfilNome}
-                    onChange={(e) => setPerfilNome(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Grau de Parentesco *
-                  </label>
-                  <select
-                    value={perfilParentesco}
-                    onChange={(e) => setPerfilParentesco(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Mãe">Mãe</option>
-                    <option value="Pai">Pai</option>
-                    <option value="Avó/Avô">Avó/Avô</option>
-                    <option value="Tio(a)">Tio(a)</option>
-                    <option value="Tutor(a) Legal">Tutor(a) Legal</option>
-                    <option value="Responsável Legal">Responsável Legal</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    CPF *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={perfilCpf}
-                    onChange={(e) => setPerfilCpf(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Telefone / WhatsApp *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={perfilTelefone}
-                    onChange={(e) => setPerfilTelefone(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    E-mail
-                  </label>
-                  <input
-                    type="email"
-                    value={perfilEmail}
-                    onChange={(e) => setPerfilEmail(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Endereço Residencial *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={perfilEndereco}
-                    onChange={(e) => setPerfilEndereco(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nova Senha (deixe em branco p/ manter)
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Mínimo 4 caracteres"
-                    value={perfilSenha}
-                    onChange={(e) => setPerfilSenha(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowFormPerfilResp(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition shadow-xs"
-                >
-                  {submitting ? 'Salvando...' : 'Salvar Meu Perfil'}
-                </button>
-              </div>
-            </form>
           </section>
         )}
 
