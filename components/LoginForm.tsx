@@ -27,7 +27,6 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-const SENHA_PADRAO_DICA = '123456';
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
 const GENEROS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
 const SERIES_ESCOLARES = [
@@ -56,13 +55,13 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
 
   // Campos de Login
   const [identificador, setIdentificador] = useState<string>('');
-  const [senha, setSenha] = useState<string>(SENHA_PADRAO_DICA);
+  const [senha, setSenha] = useState<string>('');
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
 
   // Campos de Pré-Cadastro (Responsável + Filho + Solicitação de Matrícula)
   const [cadNomeResp, setCadNomeResp] = useState<string>('');
   const [cadCpfResp, setCadCpfResp] = useState<string>('');
-  const [cadSenhaResp, setCadSenhaResp] = useState<string>('123456');
+  const [cadSenhaResp, setCadSenhaResp] = useState<string>('');
   const [cadTelefoneResp, setCadTelefoneResp] = useState<string>('');
   const [cadEmailResp, setCadEmailResp] = useState<string>('');
   const [cadEnderecoResp, setCadEnderecoResp] = useState<string>('');
@@ -85,7 +84,7 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
     setErroLogin('');
     setMensagemSucesso('');
     setIdentificador('');
-    setSenha(SENHA_PADRAO_DICA);
+    setSenha('');
   }
 
   async function handleEntrar(e: React.FormEvent) {
@@ -444,12 +443,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                     'Informe seu CPF cadastrado na equipe escolar.'}
                 </p>
               </div>
-
-              {modoResponsavel === 'ENTRAR' && (
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                  Senha padrão: {SENHA_PADRAO_DICA}
-                </span>
-              )}
             </div>
 
             {erroLogin && (
@@ -742,9 +735,6 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                     >
                       Senha de Acesso *
                     </label>
-                    <span className="text-[11px] text-slate-500">
-                      Padrão: <strong className="font-mono text-slate-800">{SENHA_PADRAO_DICA}</strong>
-                    </span>
                   </div>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
