@@ -59,7 +59,9 @@ export default function ComunicadosPage() {
   const { sessao } = useSessao();
   const perfilOperador = sessao.perfil;
   const podePublicar =
-    sessao.perfil === 'SECRETARIA' || sessao.perfil === 'ADMINISTRACAO';
+    sessao.perfil === 'SECRETARIA' ||
+    sessao.perfil === 'ADMINISTRACAO' ||
+    sessao.perfil === 'PROFESSOR';
 
   // Formulário de Publicação (RF-20)
   const [titulo, setTitulo] = useState<string>('');

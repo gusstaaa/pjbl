@@ -19,6 +19,7 @@ import {
   FileSignature,
   Calendar,
   ArrowRight,
+  ChevronDown,
   PlusCircle,
   UserPlus,
   LogIn,
@@ -48,6 +49,8 @@ export function HomeDashboardClient({
   const { sessao, carregado } = useSessao();
   const [minhasMatriculasCount, setMinhasMatriculasCount] = useState<number | null>(null);
   const [meusFilhosCount, setMeusFilhosCount] = useState<number | null>(null);
+  const [cadastrosAberto, setCadastrosAberto] = useState(false);
+  const [materiaisAberto, setMateriaisAberto] = useState(false);
 
   useEffect(() => {
     if (!carregado || !sessao.autenticado || sessao.perfil !== 'RESPONSAVEL') {
@@ -284,378 +287,252 @@ export function HomeDashboardClient({
         )}
       </section>
 
-      {/* Menu Cadastro: Alunos, Equipe e Professores, Responsáveis */}
-      {ehGestao && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-                <UserPlus className="w-3.5 h-3.5" />
-                Menu Principal de Registros
-              </span>
-              <h3 className="text-lg font-extrabold text-slate-900">
-                Cadastro (Alunos, Equipe e Professores, Responsáveis)
-              </h3>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/alunos"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
+      {/* Botões Minimalistas de Acesso às Funcionalidades (Sem títulos de setor) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
+        {/* 1. Cadastros (Expansível para Administração/Secretaria) ou Alunos/Meus Filhos */}
+        {ehGestao ? (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition">
+            <button
+              type="button"
+              onClick={() => setCadastrosAberto((prev) => !prev)}
+              className="w-full p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition cursor-pointer group text-left"
             >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <UserCheck className="w-6 h-6" />
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+                  Cadastros
+                </span>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 group-hover:text-blue-800 transition-transform ${
+                  cadastrosAberto ? 'rotate-180 text-blue-800' : ''
+                }`}
+              />
+            </button>
+
+            {cadastrosAberto && (
+              <div className="px-3 pb-3 pt-1 border-t border-slate-100 bg-slate-50/60 space-y-1.5">
+                <Link
+                  href="/alunos"
+                  className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 text-xs font-bold text-slate-800 hover:text-blue-900 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-blue-700" />
                     Alunos
-                  </h4>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    Cadastro
                   </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Ficha completa do estudante, observações médicas, histórico escolar e vínculo aos responsáveis.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/colaboradores"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+                <Link
+                  href="/colaboradores"
+                  className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 text-xs font-bold text-slate-800 hover:text-blue-900 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-blue-700" />
                     Equipe e Professores
-                  </h4>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    Cadastro
                   </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Cadastro do corpo docente, coordenação e funcionários com alocação de professor titular por turma.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/responsaveis"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <Users className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+                <Link
+                  href="/responsaveis"
+                  className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 text-xs font-bold text-slate-800 hover:text-blue-900 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-700" />
                     Responsáveis
-                  </h4>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800">
-                    Cadastro
                   </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Cadastro de mães, pais e tutores legais com validação de CPF, telefone/WhatsApp e filhos vinculados.
-                </p>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
               </div>
-            </Link>
+            )}
           </div>
-        </section>
-      )}
+        ) : (
+          <Link
+            href="/alunos"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+                {ehResponsavel ? 'Meus Filhos & Perfil' : 'Alunos'}
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />
+          </Link>
+        )}
 
-      {/* Setor 1: Secretaria & Matrículas (Oculta itens restritos ao perfil) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">
-              {ehResponsavel ? 'Acompanhamento Acadêmico e Documental' : 'Setor 01 · Atendimento e Registro'}
+        {/* 2. Controle de Matrículas / Minhas Matrículas */}
+        {!ehProfessor && (
+          <Link
+            href="/matriculas"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-emerald-700 transition">
+                {ehResponsavel ? 'Minhas Matrículas' : 'Controle de Matrículas'}
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition" />
+          </Link>
+        )}
+
+        {/* 3. Envio de Documentos */}
+        {!ehProfessor && (
+          <Link
+            href="/formularios"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <FileSignature className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+                Envio de Documentos
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />
+          </Link>
+        )}
+
+        {/* 4. Controle de Turmas (Gestão) / Turmas (Professor) */}
+        {!ehResponsavel && (
+          <Link
+            href="/turmas"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+                {ehProfessor ? 'Turmas' : 'Controle de Turmas'}
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />
+          </Link>
+        )}
+
+        {/* 5. Controle de Materiais Escolares / Materiais Escolares (Expansível com 2 opções) */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition">
+          <button
+            type="button"
+            onClick={() => setMateriaisAberto((prev) => !prev)}
+            className="w-full p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition cursor-pointer group text-left"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
+                <Package className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-emerald-700 transition">
+                {ehGestao ? 'Controle de Materiais Escolares' : 'Materiais Escolares'}
+              </span>
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-slate-400 group-hover:text-emerald-700 transition-transform ${
+                materiaisAberto ? 'rotate-180 text-emerald-700' : ''
+              }`}
+            />
+          </button>
+
+          {materiaisAberto && (
+            <div className="px-3 pb-3 pt-1 border-t border-slate-100 bg-slate-50/60 space-y-1.5">
+              <Link
+                href="/materiais"
+                className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-300 text-xs font-bold text-slate-800 hover:text-emerald-800 transition"
+              >
+                <span className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-emerald-700" />
+                  Lista de Materiais Escolares
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+              <Link
+                href="/livros"
+                className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-300 text-xs font-bold text-slate-800 hover:text-emerald-800 transition"
+              >
+                <span className="flex items-center gap-2">
+                  <Library className="w-4 h-4 text-emerald-700" />
+                  Relação de Livros Adotados e Fornecidos
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* 6. Controle Financeiro / Mensalidades */}
+        {!ehProfessor && (
+          <Link
+            href="/mensalidades"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-emerald-700 transition">
+                {ehResponsavel ? 'Mensalidades' : 'Controle Financeiro'}
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition" />
+          </Link>
+        )}
+
+        {/* 7. Solicitação de Fardas Escolares */}
+        {!ehProfessor && (
+          <Link
+            href="/fardas"
+            className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+                <Shirt className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+                Solicitação de Fardas Escolares
+              </span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />
+          </Link>
+        )}
+
+        {/* 8. Controle de Comunicados (Gestão e Professor) / Comunicados (Responsável) */}
+        <Link
+          href="/comunicados"
+          className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <span className="font-bold text-sm text-slate-900 group-hover:text-blue-900 transition">
+              {ehResponsavel ? 'Comunicados' : 'Controle de Comunicados'}
             </span>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              {ehResponsavel
-                ? 'Dados dos Filhos, Matrículas e Autorizações'
-                : 'Secretaria & Matrículas'}
-            </h3>
           </div>
-        </div>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-700 transition" />
+        </Link>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {!ehProfessor && (
-            <Link
-              href="/matriculas"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                    {ehResponsavel
-                      ? 'Situação da Matrícula e Checklist de Documentos'
-                      : 'Matrículas, Rematrícula e Documentos'}
-                  </h4>
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {ehResponsavel ? 'Consulta' : 'Principal'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehResponsavel
-                    ? 'Consulte a turma atual, código de matrícula e quais documentos já foram entregues ou estão pendentes.'
-                    : 'Efetivação de matrícula inicial, rematrícula simplificada de veteranos e checklist de documentos obrigatórios.'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          {!ehGestao && (
-            <Link
-              href="/alunos"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <UserCheck className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    {ehResponsavel
-                      ? 'Dados Cadastrais e Histórico dos Filhos'
-                      : 'Listagem de Alunos e Turmas'}
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehResponsavel
-                    ? 'Visualize os dados cadastrais, observações de saúde e o histórico anual de matrículas dos seus filhos.'
-                    : 'Consulte a relação de estudantes matriculados, observações médicas e histórico escolar.'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          {!ehProfessor && (
-            <Link
-              href="/formularios"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <FileSignature className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    {ehResponsavel
-                      ? 'Assinatura de Autorizações e Contratos Digitais'
-                      : 'Formulários, Contratos e Autorizações'}
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehResponsavel
-                    ? 'Preencha e assine digitalmente autorizações de passeios, uso de imagem e contratos escolares dos seus filhos.'
-                    : 'Publicação de contratos e termos de autorização (passeios, uso de imagem) e registro de aceite digital por aluno.'}
-                </p>
-              </div>
-            </Link>
-          )}
-        </div>
-      </section>
-
-      {/* Setor 2: Pedagógico & Materiais */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-              Setor Pedagógico
+        {/* 9. Controle de Calendário (Gestão e Professor) / Calendário (Responsável) */}
+        <Link
+          href="/calendario"
+          className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <span className="font-bold text-sm text-slate-900 group-hover:text-emerald-700 transition">
+              {ehResponsavel ? 'Calendário' : 'Controle de Calendário'}
             </span>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              {ehResponsavel
-                ? 'Listas de Materiais e Livros Escolares'
-                : 'Pedagógico, Turmas & Materiais Didáticos'}
-            </h3>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {!ehResponsavel && (
-            <Link
-              href="/turmas"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    {ehProfessor ? 'Consulta de Turmas e Séries' : 'Gestão de Séries e Turmas'}
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehProfessor
-                    ? 'Visualize as turmas do Maternal 1 ao 5º ano, turnos e ocupação de vagas por sala.'
-                    : 'Organização de turmas do Maternal 1 ao 5º ano, turnos (Manhã, Tarde, Integral) e controle automático de vagas.'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          <Link
-            href="/materiais"
-            className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-          >
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
-              <Package className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                  {ehResponsavel
-                    ? 'Consultar Lista de Materiais do Filho'
-                    : 'Listas de Materiais Escolares'}
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {ehResponsavel
-                  ? 'Consulte a relação de materiais individuais e coletivos solicitados para a série/turma do seu filho.'
-                  : 'Relação de materiais individuais e de uso coletivo por série e consulta rápida pelo aluno matriculado.'}
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/livros"
-            className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-          >
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
-              <Library className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                  {ehResponsavel
-                    ? 'Catálogo de Livros Adotados e Fornecidos'
-                    : 'Relação de Livros Adotados e Fornecidos'}
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Catálogo de livros didáticos e paradidáticos adotados pelas séries ou fornecidos diretamente pela escola.
-              </p>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* Setor 3 & 4: Comunicados, Calendário, Mensalidades e Fardas */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">
-              Comunicação, Agenda e Atendimento
-            </span>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              {ehProfessor
-                ? 'Mural de Comunicados & Calendário Escolar'
-                : 'Financeiro, Uniformes, Comunicados & Calendário'}
-            </h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {!ehProfessor && (
-            <Link
-              href="/mensalidades"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
-                <DollarSign className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                    {ehResponsavel
-                      ? 'Consulta de Mensalidades e Situação de Pagamento'
-                      : 'Controle de Mensalidades e Pagamentos'}
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehResponsavel
-                    ? 'Acompanhe as parcelas do carnê anual e confira os meses quitados ou pendentes.'
-                    : 'Geração de carnês anuais, acompanhamento de adimplência e baixa de pagamentos (Pago / Pendente).'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          {!ehProfessor && (
-            <Link
-              href="/fardas"
-              className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-                <Shirt className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                    Solicitação de Fardas Escolares
-                  </h4>
-                </div>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  {ehResponsavel
-                    ? 'Solicite peças de uniforme informando o tamanho e quantidade para os seus filhos e acompanhe a entrega.'
-                    : 'Registro de pedidos de uniforme por tamanho e peça e painel consolidado de demanda para entrega.'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          <Link
-            href="/comunicados"
-            className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-700 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-          >
-            <div className="p-3 rounded-xl bg-blue-50 text-blue-800 group-hover:bg-blue-900 group-hover:text-white transition">
-              <Megaphone className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-900 group-hover:text-blue-900 transition">
-                  Mural Oficial de Comunicados
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {ehGestao
-                  ? 'Emissão de avisos gerais para toda a escola ou comunicados exclusivos filtrados por turma.'
-                  : 'Consulte os avisos oficiais emitidos pela direção, coordenação e secretaria para a escola e turmas.'}
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/calendario"
-            className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-600 hover:shadow-md transition group shadow-xs flex items-start gap-4"
-          >
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                  Calendário de Eventos Escolares
-                </h4>
-              </div>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {ehResponsavel
-                  ? 'Consulte a agenda cronológica de reuniões de pais, feriados, semanas de provas e eventos culturais.'
-                  : 'Agenda cronológica e registro de reuniões de pais, conselhos de classe, feriados, avaliações e eventos culturais.'}
-              </p>
-            </div>
-          </Link>
-        </div>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition" />
+        </Link>
       </section>
     </main>
   );

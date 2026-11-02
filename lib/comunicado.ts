@@ -10,6 +10,7 @@ export const PERFIS_PUBLICACAO_COMUNICADO = [
   'SECRETARIA',
   'ADMINISTRACAO',
   'COORDENACAO',
+  'PROFESSOR',
 ] as const;
 export type PerfilPublicacaoComunicado = (typeof PERFIS_PUBLICACAO_COMUNICADO)[number];
 
