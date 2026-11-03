@@ -283,18 +283,11 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Centro: Indicador Contextual (Exibido apenas para usuário autenticado) */}
+          {/* Centro: Título Minimalista da Página Atual */}
           {exibirMenuLateral && (
-            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-950/60 border border-blue-700/70 text-xs">
-              <span className="text-blue-300 font-medium">
-                {itemAtual.category}
-              </span>
-              <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                {itemAtual.label}
-              </span>
-            </div>
+            <span className="hidden md:block text-sm font-bold text-white tracking-tight">
+              {itemAtual.label}
+            </span>
           )}
 
           {/* Direita: Usuário Logado (Dropdown com Opções de Perfil e Sair) ou Botão de Login */}
