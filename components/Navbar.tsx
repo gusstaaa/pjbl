@@ -247,7 +247,7 @@ export function Navbar() {
     <>
       {/* Barra Superior — Identidade Azul Royal & Esmeralda Educacional */}
       <header className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-white border-b-2 border-emerald-500/70 sticky top-0 z-30 shadow-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 relative">
           {/* Esquerda: Botão do Menu Lateral (☰ apenas quando logado fora da tela de login) + Identidade da Escola */}
           <div className="flex items-center gap-3">
             {exibirMenuLateral && (
@@ -282,7 +282,7 @@ export function Navbar() {
 
           {/* Centro: Título Minimalista da Página Atual (oculto no Painel Inicial) */}
           {exibirMenuLateral && pathname !== '/' && (
-            <span className="text-sm font-bold text-white tracking-tight truncate">
+            <span className="absolute left-1/2 -translate-x-1/2 text-sm font-bold text-white tracking-tight truncate max-w-[45%] text-center pointer-events-none">
               {itemAtual.label}
             </span>
           )}
