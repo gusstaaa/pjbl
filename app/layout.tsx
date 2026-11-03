@@ -3,8 +3,8 @@ import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Sistema de Gestão Escolar',
-  description: 'Gestão de matrículas, alunos e turmas do Maternal ao 5º ano',
+  title: 'Centro Educacional Semeando',
+  description: 'Portal do Centro Educacional Semeando — Maternal 1 ao 5º ano',
 };
 
 export default function RootLayout({

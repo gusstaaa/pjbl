@@ -273,7 +273,7 @@ export function Navbar() {
                 <School className="w-5 h-5" />
               </div>
               <h1 className="font-extrabold text-sm sm:text-base text-white leading-tight tracking-tight">
-                Nome da Escola
+                Centro Educacional Semeando
               </h1>
             </Link>
           </div>
