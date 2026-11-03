@@ -272,19 +272,14 @@ export function Navbar() {
               <div className="bg-emerald-500 group-hover:bg-emerald-400 transition text-slate-950 p-2 rounded-xl shadow-sm">
                 <School className="w-5 h-5" />
               </div>
-              <div className="hidden xs:block sm:block">
-                <h1 className="font-extrabold text-sm sm:text-base text-white leading-tight tracking-tight">
-                  Gestão Escolar
-                </h1>
-                <p className="text-[11px] text-emerald-300 font-medium">
-                  Maternal 1 ao 5º Ano
-                </p>
-              </div>
+              <h1 className="font-extrabold text-sm sm:text-base text-white leading-tight tracking-tight">
+                Nome da Escola
+              </h1>
             </Link>
           </div>
 
-          {/* Centro: Título Minimalista da Página Atual */}
-          {exibirMenuLateral && (
+          {/* Centro: Título Minimalista da Página Atual (oculto no Painel Inicial) */}
+          {exibirMenuLateral && pathname !== '/' && (
             <span className="hidden md:block text-sm font-bold text-white tracking-tight">
               {itemAtual.label}
             </span>
