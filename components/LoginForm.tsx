@@ -25,6 +25,7 @@ import {
   UserPlus,
   Baby,
   BookOpen,
+  QrCode,
 } from 'lucide-react';
 
 const PARENTESCOS = ['Mãe', 'Pai', 'Tutor Legal', 'Avó/Avô', 'Tio/Tia', 'Outro'];
@@ -229,6 +230,15 @@ export function LoginForm({ modoPaginaPrincipal = false }: LoginFormProps) {
                 <strong className="text-white">Professor</strong> ou{' '}
                 <strong className="text-white">Colaborador</strong> (Secretaria / Administração).
               </p>
+              <div className="pt-2">
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-300 text-xs font-bold transition border border-white/20 shadow-xs"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Apresentação em Sala: QR Codes para Datashow →</span>
+                </Link>
+              </div>
             </div>
           </div>
 
