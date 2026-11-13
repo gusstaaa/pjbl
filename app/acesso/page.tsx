@@ -106,6 +106,9 @@ function AcessoRapidoConteudo() {
   useEffect(() => {
     let cancelado = false;
 
+    // Define a sessão de imediato para garantir que localStorage já esteja ativo
+    definirSessao(config.fallback as any);
+
     async function autenticar() {
       try {
         const res = await fetch('/api/auth/login', {
@@ -125,8 +128,8 @@ function AcessoRapidoConteudo() {
             setStatus('sucesso');
             setMensagem(`Conectado como ${dados.nome}! Redirecionando...`);
             setTimeout(() => {
-              router.replace('/');
-            }, 500);
+              window.location.href = '/';
+            }, 300);
             return;
           }
         }
@@ -137,8 +140,8 @@ function AcessoRapidoConteudo() {
           setStatus('sucesso');
           setMensagem(`Conectado como ${config.fallback.nome}! Redirecionando...`);
           setTimeout(() => {
-            router.replace('/');
-          }, 500);
+            window.location.href = '/';
+          }, 300);
         }
       } catch {
         if (!cancelado) {
@@ -146,8 +149,8 @@ function AcessoRapidoConteudo() {
           setStatus('sucesso');
           setMensagem(`Conectado como ${config.fallback.nome}! Redirecionando...`);
           setTimeout(() => {
-            router.replace('/');
-          }, 500);
+            window.location.href = '/';
+          }, 300);
         }
       }
     }
@@ -157,7 +160,7 @@ function AcessoRapidoConteudo() {
     return () => {
       cancelado = true;
     };
-  }, [config, definirSessao, router]);
+  }, [config, definirSessao]);
 
   const meta = PERFIS_META[config.perfil];
 

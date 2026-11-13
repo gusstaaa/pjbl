@@ -73,6 +73,48 @@ export const PERFIS_META: Record<
 
 const STORAGE_KEY = 'escola_sessao_ativa_v1';
 
+export const DEMO_SESSIONS: Record<string, SessaoUsuario> = {
+  admin: {
+    autenticado: true,
+    perfil: 'ADMINISTRACAO',
+    categoriaLogin: 'COLABORADOR',
+    nome: 'Diretor Wagner (Administração)',
+    identificador: '851.861.480-59',
+    colaboradorId: '33e303fa-206d-405e-aa74-738a0b6cb889',
+    cargoColaborador: 'Diretor(a) / Administrador(a)',
+    setorColaborador: 'Administração',
+  },
+  secretaria: {
+    autenticado: true,
+    perfil: 'SECRETARIA',
+    categoriaLogin: 'COLABORADOR',
+    nome: 'Secretaria Escolar',
+    identificador: 'sec',
+  },
+  professor: {
+    autenticado: true,
+    perfil: 'PROFESSOR',
+    categoriaLogin: 'PROFESSOR',
+    nome: 'Prof. Aristóteles',
+    identificador: '298.105.200-42',
+    colaboradorId: '44693137-e754-4c9c-ac88-2a8ff71446c7',
+    cargoColaborador: 'Professor(a)',
+    setorColaborador: 'Pedagógico',
+  },
+  responsavel: {
+    autenticado: true,
+    perfil: 'RESPONSAVEL',
+    categoriaLogin: 'RESPONSAVEL',
+    nome: 'Mariana Costa Ferreira',
+    identificador: '529.982.247-25',
+    responsavelCpf: '529.982.247-25',
+    alunosVinculados: [
+      { id: 'sofia', nome: 'Sofia Costa Ferreira' },
+      { id: 'miguel', nome: 'Miguel Costa Ferreira' },
+    ],
+  },
+};
+
 export const SESSAO_DESLOGADA: SessaoUsuario = {
   autenticado: false,
   perfil: 'SECRETARIA',
@@ -103,6 +145,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
+      // Auto-login se acessando diretamente /acesso com ?perfil=... ou qualquer rota com ?demo=...
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const demoParam = (
+          params.get('demo') ||
+          (window.location.pathname.startsWith('/acesso') ? params.get('perfil') : null)
+        )?.toLowerCase();
+
+        if (demoParam && DEMO_SESSIONS[demoParam]) {
+          const sessaoDemo = DEMO_SESSIONS[demoParam];
+          setSessao(sessaoDemo);
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessaoDemo));
+        }
+      }
+
       const salvo = window.localStorage.getItem(STORAGE_KEY);
       if (salvo) {
         const parsed = JSON.parse(salvo);
@@ -169,7 +226,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const estaAutenticado = Boolean(sessao?.autenticado);
-  const ehRotaPublicaLogin = pathname === '/' || pathname === '/login';
+  const ROTAS_PUBLICAS = ['/', '/login', '/acesso', '/demo', '/qrcode'];
+  const ehRotaPublicaLogin =
+    ROTAS_PUBLICAS.includes(pathname) ||
+    pathname.startsWith('/acesso') ||
+    pathname.startsWith('/demo') ||
+    pathname.startsWith('/qrcode');
 
   useEffect(() => {
     if (carregado && !estaAutenticado && !ehRotaPublicaLogin) {
